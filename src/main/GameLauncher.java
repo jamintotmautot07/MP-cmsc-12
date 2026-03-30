@@ -19,11 +19,20 @@ package main;
  - Do NOT put game logic here
 */
 
+import javax.swing.SwingUtilities;
+
+//main class that calls the other operations
+
 public class GameLauncher {
     public static void main(String[] args) {
-        // TODO: Create JFrame
-        // TODO: Add GamePanel
-        // TODO: Set size, close operation
-        // TODO: Start game
+        // Create JFrame
+        // Add GamePanel
+        // Set size, close operation
+        // Start game
+
+        SwingUtilities.invokeLater(() -> {
+            BaseFrame frame = new BaseFrame();
+            frame.setVisible(true);
+        });
     }
 }
