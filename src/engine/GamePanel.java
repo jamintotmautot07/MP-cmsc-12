@@ -26,7 +26,7 @@ import java.awt.Graphics;
 public class GamePanel extends JPanel implements Runnable {
 
     public void run(){
-        // TODO: Game loop
+        // Game loop
         // while(running){
         //   update();
         //   repaint();
@@ -34,10 +34,10 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void update(){
-        // TODO: Update player and entities
+        // Update player and entities
     }
 
     public void render(Graphics g){
-        // TODO: Draw everything
+        // Draw everything
     }
 }
