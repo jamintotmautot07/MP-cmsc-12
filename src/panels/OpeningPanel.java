@@ -20,6 +20,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import util.Constants;
+
 public class OpeningPanel extends JPanel {
 
     //background of this panel
@@ -40,6 +42,7 @@ public class OpeningPanel extends JPanel {
     public JButton creditsButton;
 
     public OpeningPanel() {
+        setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
         this.backgroundImage = new ImageIcon("src/res/Circuito.jpg").getImage();
 
         setLayout(new BorderLayout());
