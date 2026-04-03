@@ -6,6 +6,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
@@ -48,8 +49,31 @@ public class OpeningPanel extends JPanel {
         setLayout(new BorderLayout());
 
         //Fonts
-        Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);
-        Font titleLowerFont = new Font("Papyrus", Font.BOLD, 35);
+        // Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);
+        // Font titleLowerFont = new Font("Papyrus", Font.BOLD, 35);
+
+        headerLabel1 = new JLabel(String.format("Hawak ko ang Bit:"));
+        headerLabel2 = new JLabel(String.format("THE FINAL BIT"));
+
+        try {
+            Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/TITLE_FONT.ttf"));
+            Font titleUpperFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/TopTitle_Font.ttf"));
+
+            //set sizes
+            titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 100f);
+            titleUpperFont = titleUpperFont.deriveFont(Font.BOLD, 35f);
+
+            headerLabel1.setForeground(Color.BLUE);
+            headerLabel1.setFont(titleUpperFont);
+            headerLabel1.setAlignmentX(Component.CENTER_ALIGNMENT);
+            
+            headerLabel2.setForeground(Color.green.darker());
+            headerLabel2.setFont(titleLowerFont);
+            headerLabel2.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         //buttons
         playButton = new JButton("PLAY");
@@ -58,16 +82,6 @@ public class OpeningPanel extends JPanel {
         playButton.setFocusPainted(false);
         exitButton.setFocusPainted(false);
         creditsButton.setFocusPainted(false);
-
-        headerLabel1 = new JLabel(String.format("Hawak ko ang Bit:"));
-        headerLabel1.setForeground(Color.GREEN);
-        headerLabel1.setFont(titleUpperFont);
-        headerLabel1.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        headerLabel2 = new JLabel(String.format("THE FINAL BIT"));
-        headerLabel2.setForeground(Color.green.darker());
-        headerLabel2.setFont(titleLowerFont);
-        headerLabel2.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         instructionsLabel = new JLabel("\"The system is failing... but you're still running.\"");
         instructionsLabel.setFont(
@@ -80,6 +94,7 @@ public class OpeningPanel extends JPanel {
         main.setOpaque(false);
 
         titlePanel = new TitlePanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
         centerPanel = new RoundedPanel(new GridLayout(3, 1, 20, 20), 20);
         centerPanel.setPreferredSize(new Dimension(280, 220));
@@ -95,6 +110,10 @@ public class OpeningPanel extends JPanel {
         instructions.setBorder(BorderFactory.createEmptyBorder(20, 10, 35, 10));
 
         titlePanel.add(headerLabel1);
+
+        // space in-between texts
+        titlePanel.add(Box.createRigidArea(new Dimension(0, -40)));
+
         titlePanel.add(headerLabel2);
 
         header.add(titlePanel);
@@ -127,11 +146,9 @@ public class OpeningPanel extends JPanel {
         private Image backImage;
 
         public TitlePanel () {
-            this.backImage = new ImageIcon("src/res/text_slash.PNG").getImage();
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            this.backImage = new ImageIcon("src/res/backdrop.jpg").getImage();
             setBackground(null);
             setOpaque(false);
-            setBorder(BorderFactory.createEmptyBorder(40, 0, 20, 0));
         }
 
         @Override
