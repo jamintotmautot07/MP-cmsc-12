@@ -22,6 +22,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 import util.Constants;
+import util.MethodUtilities;
+import util.MethodUtilities.GlowLabel;
 
 public class OpeningPanel extends JPanel {
 
@@ -34,8 +36,8 @@ public class OpeningPanel extends JPanel {
     private JPanel instructions;
     private TitlePanel titlePanel;
 
-    private JLabel headerLabel1;
-    private JLabel headerLabel2;
+    private MethodUtilities.GlowLabel headerLabel1;
+    private MethodUtilities.GlowLabel headerLabel2;
     private JLabel instructionsLabel;
     
     public JButton playButton;
@@ -44,7 +46,7 @@ public class OpeningPanel extends JPanel {
 
     public OpeningPanel() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
-        this.backgroundImage = new ImageIcon("src/res/Circuito.jpg").getImage();
+        this.backgroundImage = new ImageIcon(getClass().getResource("/res/Circuito.jpg")).getImage();
 
         setLayout(new BorderLayout());
 
@@ -52,22 +54,22 @@ public class OpeningPanel extends JPanel {
         // Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);
         // Font titleLowerFont = new Font("Papyrus", Font.BOLD, 35);
 
-        headerLabel1 = new JLabel(String.format("Hawak ko ang Bit:"));
-        headerLabel2 = new JLabel(String.format("THE FINAL BIT"));
+        headerLabel1 = new GlowLabel(String.format("Hawak ko ang Bit:"));
+        headerLabel2 = new GlowLabel(String.format("THE FINAL BIT"), new Color(255, 153, 51));
 
         try {
-            Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/TITLE_FONT.ttf"));
+            Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/Those_Glitch_Regular.ttf"));
             Font titleUpperFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/TopTitle_Font.ttf"));
 
             //set sizes
-            titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 100f);
+            titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 50f);
             titleUpperFont = titleUpperFont.deriveFont(Font.BOLD, 35f);
 
-            headerLabel1.setForeground(Color.BLUE);
+            headerLabel1.setForeground(new Color(153, 204, 255));
             headerLabel1.setFont(titleUpperFont);
             headerLabel1.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            headerLabel2.setForeground(Color.green.darker());
+            headerLabel2.setForeground(new Color(255, 51, 0));
             headerLabel2.setFont(titleLowerFont);
             headerLabel2.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -112,7 +114,7 @@ public class OpeningPanel extends JPanel {
         titlePanel.add(headerLabel1);
 
         // space in-between texts
-        titlePanel.add(Box.createRigidArea(new Dimension(0, -40)));
+        titlePanel.add(Box.createRigidArea(new Dimension(0, -15)));
 
         titlePanel.add(headerLabel2);
 
@@ -146,7 +148,7 @@ public class OpeningPanel extends JPanel {
         private Image backImage;
 
         public TitlePanel () {
-            this.backImage = new ImageIcon("src/res/backdrop.jpg").getImage();
+            this.backImage = new ImageIcon(getClass().getResource("/res/backdrop.jpg")).getImage();
             setBackground(null);
             setOpaque(false);
         }

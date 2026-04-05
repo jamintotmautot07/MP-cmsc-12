@@ -13,7 +13,7 @@ to compile new file...
 
 1. Either you compile it individually if only one file was changed. or
 2. Type this in the terminal: 
-"(for /r src %i in (*.java) do @set "line=%i" && call echo "%line:\=/%") > sources.txt"
+"cmd /v:on /c "(for /r src %i in (*.java) do @set "line=%i" && @echo "!line:\=/!")" > sources.txt"
 
 this finds all .java files and writes their directory in "sources.txt" with certain specific format changes
 
@@ -23,3 +23,8 @@ then compile all files in sources.txt using "javac -d bin @sources.txt"
 Finally, to run, type this in terminal...
 
 "java -cp bin main.GameLauncher"
+
+in updating the .jar file, use the command "jar cfe HawakKoAngBit.jar main.GameLauncher -C bin ."
+
+then to test the .jar file,
+use "java -jar HawakKoAngBit.jar"

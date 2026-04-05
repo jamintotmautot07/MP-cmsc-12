@@ -30,6 +30,8 @@ public class GameLauncher {
         // Set size, close operation
         // Start game
 
+        System.out.println("VERSION: UPDATED BUILD");
+
         SwingUtilities.invokeLater(() -> {
             BaseFrame frame = new BaseFrame();
             frame.setVisible(true);
