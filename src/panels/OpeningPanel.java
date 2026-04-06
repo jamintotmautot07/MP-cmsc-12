@@ -31,7 +31,7 @@ public class OpeningPanel extends JPanel {
     private Image backgroundImage;
 
     private JPanel main;
-    private RoundedPanel centerPanel;
+    private TitlePanel centerPanel;
     private JPanel header;
     private JPanel instructions;
     private TitlePanel titlePanel;
@@ -46,7 +46,7 @@ public class OpeningPanel extends JPanel {
 
     public OpeningPanel() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
-        this.backgroundImage = new ImageIcon(getClass().getResource("/res/Circuito.jpg")).getImage();
+        this.backgroundImage = new ImageIcon(getClass().getResource("/res/background.png")).getImage();
 
         setLayout(new BorderLayout());
 
@@ -98,7 +98,7 @@ public class OpeningPanel extends JPanel {
         titlePanel = new TitlePanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        centerPanel = new RoundedPanel(new GridLayout(3, 1, 20, 20), 20);
+        centerPanel = new TitlePanel(new GridLayout(3, 1, 10, 10));
         centerPanel.setPreferredSize(new Dimension(280, 220));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -148,16 +148,23 @@ public class OpeningPanel extends JPanel {
         private Image backImage;
 
         public TitlePanel () {
-            this.backImage = new ImageIcon(getClass().getResource("/res/backdrop.jpg")).getImage();
+            this.backImage = new ImageIcon(getClass().getResource("/res/text_background.png")).getImage();
             setBackground(null);
             setOpaque(false);
+        }
+
+        public TitlePanel (LayoutManager layout) {
+            this.backImage = new ImageIcon(getClass().getResource("/res/text_background.png")).getImage();
+            setBackground(null);
+            setOpaque(false);
+            setLayout(layout);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            g.drawImage(backImage, 0, 0, this.getWidth(), this.getHeight() + 10, this);
+            g.drawImage(backImage, 0, 0, this.getWidth() + 25, this.getHeight() + 25, this);
         }
 
     }

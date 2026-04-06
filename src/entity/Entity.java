@@ -22,7 +22,7 @@ public class Entity {
     public int worldX, worldY;
     public int speed;
 
-    public BufferedImage up[], right[], left[], down[];
+    public BufferedImage up[], right[], left[], down[], idle[];
     public String direction;
 
     public int spriteCounter = 0;

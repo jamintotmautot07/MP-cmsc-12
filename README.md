@@ -11,7 +11,12 @@ type this in the terminal
 
 to compile new file...
 
-1. Either you compile it individually if only one file was changed. or
+1. Either you compile it individually if only one file was changed. 
+
+
+or
+
+
 2. Type this in the terminal: 
 "cmd /v:on /c "(for /r src %i in (*.java) do @set "line=%i" && @echo "!line:\=/!")" > sources.txt"
 

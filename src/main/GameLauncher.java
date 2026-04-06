@@ -30,6 +30,13 @@ public class GameLauncher {
         // Set size, close operation
         // Start game
 
+        if (args.length > 0) {
+            String filePath = args[0];
+            System.out.println("Opening save file: " + filePath);
+
+            // TODO: load save file here
+        }
+
         System.out.println("VERSION: UPDATED BUILD");
 
         SwingUtilities.invokeLater(() -> {
