@@ -8,6 +8,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import engine.GamePanel;
+import engine.Level;
 import panels.CreditScroller;
 import panels.OpeningPanel;
 import util.Constants;
@@ -21,6 +22,7 @@ public class BaseFrame extends JFrame{
     private OpeningPanel openPanel;
     public GamePanel gamePanel;
     private CreditScroller credits;
+    private Level selectedLevel = Level.TUTORIAL;
 
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
@@ -50,7 +52,33 @@ public class BaseFrame extends JFrame{
             cardLayout.show(container, "Openning");
         });
 
+        openPanel.levelButton.addActionListener(e -> {
+            Object[] options = new Object[] {
+                Level.TUTORIAL.name,
+                Level.LEVEL_1.name,
+                Level.LEVEL_2.name,
+                Level.LEVEL_3.name
+            };
+
+            int choice = JOptionPane.showOptionDialog(
+                this,
+                "Choose a level:",
+                "Select Level",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                0
+            );
+
+            if (choice >= 0 && choice < Level.LEVELS.length) {
+                selectedLevel = Level.LEVELS[choice];
+                openPanel.setSelectedLevelIndex(choice, selectedLevel.name);
+            }
+        });
+
         openPanel.playButton.addActionListener(e -> {
+            gamePanel.setLevel(selectedLevel);
             cardLayout.show(container, "Game");
             gamePanel.requestFocusInWindow();
             gamePanel.startGameThread();

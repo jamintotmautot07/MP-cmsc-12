@@ -3,6 +3,7 @@ package engine;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,6 +17,8 @@ import java.awt.Color;
 import util.Constants;
 import systems.KeyHandler;
 import entity.Player;
+import systems.Timer;
+import Tile.TileManager;
 
 /*
  OWNER: Jamin
@@ -42,9 +45,14 @@ public class GamePanel extends JPanel implements Runnable {
     Thread gameThread;
     private volatile boolean running = false;
 
+    // Timer
+    private Level currentLevel = Level.TUTORIAL;
+    private Timer timer = new Timer(currentLevel.timeLimitSeconds);
+
 
     //Entities
-    Player player = new Player(this, keyH);
+    public Player player = new Player(this, keyH);
+    TileManager tileM;
 
     //FPS
     final int fps = 60; //60 frames per second
@@ -59,6 +67,9 @@ public class GamePanel extends JPanel implements Runnable {
         this.addKeyListener(keyH);
         this.setFocusable(true);
         this.setLayout(new BorderLayout());
+
+        //Entities
+        tileM = new TileManager(this);
 
         backButton.setFocusPainted(false);
         backButton.setFocusable(true);
@@ -80,11 +91,32 @@ public class GamePanel extends JPanel implements Runnable {
                 backButton.setFocusable(false);
             }
         });
+        
+    }
+
+    public void setLevel(Level level) {
+        if (level == null) {
+            level = Level.TUTORIAL;
+        }
+
+        this.currentLevel = level;
+        this.timer = new Timer(level.timeLimitSeconds);
+        this.timer.startTimer();
+        tileM.loadMap(level.mapPath);
+        this.player.setDefaultValues();
+    }
+
+    public Level getCurrentLevel() {
+        return currentLevel;
     }
 
     public void startGameThread() {
         running = true;
         gameThread = new Thread(this);
+
+        // initialize timer
+        timer.startTimer();
+
         gameThread.start();
     }
 
@@ -92,6 +124,10 @@ public class GamePanel extends JPanel implements Runnable {
 
         //reset player defualt values
         player.setDefaultValues();
+
+        // stop timer
+        timer.stopTimer();
+        timer.resetTimer();
 
         running = false;
         if(gameThread != null) {
@@ -131,6 +167,7 @@ public class GamePanel extends JPanel implements Runnable {
 
             if(timer >= 1000000000) {
                 System.out.println("FPS: " + drawCount);
+                this.timer.showTimeScore();
                 drawCount = 0;
                 timer = 0;
             }
@@ -139,6 +176,18 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void update(){
         player.update();
+        if (timer != null) {
+            timer.setTimeScore(); // time based score
+            if (timer.isTimeUp() && currentLevel.nextLevel != null) {
+                int result = JOptionPane.showConfirmDialog(this, "Time's up! Proceed to next level?", "Level Complete", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    setLevel(currentLevel.nextLevel);
+                } else {
+                    // Stop the game or go back to menu
+                    running = false;
+                }
+            }
+        }
     }
 
     public void paintComponent(Graphics g){
@@ -147,8 +196,17 @@ public class GamePanel extends JPanel implements Runnable {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
+        g2.setColor(Color.WHITE);
+        g2.drawString("Level: " + (currentLevel != null ? currentLevel.name : "Unknown"), 20, 20);
+
+        if (timer != null) {
+            timer.show(g2, 20, 40);
+        }
 
         // DRAW THE COMPONENTS
+
+        // tiles
+        tileM.draw(g2);
 
         // player
         player.draw(g2);

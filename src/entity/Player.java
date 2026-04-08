@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
@@ -79,23 +80,23 @@ public class Player extends Entity{
             
             // idle assets
             for(int i = 0; i < 7; i++) {
-                idle[i] = ImageIO.read(getClass().getResourceAsStream(String.format("/res/PlayerAssets/idle%d.png", i + 1)));
+                idle[i] = ImageIO.read(new File(String.format("res/PlayerAssets/idle%d.png", i + 1)));
             }
             // down assets
             for(int i = 0; i < 4; i++) {
-                down[i] = ImageIO.read(getClass().getResourceAsStream(String.format("/res/PlayerAssets/down%d.png", i + 1)));
+                down[i] = ImageIO.read(new File(String.format("res/PlayerAssets/down%d.png", i + 1)));
             }
             // up assets
             for(int i = 0; i < 6; i++) {
-                up[i] = ImageIO.read(getClass().getResourceAsStream(String.format("/res/PlayerAssets/up%d.png", i + 1)));
+                up[i] = ImageIO.read(new File(String.format("res/PlayerAssets/up%d.png", i + 1)));
             }
             // left assets
             for(int i = 0; i < 6; i++) {
-                left[i] = ImageIO.read(getClass().getResourceAsStream(String.format("/res/PlayerAssets/left%d.png", i + 1)));
+                left[i] = ImageIO.read(new File(String.format("res/PlayerAssets/left%d.png", i + 1)));
             }
             // right assets
             for(int i = 0; i < 6; i++) {
-                right[i] = ImageIO.read(getClass().getResourceAsStream(String.format("/res/PlayerAssets/right%d.png", i + 1)));
+                right[i] = ImageIO.read(new File(String.format("res/PlayerAssets/right%d.png", i + 1)));
             }
 
         } catch (IOException e) {
@@ -256,7 +257,7 @@ public class Player extends Entity{
                 break;
         }
 
-        g2.drawImage(image, worldX, worldY, Constants.tileSize, Constants.tileSize, null);
+        g2.drawImage(image, screenX, screenY, Constants.tileSize, Constants.tileSize, null);
 
         //Initial character
         // g2.setColor(Color.WHITE);

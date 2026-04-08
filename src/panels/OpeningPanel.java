@@ -17,9 +17,13 @@ import java.awt.RenderingHints;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Paths;
 
 import util.Constants;
 import util.MethodUtilities;
@@ -39,14 +43,17 @@ public class OpeningPanel extends JPanel {
     private MethodUtilities.GlowLabel headerLabel1;
     private MethodUtilities.GlowLabel headerLabel2;
     private JLabel instructionsLabel;
+    private JLabel levelSelectionLabel;
     
     public JButton playButton;
     public JButton exitButton;
     public JButton creditsButton;
+    public JButton levelButton;
+    private int selectedLevelIndex = 0;
 
     public OpeningPanel() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
-        this.backgroundImage = new ImageIcon(getClass().getResource("/res/background.png")).getImage();
+        this.backgroundImage = new ImageIcon("res/background.png").getImage();
 
         setLayout(new BorderLayout());
 
@@ -57,9 +64,10 @@ public class OpeningPanel extends JPanel {
         headerLabel1 = new GlowLabel(String.format("Hawak ko ang Bit:"));
         headerLabel2 = new GlowLabel(String.format("THE FINAL BIT"), new Color(255, 153, 51));
 
-        try {
-            Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/Those_Glitch_Regular.ttf"));
-            Font titleUpperFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/Font/TopTitle_Font.ttf"));
+        try (InputStream titleLowerStream = new FileInputStream("res/Font/Those_Glitch_Regular.ttf");
+             InputStream titleUpperStream = new FileInputStream("res/Font/TopTitle_Font.ttf")) {
+            Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, titleLowerStream);
+            Font titleUpperFont = Font.createFont(Font.TRUETYPE_FONT, titleUpperStream);
 
             //set sizes
             titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 50f);
@@ -81,15 +89,21 @@ public class OpeningPanel extends JPanel {
         playButton = new JButton("PLAY");
         exitButton = new JButton("EXIT");
         creditsButton = new JButton("CREDITS");
+        levelButton = new JButton("LEVELS");
         playButton.setFocusPainted(false);
         exitButton.setFocusPainted(false);
         creditsButton.setFocusPainted(false);
+        levelButton.setFocusPainted(false);
 
         instructionsLabel = new JLabel("\"The system is failing... but you're still running.\"");
         instructionsLabel.setFont(
             new Font("Papyrus", Font.BOLD, 18)
         );
         instructionsLabel.setForeground(Color.WHITE);
+
+        levelSelectionLabel = new JLabel("Selected: Tutorial");
+        levelSelectionLabel.setFont(new Font("Papyrus", Font.BOLD, 14));
+        levelSelectionLabel.setForeground(Color.WHITE);
 
         main = new JPanel();
         main.setBackground(null);
@@ -107,9 +121,21 @@ public class OpeningPanel extends JPanel {
         header.setOpaque(false);
         header.setBorder(BorderFactory.createEmptyBorder(25, 0, 20, 0));
 
-        instructions =  new JPanel();
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.setOpaque(false);
+        southPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 35, 10));
+
+        instructions = new JPanel(new BorderLayout());
         instructions.setOpaque(false);
-        instructions.setBorder(BorderFactory.createEmptyBorder(20, 10, 35, 10));
+        instructions.add(instructionsLabel, BorderLayout.WEST);
+        instructions.add(levelSelectionLabel, BorderLayout.CENTER);
+
+        JPanel levelPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        levelPanel.setOpaque(false);
+        levelPanel.add(levelButton);
+
+        southPanel.add(instructions, BorderLayout.CENTER);
+        southPanel.add(levelPanel, BorderLayout.EAST);
 
         titlePanel.add(headerLabel1);
 
@@ -120,8 +146,6 @@ public class OpeningPanel extends JPanel {
 
         header.add(titlePanel);
 
-        instructions.add(instructionsLabel);
-
         centerPanel.add(playButton);
         centerPanel.add(creditsButton);
         centerPanel.add(exitButton);
@@ -131,7 +155,7 @@ public class OpeningPanel extends JPanel {
 
         add(main, BorderLayout.CENTER);
         add(header, BorderLayout.NORTH);
-        add(instructions, BorderLayout.SOUTH);
+        add(southPanel, BorderLayout.SOUTH);
     }
 
     //overriding the default paint component
@@ -148,13 +172,13 @@ public class OpeningPanel extends JPanel {
         private Image backImage;
 
         public TitlePanel () {
-            this.backImage = new ImageIcon(getClass().getResource("/res/text_background.png")).getImage();
+            this.backImage = new ImageIcon("res/text_background.png").getImage();
             setBackground(null);
             setOpaque(false);
         }
 
         public TitlePanel (LayoutManager layout) {
-            this.backImage = new ImageIcon(getClass().getResource("/res/text_background.png")).getImage();
+            this.backImage = new ImageIcon("res/text_background.png").getImage();
             setBackground(null);
             setOpaque(false);
             setLayout(layout);
@@ -167,6 +191,17 @@ public class OpeningPanel extends JPanel {
             g.drawImage(backImage, 0, 0, this.getWidth() + 25, this.getHeight() + 25, this);
         }
 
+    }
+
+    public int getSelectedLevelIndex() {
+        return selectedLevelIndex;
+    }
+
+    public void setSelectedLevelIndex(int selectedLevelIndex, String levelName) {
+        this.selectedLevelIndex = selectedLevelIndex;
+        if (levelSelectionLabel != null) {
+            levelSelectionLabel.setText("Selected: " + levelName);
+        }
     }
 
     //custom panels for the buttons

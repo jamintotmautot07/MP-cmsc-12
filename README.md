@@ -24,12 +24,13 @@ this finds all .java files and writes their directory in "sources.txt" with cert
 
 then compile all files in sources.txt using "javac -d bin @sources.txt"
 
+Important: the `res` folder must stay alongside the `bin` folder when running the game, because assets are loaded from filesystem paths like `res/Font/...` and `res/PlayerAssets/...`.
 
 Finally, to run, type this in terminal...
 
 "java -cp bin main.GameLauncher"
 
-in updating the .jar file, use the command "jar cfe HawakKoAngBit.jar main.GameLauncher -C bin ."
+in updating the .jar file, use the command "jar cfe HawakKoAngBit.jar main.GameLauncher -C bin . -C res ."
 
 then to test the .jar file,
 use "java -jar HawakKoAngBit.jar"
