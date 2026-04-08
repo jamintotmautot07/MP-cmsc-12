@@ -110,7 +110,7 @@ public class Player extends Entity{
             downCounter = 0;
             leftCounter = 0;
             rightCounter = 0;
-            spriteCounter = 0;  // Optional: Reset animation timer too
+            spriteCounter = 0; 
         }
         previousDirection = direction;
         String oldDirection = direction;
@@ -256,7 +256,7 @@ public class Player extends Entity{
                 break;
         }
 
-        g2.drawImage(image, screenX, screenY, Constants.tileSize, Constants.tileSize, null);
+        g2.drawImage(image, worldX, worldY, Constants.tileSize, Constants.tileSize, null);
 
         //Initial character
         // g2.setColor(Color.WHITE);
