@@ -1,2 +1,36 @@
 # MP-cmsc-12
 Final game project for cmsc 12
+
+To compile...
+
+type this in the terminal 
+
+"javac -d bin @sources.txt" 
+
+//this compiles every file in the sources list and then compiles the found .java files then puts the .class files in "bin"
+
+to compile new file...
+
+1. Either you compile it individually if only one file was changed. 
+
+
+or
+
+
+2. Type this in the terminal: 
+"cmd /v:on /c "(for /r src %i in (*.java) do @set "line=%i" && @echo "!line:\=/!")" > sources.txt"
+
+this finds all .java files and writes their directory in "sources.txt" with certain specific format changes
+
+then compile all files in sources.txt using "javac -d bin @sources.txt"
+
+Important: the `res` folder must stay alongside the `bin` folder when running the game, because assets are loaded from filesystem paths like `res/Font/...` and `res/PlayerAssets/...`.
+
+Finally, to run, type this in terminal...
+
+"java -cp bin main.GameLauncher"
+
+in updating the .jar file, use the command "jar cfe HawakKoAngBit.jar main.GameLauncher -C bin . -C res ."
+
+then to test the .jar file,
+use "java -jar HawakKoAngBit.jar"
