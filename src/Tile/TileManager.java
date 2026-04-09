@@ -5,6 +5,8 @@ import engine.GamePanel;
 import java.awt.Graphics2D;
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -50,40 +52,44 @@ public class TileManager {
     public void loadMap(String filePath) {
 
         try {
-
+            BufferedReader br;
             InputStream is = getClass().getResourceAsStream(filePath);
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            if (is != null) {
+                br = new BufferedReader(new InputStreamReader(is));
+            } else {
+                File mapFile = new File(filePath.startsWith("/") ? filePath.substring(1) : filePath);
+                br = new BufferedReader(new FileReader(mapFile));
+            }
 
             int col = 0;
             int row = 0;
 
-            while(col < Constants.worldMaxRow && row < Constants.worldMaxCol) {
-
+            while(col < Constants.worldMaxCol && row < Constants.worldMaxRow) {
                 String line = br.readLine();
+                if (line == null) break;
 
-                while(col < Constants.worldMaxCol) {
-                    String numbers[] = line.split(" ");
-
+                String numbers[] = line.split(" ");
+                while(col < Constants.worldMaxCol && col < numbers.length) {
                     int num = Integer.parseInt(numbers[col]);
-
                     mapTileNum[col][row] = num;
                     col++;
                 }
 
-                if(col == Constants.worldMaxRow) {
-                    col = 0;
-                    row++;
-                }
-
+                col = 0;
+                row++;
             }
 
             br.close();
-            
+
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
     
     public void draw(Graphics2D g2) {
+
+        int cameraWorldX = gp.getCameraWorldX();
+        int cameraWorldY = gp.getCameraWorldY();
 
         int worldCol = 0;
         int worldRow = 0;
@@ -94,13 +100,13 @@ public class TileManager {
 
             int worldX = Constants.tileSize * worldCol;
             int worldY = Constants.tileSize * worldRow;
-            int screenX = worldX - gp.player.worldX + gp.player.screenX;
-            int screenY = worldY - gp.player.worldY + gp.player.screenY;
+            int screenX = worldX - cameraWorldX;
+            int screenY = worldY - cameraWorldY;
 
-            if(worldX + Constants.tileSize > gp.player.worldX - gp.player.screenX &&
-                worldX - Constants.tileSize < gp.player.worldX + gp.player.screenX &&
-                worldY + Constants.tileSize > gp.player.worldY - gp.player.screenY &&
-                worldY - Constants.tileSize < gp.player.worldY + gp.player.screenY
+            if(worldX + Constants.tileSize > cameraWorldX - (Constants.screenWidth) &&
+                worldX - Constants.tileSize < cameraWorldX + (Constants.screenWidth) &&
+                worldY + Constants.tileSize > cameraWorldY - (Constants.screenHeight) &&
+                worldY - Constants.tileSize < cameraWorldY + (Constants.screenHeight)
             ) {
                 g2.setColor(tile[tileNum].color);
                 g2.fillRect(screenX, screenY, Constants.tileSize, Constants.tileSize);

@@ -23,7 +23,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.file.Paths;
 
 import util.Constants;
 import util.MethodUtilities;
@@ -43,12 +42,14 @@ public class OpeningPanel extends JPanel {
     private MethodUtilities.GlowLabel headerLabel1;
     private MethodUtilities.GlowLabel headerLabel2;
     private JLabel instructionsLabel;
-    private JLabel levelSelectionLabel;
     
     public JButton playButton;
     public JButton exitButton;
     public JButton creditsButton;
     public JButton levelButton;
+    public JButton scoreButton;
+    public JButton continueButton;
+    public JButton cutScenesButton;
     private int selectedLevelIndex = 0;
 
     public OpeningPanel() {
@@ -90,20 +91,22 @@ public class OpeningPanel extends JPanel {
         exitButton = new JButton("EXIT");
         creditsButton = new JButton("CREDITS");
         levelButton = new JButton("LEVELS");
+        scoreButton = new JButton("SCORES");
+        continueButton = new JButton("CONTINUE");
+        cutScenesButton = new JButton("STORY");
         playButton.setFocusPainted(false);
         exitButton.setFocusPainted(false);
         creditsButton.setFocusPainted(false);
         levelButton.setFocusPainted(false);
+        scoreButton.setFocusPainted(false);
+        continueButton.setFocusPainted(false);
+        cutScenesButton.setFocusPainted(false);
 
         instructionsLabel = new JLabel("\"The system is failing... but you're still running.\"");
         instructionsLabel.setFont(
             new Font("Papyrus", Font.BOLD, 18)
         );
         instructionsLabel.setForeground(Color.WHITE);
-
-        levelSelectionLabel = new JLabel("Selected: Tutorial");
-        levelSelectionLabel.setFont(new Font("Papyrus", Font.BOLD, 14));
-        levelSelectionLabel.setForeground(Color.WHITE);
 
         main = new JPanel();
         main.setBackground(null);
@@ -112,7 +115,7 @@ public class OpeningPanel extends JPanel {
         titlePanel = new TitlePanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        centerPanel = new TitlePanel(new GridLayout(3, 1, 10, 10));
+        centerPanel = new TitlePanel(new GridLayout(4, 1, 10, 10));
         centerPanel.setPreferredSize(new Dimension(280, 220));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -128,10 +131,11 @@ public class OpeningPanel extends JPanel {
         instructions = new JPanel(new BorderLayout());
         instructions.setOpaque(false);
         instructions.add(instructionsLabel, BorderLayout.WEST);
-        instructions.add(levelSelectionLabel, BorderLayout.CENTER);
 
         JPanel levelPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         levelPanel.setOpaque(false);
+        levelPanel.add(cutScenesButton);
+        levelPanel.add(scoreButton);
         levelPanel.add(levelButton);
 
         southPanel.add(instructions, BorderLayout.CENTER);
@@ -146,6 +150,7 @@ public class OpeningPanel extends JPanel {
 
         header.add(titlePanel);
 
+        centerPanel.add(continueButton);
         centerPanel.add(playButton);
         centerPanel.add(creditsButton);
         centerPanel.add(exitButton);
@@ -197,11 +202,12 @@ public class OpeningPanel extends JPanel {
         return selectedLevelIndex;
     }
 
+    public void setContinueVisible(boolean visible) {
+        continueButton.setVisible(visible);
+    }
+
     public void setSelectedLevelIndex(int selectedLevelIndex, String levelName) {
         this.selectedLevelIndex = selectedLevelIndex;
-        if (levelSelectionLabel != null) {
-            levelSelectionLabel.setText("Selected: " + levelName);
-        }
     }
 
     //custom panels for the buttons

@@ -23,11 +23,17 @@ public class BaseFrame extends JFrame{
     public GamePanel gamePanel;
     private CreditScroller credits;
     private Level selectedLevel = Level.TUTORIAL;
+    private int maxLevelReached = 3;
+    private boolean tutorialPlayed = true;
 
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
         setResizable(false);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        // Placeholder for loading progress
+        // maxLevelReached = FileManager.loadMaxLevelReached();
+        // tutorialPlayed = FileManager.loadTutorialPlayed();
 
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
@@ -53,31 +59,36 @@ public class BaseFrame extends JFrame{
         });
 
         openPanel.levelButton.addActionListener(e -> {
-            Object[] options = new Object[] {
-                Level.TUTORIAL.name,
-                Level.LEVEL_1.name,
-                Level.LEVEL_2.name,
-                Level.LEVEL_3.name
-            };
-
-            int choice = JOptionPane.showOptionDialog(
-                this,
-                "Choose a level:",
-                "Select Level",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                options,
-                0
-            );
-
-            if (choice >= 0 && choice < Level.LEVELS.length) {
-                selectedLevel = Level.LEVELS[choice];
-                openPanel.setSelectedLevelIndex(choice, selectedLevel.name);
+            panels.LevelSelectionDialog dialog = new panels.LevelSelectionDialog(this, maxLevelReached);
+            dialog.setVisible(true);
+            if (dialog.selected != null) {
+                tutorialPlayed = true;
+                selectedLevel = dialog.selected;
+                openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
+                gamePanel.setLevel(selectedLevel);
+                cardLayout.show(container, "Game");
+                gamePanel.requestFocusInWindow();
+                gamePanel.startGameThread();
             }
         });
 
         openPanel.playButton.addActionListener(e -> {
+            // Sample code when the player already has progress,
+            // pressing play resets the progress and let's them start anew
+            // ...
+            // if (maxLevelReached > 0) {
+            //     int confirm = JOptionPane.showConfirmDialog(this, "This will reset your progress. Continue?", "Reset Progress", JOptionPane.YES_NO_OPTION);
+            //     if (confirm == JOptionPane.YES_OPTION) {
+            //         maxLevelReached = 0;
+            //         tutorialPlayed = false;
+            //         // FileManager.saveProgress(maxLevelReached, tutorialPlayed);
+            //         openPanel.setContinueVisible(false);
+            //     } else {
+            //         return;
+            //     }
+            // }
+            selectedLevel = Level.TUTORIAL;
+            openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
             gamePanel.setLevel(selectedLevel);
             cardLayout.show(container, "Game");
             gamePanel.requestFocusInWindow();
@@ -89,27 +100,55 @@ public class BaseFrame extends JFrame{
             credits.startTimer();
         });
 
-        gamePanel.backButton.addActionListener(e -> {
-
-            int choice = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to quit? ",
-                "EXIT",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-            );
-
-            if(choice == JOptionPane.YES_OPTION) {
-                cardLayout.show(container, "Openning");
-                gamePanel.stopGameThread();
-            }
+        openPanel.scoreButton.addActionListener(e -> {
+            panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
+            int timeScore = gamePanel.timer != null ? gamePanel.timer.getTimeScore() : 0;
+            int enemyScore = 0; // placeholder
+            int levelsCleared = gamePanel.getLevelsCleared();
+            int totalScore = timeScore + enemyScore + levelsCleared * 100; // placeholder calculation
+            dialog.updateScores(timeScore, enemyScore, levelsCleared, totalScore);
+            dialog.setVisible(true);
         });
 
+        // This button is mainly for saving,
+        // when the player already had progress like level progress
+        // they can just click this to continue where they left out
+        // ....
+        // openPanel.continueButton.addActionListener(e -> {
+        //     // selectedLevel = Level.LEVEL_1; // continue from first level after tutorial
+        //     // selectedLevel = (example code) FileManager.getMaxLevelReached(); - returns a level variable
+        //     openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
+        //     gamePanel.setLevel(selectedLevel);
+        //     cardLayout.show(container, "Game");
+        //     gamePanel.requestFocusInWindow();
+        //     gamePanel.startGameThread();
+        // });
+
         addWindowListener(new MethodUtilities.exitAction(this));
+
+        // Placeholder for progress setup
+        // gamePanel.onLevelComplete = this::updateProgress;
+        openPanel.setContinueVisible(tutorialPlayed && maxLevelReached >= 2);
 
         this.pack();
         setLocationRelativeTo(null);
     }
+
+    public void showOpeningScreen() {
+        cardLayout.show(container, "Openning");
+    }
+
+    // Placeholder for updateProgress method
+    // private void updateProgress() {
+    //     Level current = gamePanel.getCurrentLevel();
+    //     if (current == Level.TUTORIAL) {
+    //         tutorialPlayed = true;
+    //     }
+    //     if (current.nextLevel != null) {
+    //         maxLevelReached = Math.max(maxLevelReached, Level.getIndex(current.nextLevel));
+    //     }
+    //     FileManager.saveProgress(maxLevelReached, tutorialPlayed);
+    // }
 
     public CreditScroller getCredits() {
         return credits;

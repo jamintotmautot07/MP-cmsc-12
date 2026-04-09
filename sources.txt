@@ -10,6 +10,8 @@
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/object/SuperObject.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/CreditScroller.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/OpeningPanel.java"
+"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/ScoreboardDialog.java"
+"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/LevelSelectionDialog.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/CollisionManager.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/FileManager.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/KeyHandler.java"

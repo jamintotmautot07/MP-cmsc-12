@@ -8,12 +8,14 @@ public class Timer {
     private boolean running;
     private long pausedTime;
     private int timeScore;
+    private int inGameTimeScore;
     private int timeLimit;
     private boolean paused;
 
     public Timer(int timeLimit) {
         this.timeLimit = timeLimit;
         timeScore = 0;
+        inGameTimeScore = 0;
         pausedTime = 0;
         running = false;
         paused = false;
@@ -96,13 +98,28 @@ public class Timer {
         return hasTimeLimit() && getRemainingTime() <= 0;
     }
 
+    public int getTimeScore() {
+        return timeScore;
+    }
+
+    public int getInGameTimeScore() {
+        return inGameTimeScore;
+    }
+
     public void showTimeScore() {
-        System.out.println("Time Score: " + timeScore);
+        System.out.println("Time Score: " + inGameTimeScore);
     }
 
     public void setTimeScore() {
         int remaining = getRemainingTime();
-        timeScore = remaining * 5; // reward faster clears
+        inGameTimeScore = remaining * 5; // reward faster clears
+    }
+
+    public void setFinalTimeScore() {
+        // records only the maximum point per game
+        if(inGameTimeScore > timeScore) {
+            timeScore = inGameTimeScore;
+        }
     }
     
     public void show(Graphics2D g2, int x, int y) {

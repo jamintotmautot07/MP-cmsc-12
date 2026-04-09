@@ -257,7 +257,7 @@ public class Player extends Entity{
                 break;
         }
 
-        g2.drawImage(image, screenX, screenY, Constants.tileSize, Constants.tileSize, null);
+        g2.drawImage(image, gp.getCameraX(), gp.getCameraY(), Constants.tileSize, Constants.tileSize, null);
 
         //Initial character
         // g2.setColor(Color.WHITE);
