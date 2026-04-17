@@ -3,6 +3,9 @@ package panels;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import util.MethodUtilities.RoundedPanel;
+
 import javax.swing.BorderFactory;
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
@@ -22,7 +25,8 @@ public class ScoreboardDialog extends JDialog {
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
+        RoundedPanel panel = new RoundedPanel(new GridLayout(4, 1, 10, 10), 10);
+        panel.setColor(new Color(159, 188, 143).darker());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         timeScoreLabel = new JLabel("Time Score: 0");

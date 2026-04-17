@@ -103,6 +103,8 @@ public class GamePanel extends JPanel implements Runnable {
             levelsCleared = 0;
         }
 
+        player.setDirection("idle");
+        keyH.resetKeys();
         this.currentLevel = level;
         this.timer = new Timer(level.timeLimitSeconds);
         this.timer.startTimer();
@@ -154,6 +156,7 @@ public class GamePanel extends JPanel implements Runnable {
             return;
         }
 
+        keyH.resetKeys();
         timer.stopTimer();
         gameState = pausedState;
         showPauseDialog();
@@ -303,6 +306,7 @@ public class GamePanel extends JPanel implements Runnable {
                 if (timer.isTimeUp() && currentLevel.nextLevel != null) {
                     int result = JOptionPane.showConfirmDialog(this, "Time's up! Proceed to next level?", "Level Complete", JOptionPane.YES_NO_OPTION);
                     if (result == JOptionPane.YES_OPTION) {
+                        player.setDirection("idle");
                         levelsCleared++;
                         if (onLevelComplete != null) onLevelComplete.run();
                         timer.setFinalTimeScore();

@@ -12,44 +12,49 @@ import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.LayoutManager;
-import java.awt.RenderingHints;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
 import util.Constants;
 import util.MethodUtilities;
+import util.MethodUtilities.CustomButton;
 import util.MethodUtilities.GlowLabel;
+import util.MethodUtilities.RoundedPanel;
+// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
 public class OpeningPanel extends JPanel {
 
     //background of this panel
     private Image backgroundImage;
 
+    // Animated background for this panel
+    private Image[] backgroundFrames;
+    private int currentBackgroundFrame;
+    private javax.swing.Timer backgroundTimer;
+
     private JPanel main;
-    private TitlePanel centerPanel;
+    private MethodUtilities.RoundedPanel centerPanel;
     private JPanel header;
     private JPanel instructions;
-    private TitlePanel titlePanel;
+    private MethodUtilities.RoundedPanel titlePanel;
 
     private MethodUtilities.GlowLabel headerLabel1;
     private MethodUtilities.GlowLabel headerLabel2;
     private JLabel instructionsLabel;
     
-    public JButton playButton;
-    public JButton exitButton;
-    public JButton creditsButton;
-    public JButton levelButton;
-    public JButton scoreButton;
-    public JButton continueButton;
-    public JButton cutScenesButton;
+    public CustomButton playButton;
+    public CustomButton exitButton;
+    public CustomButton creditsButton;
+    public CustomButton levelButton;
+    public CustomButton scoreButton;
+    public CustomButton continueButton;
+    public CustomButton cutScenesButton;
     private int selectedLevelIndex = 0;
 
     public OpeningPanel() {
@@ -57,6 +62,8 @@ public class OpeningPanel extends JPanel {
         this.backgroundImage = new ImageIcon("res/background.png").getImage();
 
         setLayout(new BorderLayout());
+        loadBackgroundFrames();
+        startBackgroundAnimation();
 
         //Fonts
         // Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);
@@ -87,13 +94,13 @@ public class OpeningPanel extends JPanel {
         }
 
         //buttons
-        playButton = new JButton("PLAY");
-        exitButton = new JButton("EXIT");
-        creditsButton = new JButton("CREDITS");
-        levelButton = new JButton("LEVELS");
-        scoreButton = new JButton("SCORES");
-        continueButton = new JButton("CONTINUE");
-        cutScenesButton = new JButton("STORY");
+        playButton = new CustomButton("PLAY");
+        exitButton = new CustomButton("EXIT");
+        creditsButton = new CustomButton("CREDITS");
+        levelButton = new CustomButton("LEVELS");
+        scoreButton = new CustomButton("SCORES");
+        continueButton = new CustomButton("CONTINUE");
+        cutScenesButton = new CustomButton("STORY");
         playButton.setFocusPainted(false);
         exitButton.setFocusPainted(false);
         creditsButton.setFocusPainted(false);
@@ -112,10 +119,11 @@ public class OpeningPanel extends JPanel {
         main.setBackground(null);
         main.setOpaque(false);
 
-        titlePanel = new TitlePanel();
+        titlePanel = new RoundedPanel(15);
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 12, 10,12));
 
-        centerPanel = new TitlePanel(new GridLayout(4, 1, 10, 10));
+        centerPanel = new RoundedPanel(new GridLayout(4, 1, 10, 10), 15);
         centerPanel.setPreferredSize(new Dimension(280, 220));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -163,39 +171,41 @@ public class OpeningPanel extends JPanel {
         add(southPanel, BorderLayout.SOUTH);
     }
 
+    // method for loading the frames of the background animation
+    private void loadBackgroundFrames() {
+        int frameCount = 22;
+        backgroundFrames = new Image[frameCount];
+        for(int i = 0; i < frameCount; i++) {
+            backgroundFrames[i] = new ImageIcon(String.format("res/BackGroundSeq/frame%04d.png", i)).getImage();
+        }
+    }
+
+    // method for starting background animation
+    public void startBackgroundAnimation() {
+        backgroundTimer = new javax.swing.Timer(100, e -> {
+            currentBackgroundFrame = (currentBackgroundFrame + 1) % backgroundFrames.length; // this makes sure it loops forever
+            repaint();
+        });
+        backgroundTimer.start();
+    }
+
+    public void stopBackgroundAnimation() {
+        if(backgroundTimer != null && backgroundTimer.isRunning()) {
+            this.backgroundTimer.stop();
+        }
+    }
+
     //overriding the default paint component
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         //for the background
-        g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-    }
-
-    //custom panel for effects
-    public class TitlePanel extends JPanel {
-        private Image backImage;
-
-        public TitlePanel () {
-            this.backImage = new ImageIcon("res/text_background.png").getImage();
-            setBackground(null);
-            setOpaque(false);
+        if(backgroundFrames != null && backgroundFrames.length > 0) {
+            g.drawImage(backgroundFrames[currentBackgroundFrame], 0, 0, getWidth(), getHeight(), this);
+        } else {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);           
         }
-
-        public TitlePanel (LayoutManager layout) {
-            this.backImage = new ImageIcon("res/text_background.png").getImage();
-            setBackground(null);
-            setOpaque(false);
-            setLayout(layout);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            g.drawImage(backImage, 0, 0, this.getWidth() + 25, this.getHeight() + 25, this);
-        }
-
     }
 
     public int getSelectedLevelIndex() {
@@ -208,40 +218,5 @@ public class OpeningPanel extends JPanel {
 
     public void setSelectedLevelIndex(int selectedLevelIndex, String levelName) {
         this.selectedLevelIndex = selectedLevelIndex;
-    }
-
-    //custom panels for the buttons
-    public class RoundedPanel extends JPanel {
-        private int radius;
-
-        public RoundedPanel(int radius) {
-            this.radius = radius;
-            setOpaque(false);
-        }
-
-        public RoundedPanel(LayoutManager layout, int radius) {
-            super(layout);
-            this.radius = radius;
-            setOpaque(false); 
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            Graphics2D g2 = (Graphics2D)g;
-
-            //makes the drawing smooth
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            g2.setColor(getBackground());
-
-            //fill the entire panel with the rounded rect
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-
-            //make a line border
-            g2.setColor(Color.BLACK);
-            g2.drawRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-        }
     }
 }
