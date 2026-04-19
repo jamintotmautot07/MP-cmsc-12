@@ -10,8 +10,10 @@ import javax.swing.JPanel;
 import engine.GamePanel;
 import engine.Level;
 import panels.CreditScroller;
-// import panels.LoadingPanel; // COMMENTED OUT - Cache system disabled
 import panels.OpeningPanel;
+import panels.ScenePanel;
+import ui.IntroManager;
+// import panels.LoadingPanel; // COMMENTED OUT - Cache system disabled
 import util.Constants;
 import util.MethodUtilities;
 // import util.ResourceCache; // COMMENTED OUT - Cache system disabled
@@ -24,6 +26,8 @@ public class BaseFrame extends JFrame{
     public OpeningPanel openPanel;
     public GamePanel gamePanel;
     private CreditScroller credits;
+    public IntroManager sceneManager;
+    public ScenePanel scenePanel;
     // private LoadingPanel loadingPanel; // COMMENTED OUT - Cache system disabled
     private Level selectedLevel = Level.TUTORIAL;
     private int maxLevelReached = 3;
@@ -41,6 +45,8 @@ public class BaseFrame extends JFrame{
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
         credits = new CreditScroller();
+        sceneManager = new IntroManager();
+        scenePanel = new ScenePanel(sceneManager);
         // loadingPanel = new LoadingPanel(); // COMMENTED OUT - Cache system disabled
 
         cardLayout = new CardLayout();
@@ -49,6 +55,7 @@ public class BaseFrame extends JFrame{
 
         // Add all panels to container
         // container.add(loadingPanel, "Loading"); // COMMENTED OUT - Cache system disabled
+        container.add(scenePanel, "Scene");
         container.add(openPanel, "Openning");
         container.add(gamePanel, "Game");
         container.add(credits, "Credits");
@@ -61,6 +68,7 @@ public class BaseFrame extends JFrame{
 
         // Setup all button listeners BEFORE loading resources
         setupButtonListeners();
+        startStartupScene();
 
         // COMMENTED OUT - Cache system disabled
         // Preload all resources in background
@@ -68,6 +76,19 @@ public class BaseFrame extends JFrame{
 
         this.pack();
         setLocationRelativeTo(null);
+    }
+
+    private void startStartupScene() {
+        if (!sceneManager.hasPlayed("gameIntro")) {
+            openPanel.stopBackgroundAnimation();
+            scenePanel.setOnSceneComplete(() -> {
+                openPanel.startBackgroundAnimation();
+                cardLayout.show(container, "Openning");
+                openPanel.requestFocusInWindow();
+            });
+            cardLayout.show(container, "Scene");
+            scenePanel.startScene("gameIntro", "res/IntroSeq/Intro%04d.png", 221, 100);
+        }
     }
 
     private void setupButtonListeners() {

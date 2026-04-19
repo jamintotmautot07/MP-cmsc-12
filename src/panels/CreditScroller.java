@@ -11,11 +11,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import util.Constants;
+import util.MethodUtilities.CustomButton;
 
 public class CreditScroller extends JPanel implements ActionListener {
     private int y; // Start below the panel
     private Timer timer;
-    private JButton backButton;
+    private CustomButton backButton;
     private final String[] credits = {
         "MEMBERS:", "", "   UI:", "     JAMIN", "",  "   MUSIC:", "     INOY", "", "   FILE:", "     ALTHEA", "", "   MOVEMENT:", "     ALLAN"
     };
@@ -24,7 +25,7 @@ public class CreditScroller extends JPanel implements ActionListener {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
         setLayout(null);
         
-        backButton = new JButton("Back");
+        backButton = new CustomButton("Back");
         backButton.setBounds(10, 10, 80, 30);
         add(backButton);
         

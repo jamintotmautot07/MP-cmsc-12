@@ -49,6 +49,18 @@ public class Player extends Entity{
     private int movementAnimationSpeed = 8;
     private int idleAnimationSpeed = 13; // Slower for idle
 
+    public enum AttackType {
+        NONE,
+        NORMAL,
+        FORWARD,
+        SIDE,
+        DOWN
+    }
+
+    private AttackType attackType = AttackType.NONE;
+    private int attackCounter = 0;
+    private final int attackDuration = 18;
+
     public Player(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
@@ -117,18 +129,56 @@ public class Player extends Entity{
         previousDirection = direction;
         String oldDirection = direction;
         // TODO: Movement logic
-        if(keyH.upPressed == true || keyH.rightPressed == true ||
-            keyH.leftPressed == true || keyH.downPressed == true
+        // update attack state first so movement can still happen while an attack button is held
+        AttackType requestedAttack = AttackType.NONE;
+        if (keyH.isActionPressed(KeyHandler.Action.ATTACK)) {
+            if (keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
+                requestedAttack = AttackType.FORWARD;
+                System.out.println("Attack: FORWARD");
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
+                requestedAttack = AttackType.DOWN;
+                System.out.println("Attack: DOWN");
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
+                requestedAttack = AttackType.SIDE;
+                System.out.println("Attack: SIDE");
+            } else {
+                requestedAttack = AttackType.NORMAL;
+                System.out.println("Attack: NORMAL");
+            }
+        }
+
+        if (requestedAttack != AttackType.NONE) {
+            if (attackType != requestedAttack) {
+                attackType = requestedAttack;
+                attackCounter = 0;
+            }
+            attackCounter++;
+            if (attackCounter > attackDuration) {
+                attackCounter = 0;
+                attackType = AttackType.NONE;
+            }
+            direction = "idle"; // Keep animation idle during attacks
+        } else {
+            attackType = AttackType.NONE;
+            attackCounter = 0;
+        }
+
+        if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
+            keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
         ) {
 
-            if(keyH.upPressed == true) {
+            if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
                 direction = "up";
-            } else if (keyH.leftPressed == true) {
+                System.out.println("Moving: UP");
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT)) {
                 direction = "left";
-            } else if (keyH.rightPressed == true) {
+                System.out.println("Moving: LEFT");
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
                 direction = "right";
-            } else if (keyH.downPressed == true) {
+                System.out.println("Moving: RIGHT");
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
                 direction = "down";
+                System.out.println("Moving: DOWN");
             }
 
             if (!oldDirection.equals(direction)) {
@@ -162,6 +212,8 @@ public class Player extends Entity{
                     } else if (upCounter == 5) {
                         upCounter = 0;
                     }
+
+                    System.out.println("UP");
                 } else if (direction.equals("down")) {
                     if(downCounter == 0) {
                         downCounter = 1;
@@ -172,6 +224,8 @@ public class Player extends Entity{
                     } else if (downCounter == 3) {
                         downCounter = 0;
                     }
+
+                    System.out.println("DOWN");
                 } else if (direction.equals("left")) {
                     if(leftCounter == 0) {
                         leftCounter = 1;
@@ -186,6 +240,8 @@ public class Player extends Entity{
                     } else if (leftCounter == 5) {
                         leftCounter = 0;
                     }
+
+                    System.out.println("LEFT");
                 } else if (direction.equals("right")) {
                     if(rightCounter == 0) {
                         rightCounter = 1;
@@ -200,6 +256,10 @@ public class Player extends Entity{
                     } else if (rightCounter == 5) {
                         rightCounter = 0;
                     }
+
+                    System.out.println("RIGHT");
+                } else if (direction.equalsIgnoreCase("attack")) {
+                    System.out.println("ATTACK");
                 }
 
 
@@ -231,6 +291,8 @@ public class Player extends Entity{
                 }
 
                 spriteCounter = 0;
+
+                System.out.println("IDLE");
             }
         }
     }
@@ -250,6 +312,12 @@ public class Player extends Entity{
                 break;
             case "up":
                 image = up[upCounter];
+                break;
+            case "up1":
+                image = up[upCounter];
+                break;
+            case "attack":
+                image = idle[idleCounter];
                 break;
             case "down":
                 image = down[downCounter];

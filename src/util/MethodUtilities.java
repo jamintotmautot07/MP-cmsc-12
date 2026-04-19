@@ -1,4 +1,8 @@
 package util;
+import main.BaseFrame;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,17 +11,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.awt.Color;
 import java.awt.Font;
-
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.border.BevelBorder;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -26,7 +21,13 @@ import java.awt.AlphaComposite;
 import java.awt.LayoutManager;
 import java.awt.Component;
 
-import main.BaseFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.border.BevelBorder;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JComponent;
 
 public class MethodUtilities {
     public static class exitAction implements ActionListener, WindowListener {
@@ -43,7 +44,7 @@ public class MethodUtilities {
 
         @Override
         public void windowClosing(WindowEvent e) {
-            windowExit();
+            exit();
         }
 
         @Override
@@ -60,26 +61,11 @@ public class MethodUtilities {
         @Override
         public void windowIconified(WindowEvent e) {}
 
-        public static void exit() {
-            int choice = JOptionPane.showConfirmDialog(
-                frame,
-                "Are you sure you want to exit?",
-                "WARNING: Close program",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-            );
-
-            if(choice == JOptionPane.YES_OPTION) {
-                frame.gamePanel.stopGameThread();
-                frame.getCredits().stopTimer();
-                frame.openPanel.stopBackgroundAnimation();
-                frame.dispose();
-            } else {
-                frame.gamePanel.requestFocusInWindow();
-            }
+        public void exit() {
+            makeOptionDialog();
         }
 
-        public void windowExit() {
+        private void makeOptionDialog() {
             int choice = JOptionPane.showConfirmDialog(
                 frame,
                 "Are you sure you want to exit?",
@@ -89,12 +75,13 @@ public class MethodUtilities {
             );
 
             if(choice == JOptionPane.YES_OPTION) {
+                frame.scenePanel.stopScene();
                 frame.gamePanel.stopGameThread();
                 frame.getCredits().stopTimer();
                 frame.openPanel.stopBackgroundAnimation();
                 frame.dispose();
             } 
-        } 
+        }
     }
 
     public static class GlowLabel extends JLabel {
@@ -219,17 +206,7 @@ public class MethodUtilities {
 
             });
             
-            try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
-                
-                Font textFont = Font.createFont(Font.TRUETYPE_FONT, font);
-                textFont = textFont.deriveFont(Font.BOLD, 20f);
-
-                this.setFont(textFont);
-                this.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            this.setFont(MethodUtilities.getFont(20f, this));
         }
 
         @Override
@@ -247,5 +224,46 @@ public class MethodUtilities {
             g2.dispose();
         }
         
+    }
+
+    public static Font getFont(float size, JComponent component) {
+        Font textFont;
+
+        try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
+            textFont = Font.createFont(Font.TRUETYPE_FONT, font);
+            textFont = textFont.deriveFont(Font.BOLD, size);
+
+            component.setFont(textFont);
+            component.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            return textFont;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            Font fallbackFont = new Font("SansSerif", Font.BOLD, (int) size);
+            component.setFont(fallbackFont);
+            component.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            return fallbackFont;
+        }
+    }
+
+    public static Font getFont(float size) {
+        Font textFont;
+
+        try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
+            textFont = Font.createFont(Font.TRUETYPE_FONT, font);
+            textFont = textFont.deriveFont(Font.BOLD, size);
+
+            return textFont;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            Font fallbackFont = new Font("Arial", Font.BOLD, (int) size);
+
+            return fallbackFont;
+        }
     }
 }
