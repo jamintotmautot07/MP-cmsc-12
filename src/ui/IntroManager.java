@@ -1,182 +1,202 @@
 package ui;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.imageio.ImageIO;
+
+import util.Constants;
 
 /*
  OWNER: Jamin
 
  PURPOSE:
- - Handles the intro cutscene (only shown once)
- - Plays a sequence of frames/images with timing
- - Transitions to gameplay after finishing
+ - Handles a scene sequence of frames/images
+ - Supports intro, cutscene, or any cinematic scene
+ - Plays each frame on a timer and allows skipping
+ - Tracks scenes played once per app session
 
- HOW IT WORKS (BIG IDEA):
- - Store intro images in an array
- - Display one image at a time
- - Wait for a set duration
- - Move to next frame
- - When done → switch to PLAYING state
-
- IMPORTANT:
- - This class DOES NOT control the game state directly
- - It should SIGNAL GamePanel when it is finished
+ USAGE:
+ - startScene(sceneId, pattern, count, delayMs)
+ - update() every frame
+ - render(g) every paint
+ - skip() when player requests it
+ - isFinished() to detect completion
 */
-
 public class IntroManager {
 
-    // =========================
-    // CORE VARIABLES
-    // =========================
-
-    // TODO: Store all intro frames/images here
+    private String activeSceneId;
     private BufferedImage[] frames;
-
-    // TODO: Track which frame is currently shown
-    private int currentFrame = 0;
-
-    // TODO: Timer variables
+    private int currentFrame;
     private long lastFrameTime;
-    private int frameDelay = 2000; // 2 seconds per frame (adjustable)
+    private int frameDelay;
+    private boolean finished;
+    private final Set<String> completedScenes;
 
-    // TODO: Flag to check if intro is done
-    private boolean finished = false;
+    // Fade effect variables
+    private boolean isFading;
+    private float fadeProgress;
+    private long fadeStartTime;
+    private int fadeDurationMs;
+    private Color fadeColor;
 
-
-    // =========================
-    // CONSTRUCTOR
-    // =========================
     public IntroManager() {
-
-        /*
-         TASKS:
-
-         1. Load all intro images into "frames"
-            Example:
-            frames = new BufferedImage[3];
-
-            frames[0] = ImageIO.read(...);
-            frames[1] = ImageIO.read(...);
-
-         2. Set initial time:
-            lastFrameTime = System.currentTimeMillis();
-
-         NOTE:
-         - You can use a utility class later for loading images
-         - For now, even NULL frames are fine (placeholder)
-        */
+        this.currentFrame = 0;
+        this.lastFrameTime = System.currentTimeMillis();
+        this.frameDelay = 80;
+        this.finished = true;
+        this.completedScenes = new HashSet<>();
+        this.isFading = false;
+        this.fadeProgress = 0.0f;
+        this.fadeDurationMs = 1000; // 0.5 seconds
+        this.fadeColor = Color.BLACK;
     }
 
+    public boolean hasPlayed(String sceneId) {
+        return completedScenes.contains(sceneId);
+    }
 
-    // =========================
-    // UPDATE METHOD
-    // =========================
+    public boolean startScene(String sceneId, String filePattern, int frameCount, int frameDelayMs) {
+        if (sceneId == null || filePattern == null || frameCount <= 0) {
+            return false;
+        }
+
+        if (completedScenes.contains(sceneId)) {
+            this.activeSceneId = sceneId;
+            this.finished = true;
+            return false;
+        }
+
+        this.activeSceneId = sceneId;
+        this.frameDelay = Math.max(frameDelayMs, 16);
+        this.currentFrame = 0;
+        this.finished = false;
+        this.isFading = false;
+        this.fadeProgress = 0.0f;
+        this.lastFrameTime = System.currentTimeMillis();
+        loadSceneFrames(filePattern, frameCount);
+        return frames != null && frames.length > 0;
+    }
+
+    private void loadSceneFrames(String filePattern, int frameCount) {
+        frames = new BufferedImage[frameCount];
+        int loadedFrames = 0;
+
+        try {
+            for (int i = 0; i < frameCount; i++) {
+                String path = String.format(filePattern, i);
+                BufferedImage image = ImageIO.read(new File(path));
+                if (image != null) {
+                    frames[loadedFrames++] = image;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (loadedFrames != frameCount) {
+            BufferedImage[] trimmed = new BufferedImage[loadedFrames];
+            System.arraycopy(frames, 0, trimmed, 0, loadedFrames);
+            frames = trimmed;
+        }
+
+        if (frames.length == 0) {
+            finished = true;
+        }
+    }
+
     public void update() {
+        if (finished || frames == null || frames.length == 0) {
+            return;
+        }
 
-        /*
-         PURPOSE:
-         - Controls timing of frame switching
+        long now = System.currentTimeMillis();
 
-         STEPS:
+        if (isFading) {
+            long elapsed = now - fadeStartTime;
+            fadeProgress = Math.min(1.0f, (float) elapsed / fadeDurationMs);
+            if (fadeProgress >= 1.0f) {
+                finished = true;
+                if (activeSceneId != null) {
+                    completedScenes.add(activeSceneId);
+                }
+            }
+        } else {
+            if (now - lastFrameTime >= frameDelay) {
+                currentFrame++;
+                lastFrameTime = now;
 
-         1. Get current time:
-            long now = System.currentTimeMillis();
-
-         2. Check if enough time passed:
-            if(now - lastFrameTime > frameDelay)
-
-         3. If yes:
-            - Move to next frame
-            - Reset timer
-
-         4. If currentFrame exceeds frames length:
-            - Set finished = true
-
-         IMPORTANT:
-         - DO NOT reset currentFrame to 0
-         - Intro should only play once
-        */
+                if (currentFrame >= frames.length) {
+                    // Start fading instead of finishing immediately
+                    isFading = true;
+                    fadeStartTime = now;
+                    fadeProgress = 0.0f;
+                    currentFrame = Math.max(0, frames.length - 1); // Stay on last frame
+                }
+            }
+        }
     }
 
-
-    // =========================
-    // RENDER METHOD
-    // =========================
     public void render(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
 
-        /*
-         PURPOSE:
-         - Draw current frame on screen
+        // Draw the current frame
+        if (frames != null && frames.length > 0 && currentFrame < frames.length && frames[currentFrame] != null) {
+            g2d.drawImage(frames[currentFrame], 0, 0, Constants.screenWidth, Constants.screenHeight, null);
+        } else {
+            g2d.setColor(Color.BLACK);
+            g2d.fillRect(0, 0, Constants.screenWidth, Constants.screenHeight);
+        }
 
-         STEPS:
-
-         1. Check if frames exist
-         2. Draw current frame:
-            g.drawImage(frames[currentFrame], 0, 0, null);
-
-         OPTIONAL ADDITIONS:
-
-         - Draw text overlay (story text)
-         - Draw "Press any key to skip"
-         - Add fade effect (advanced)
-
-         IMPORTANT:
-         - Always check array bounds before drawing
-        */
+        // Draw fade overlay if fading
+        if (isFading) {
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeProgress));
+            g2d.setColor(fadeColor);
+            g2d.fillRect(0, 0, Constants.screenWidth, Constants.screenHeight);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f)); // Reset composite
+        }
     }
 
-
-    // =========================
-    // SKIP INTRO
-    // =========================
     public void skip() {
+        if (finished) {
+            return;
+        }
 
-        /*
-         PURPOSE:
-         - Allows player to skip intro
-
-         IMPLEMENTATION:
-         - Set finished = true
-
-         NOTE:
-         - Call this when any key is pressed
-        */
+        if (!isFading) {
+            // First skip: start fading
+            isFading = true;
+            fadeStartTime = System.currentTimeMillis();
+            fadeProgress = 0.0f;
+            currentFrame = Math.max(0, frames.length - 1); // Jump to last frame
+        } else {
+            // Second skip: skip the fade entirely
+            fadeProgress = 1.0f;
+            finished = true;
+            if (activeSceneId != null) {
+                completedScenes.add(activeSceneId);
+            }
+        }
     }
 
-
-    // =========================
-    // CHECK IF DONE
-    // =========================
     public boolean isFinished() {
-
-        /*
-         PURPOSE:
-         - Lets GamePanel know when to switch to gameplay
-
-         USAGE (in GamePanel):
-
-         if(introManager.isFinished()){
-             currentState = GameState.PLAYING;
-         }
-        */
-
         return finished;
     }
 
+    public boolean isRunning() {
+        return !finished && (frames != null && frames.length > 0 || isFading);
+    }
 
-    // =========================
-    // RESET (OPTIONAL)
-    // =========================
     public void reset() {
-
-        /*
-         PURPOSE:
-         - Reset intro if needed (for testing)
-
-         TASKS:
-         - currentFrame = 0
-         - finished = false
-         - reset timer
-        */
+        this.currentFrame = 0;
+        this.lastFrameTime = System.currentTimeMillis();
+        this.finished = false;
+        this.isFading = false;
+        this.fadeProgress = 0.0f;
     }
 }

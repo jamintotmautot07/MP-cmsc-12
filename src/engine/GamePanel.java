@@ -1,7 +1,6 @@
 
 package engine;
 
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -19,6 +18,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 
 import util.Constants;
+import util.MethodUtilities.CustomButton;
+import util.MethodUtilities;
+import ui.IntroManager;
 import systems.KeyHandler;
 import entity.Player;
 import systems.Timer;
@@ -48,6 +50,9 @@ public class GamePanel extends JPanel implements Runnable {
     KeyHandler keyH = new KeyHandler(this);
     Thread gameThread;
     private volatile boolean running = false;
+
+    // Scenes
+    public IntroManager sceneManager;
 
     // Timer
     private Level currentLevel = Level.LEVEL_1;
@@ -87,6 +92,7 @@ public class GamePanel extends JPanel implements Runnable {
         tileM = new TileManager(this);
         cameraX = player.screenX;
         cameraY = player.screenY;
+        sceneManager = new IntroManager();
 
         header.setFocusable(false);
         header.setOpaque(false);
@@ -124,12 +130,32 @@ public class GamePanel extends JPanel implements Runnable {
     public void startGameThread() {
         running = true;
         gameThread = new Thread(this);
-        gameState = playState;
+        if (gameState != cutsceneState) {
+            gameState = playState;
+        }
 
         // initialize timer
-        timer.startTimer();
+        if (gameState == playState) {
+            timer.startTimer();
+        }
 
         gameThread.start();
+    }
+
+    public void startLevelScene(String sceneId, String filePattern, int frameCount, int frameDelayMs) {
+        if (sceneManager.startScene(sceneId, filePattern, frameCount, frameDelayMs)) {
+            gameState = cutsceneState;
+        } else {
+            gameState = playState;
+        }
+    }
+
+    public void skipScene() {
+        sceneManager.skip();
+        if (sceneManager.isFinished()) {
+            gameState = playState;
+            timer.startTimer();
+        }
     }
 
     public void stopGameThread() {
@@ -197,16 +223,16 @@ public class GamePanel extends JPanel implements Runnable {
 
         JLabel title = new JLabel("Game Paused", JLabel.CENTER);
         title.setForeground(Color.WHITE);
-        title.setFont(title.getFont().deriveFont(18f));
+        title.setFont(MethodUtilities.getFont(25f, this));
         content.add(title, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 12, 12));
         buttonPanel.setBackground(Color.DARK_GRAY);
 
-        JButton resumeButton = new JButton("Resume");
-        JButton homeButton = new JButton("Home");
-        JButton settingsButton = new JButton("Settings");
-        JButton mapButton = new JButton("Map");
+        CustomButton resumeButton = new CustomButton("Resume");
+        CustomButton homeButton = new CustomButton("Home");
+        CustomButton settingsButton = new CustomButton("Settings");
+        CustomButton mapButton = new CustomButton("Map");
 
         resumeButton.addActionListener(e -> resumeGame());
         homeButton.addActionListener(e -> {
@@ -322,16 +348,10 @@ public class GamePanel extends JPanel implements Runnable {
             // Pause state: game logic is frozen and timer is already stopped.
             return;
         } else if (gameState == cutsceneState) {
-            if(currentLevel == Level.LEVEL_1) {
-                // show cutscene before level 1
-            } else if (currentLevel == Level.LEVEL_2) {
-                // show cutscene before level 2
-            } else if (currentLevel == Level.LEVEL_3) {
-                // show cutscene before level 3
-
-                if(currentLevel.isCompleted()) {
-                    // show ending scene after completion
-                }
+            sceneManager.update();
+            if (sceneManager.isFinished()) {
+                gameState = playState;
+                timer.startTimer();
             }
             return;
         }
@@ -389,6 +409,16 @@ public class GamePanel extends JPanel implements Runnable {
 
         // tiles
         tileM.draw(g2);
+
+        if (gameState == cutsceneState) {
+            sceneManager.render(g2);
+            g2.setColor(Color.WHITE);
+            g2.setFont(MethodUtilities.getFont(20f));
+            String text = "Press ESC to skip";
+            int textWidth = g2.getFontMetrics().stringWidth(text);
+            g2.drawString(text, (getWidth() - textWidth) / 2, getHeight() - 40);
+            return;
+        }
 
         // player
         player.draw(g2);
