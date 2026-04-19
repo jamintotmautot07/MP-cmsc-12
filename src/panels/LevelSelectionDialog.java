@@ -6,16 +6,19 @@ import javax.swing.JPanel;
 import javax.swing.BorderFactory;
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import engine.Level;
+import util.MethodUtilities;
+import util.MethodUtilities.CustomButton;
 
 public class LevelSelectionDialog extends JDialog {
 
     public Level selected = null;
-    private JButton[] levelButtons;
+    private CustomButton[] levelButtons;
 
     public LevelSelectionDialog(java.awt.Frame parent, int maxLevelReached) {
         super(parent, "Select Level", true);
@@ -23,14 +26,14 @@ public class LevelSelectionDialog extends JDialog {
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(Level.LEVELS.length, 1, 10, 10));
+        MethodUtilities.RoundedPanel panel = new MethodUtilities.RoundedPanel(new GridLayout(Level.LEVELS.length, 1, 10, 10), 15);
+        panel.setColor(new Color(159, 188, 143).darker());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        levelButtons = new JButton[Level.LEVELS.length];
+        levelButtons = new CustomButton[Level.LEVELS.length];
 
         for (int i = 0; i < Level.LEVELS.length; i++) {
-            levelButtons[i] = new JButton(Level.LEVELS[i].name);
-            levelButtons[i].setFont(new Font("Arial", Font.PLAIN, 14));
+            levelButtons[i] = new CustomButton(Level.LEVELS[i].name);
             // levelButtons[i].setEnabled(i <= maxLevelReached);
             levelButtons[i].setEnabled(true);
             final int index = i;

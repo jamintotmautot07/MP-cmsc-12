@@ -1,56 +1,86 @@
 package Tile;
 
 import engine.GamePanel;
+import util.Constants;
+import util.UtilityTool;
+// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
+import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
-import util.Constants;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TileManager {
-    
+
+    private static final String TILE_FOLDER = "res/TILES/";
+    private static final int GROUND_TILE_COUNT = 180;
+
     GamePanel gp;
-    public Tiles[] tile;
-    public int mapTileNum[][];
+    public List<Tiles> tiles;
+    public int[][] mapTileNum;
 
     public TileManager(GamePanel gp) {
         this.gp = gp;
 
-        tile = new Tiles[10];
+        tiles = new ArrayList<>();
+        mapTileNum = new int[Constants.worldMaxRow][Constants.worldMaxCol];
 
-        mapTileNum = new int[Constants.maxWorldHeight][Constants.maxWorldWidth];
-
-        getTileImage();
+        loadAllTiles();
     }
 
-    public void getTileImage() {
+    private void loadAllTiles() {
+        loadTilesByPrefix("ground", false, GROUND_TILE_COUNT);
+        loadTilesByPrefix("solid", true, Integer.MAX_VALUE);
+    }
+
+    private void loadTilesByPrefix(String prefix, boolean solid, int maxTiles) {
+        int index = 1;
+
+        while (index <= maxTiles) {
+            String fileName = TILE_FOLDER + prefix + String.format("%03d", index) + ".png";
+            BufferedImage image = loadImage(fileName);
+
+            if (image == null) {
+                if (maxTiles == Integer.MAX_VALUE) {
+                    break;
+                }
+                index++;
+                continue;
+            }
+
+            Tiles tile = solid ? new SolidTiles() : new GroundTiles();
+            tile.image = UtilityTool.resizeImage(image, Constants.tileSize, Constants.tileSize);
+            tiles.add(tile);
+            index++;
+        }
+    }
+
+    private BufferedImage loadImage(String path) {
         try {
+            File file = new File(path);
+            if (file.exists()) {
+                return ImageIO.read(file);
+            }
 
-            tile[0] = new Tiles();
-            tile[0].color = Color.GRAY;
-
-            tile[1] = new Tiles();
-            tile[1].color = Color.BLUE;
-
-            tile[2] = new Tiles();
-            tile[2].color = Color.BLACK;
-
-            tile[3] = new Tiles();
-            tile[3].color = Color.RED;
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            InputStream is = getClass().getResourceAsStream("/" + path.replace("\\", "/"));
+            if (is != null) {
+                return ImageIO.read(is);
+            }
+        } catch (IOException ignored) {
         }
 
+        return null;
     }
 
     public void loadMap(String filePath) {
-
         try {
             BufferedReader br;
             InputStream is = getClass().getResourceAsStream(filePath);
@@ -61,64 +91,62 @@ public class TileManager {
                 br = new BufferedReader(new FileReader(mapFile));
             }
 
-            int col = 0;
+            String line;
             int row = 0;
 
-            while(col < Constants.worldMaxCol && row < Constants.worldMaxRow) {
-                String line = br.readLine();
-                if (line == null) break;
-
-                String numbers[] = line.split(" ");
-                while(col < Constants.worldMaxCol && col < numbers.length) {
-                    int num = Integer.parseInt(numbers[col]);
-                    mapTileNum[col][row] = num;
-                    col++;
+            while (row < Constants.worldMaxRow && (line = br.readLine()) != null) {
+                String[] numbers = line.trim().split("\\s+");
+                for (int col = 0; col < Constants.worldMaxCol && col < numbers.length; col++) {
+                    mapTileNum[row][col] = Integer.parseInt(numbers[col]) + 1;
                 }
-
-                col = 0;
                 row++;
             }
 
             br.close();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-    public void draw(Graphics2D g2) {
 
+    public void draw(Graphics2D g2) {
         int cameraWorldX = gp.getCameraWorldX();
         int cameraWorldY = gp.getCameraWorldY();
 
-        int worldCol = 0;
-        int worldRow = 0;
+        for (int worldRow = 0; worldRow < Constants.worldMaxRow; worldRow++) {
+            for (int worldCol = 0; worldCol < Constants.worldMaxCol; worldCol++) {
+                int tileNum = mapTileNum[worldRow][worldCol];
+                int worldX = Constants.tileSize * worldCol;
+                int worldY = Constants.tileSize * worldRow;
+                int screenX = worldX - cameraWorldX;
+                int screenY = worldY - cameraWorldY;
 
-        while(worldCol < Constants.worldMaxCol && worldRow < Constants.worldMaxRow) {
+                if (worldX + Constants.tileSize > cameraWorldX - Constants.screenWidth &&
+                    worldX - Constants.tileSize < cameraWorldX + Constants.screenWidth &&
+                    worldY + Constants.tileSize > cameraWorldY - Constants.screenHeight &&
+                    worldY - Constants.tileSize < cameraWorldY + Constants.screenHeight) {
 
-            int tileNum = mapTileNum[worldCol][worldRow];
-
-            int worldX = Constants.tileSize * worldCol;
-            int worldY = Constants.tileSize * worldRow;
-            int screenX = worldX - cameraWorldX;
-            int screenY = worldY - cameraWorldY;
-
-            if(worldX + Constants.tileSize > cameraWorldX - (Constants.screenWidth) &&
-                worldX - Constants.tileSize < cameraWorldX + (Constants.screenWidth) &&
-                worldY + Constants.tileSize > cameraWorldY - (Constants.screenHeight) &&
-                worldY - Constants.tileSize < cameraWorldY + (Constants.screenHeight)
-            ) {
-                g2.setColor(tile[tileNum].color);
-                g2.fillRect(screenX, screenY, Constants.tileSize, Constants.tileSize);
-            }
-
-            worldCol++;
-
-            if(worldCol == Constants.worldMaxCol) {
-                worldCol = 0;
-                worldRow++;
+                    Tiles currentTile = getTileByMapNumber(tileNum);
+                    if (currentTile != null && currentTile.image != null) {
+                        g2.drawImage(currentTile.image, screenX, screenY, null);
+                    } else {
+                        g2.setColor(Color.BLACK);
+                        g2.fillRect(screenX, screenY, Constants.tileSize, Constants.tileSize);
+                    }
+                }
             }
         }
     }
 
+    private Tiles getTileByMapNumber(int tileNum) {
+        if (tileNum <= 0) {
+            return tiles.isEmpty() ? null : tiles.get(0);
+        }
+
+        int index = tileNum - 1;
+        if (index >= 0 && index < tiles.size()) {
+            return tiles.get(index);
+        }
+
+        return tiles.isEmpty() ? null : tiles.get(0);
+    }
 }

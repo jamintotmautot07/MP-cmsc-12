@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import engine.GamePanel;
 import systems.KeyHandler;
 import util.Constants;
+// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
 /*
  OWNER: Jamin
@@ -232,6 +233,10 @@ public class Player extends Entity{
                 spriteCounter = 0;
             }
         }
+    }
+
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     public void draw(Graphics2D g2){
