@@ -11,9 +11,10 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import engine.GamePanel;
+import systems.CollisionManager;
 import systems.KeyHandler;
 import util.Constants;
-// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
+import util.UtilityTool;
 
 /*
  OWNER: Jamin
@@ -33,33 +34,34 @@ import util.Constants;
 
 public class Player extends Entity{
 
+    // Back-references the player needs to read input and query the world/camera.
     GamePanel gp;
     KeyHandler keyH;
 
+    // Fixed on-screen anchor point. The camera moves the world around the player most of the time.
     public final int screenX;
     public final int screenY;
 
-    // for motion variables
+    // Separate counters per animation set keep the frame order simple and independent.
     private int idleCounter = 0;
     private int downCounter = 0;
     private int upCounter = 0;
     private int leftCounter = 0;
     private int rightCounter = 0;
+
+    // Helps detect direction/state changes so animations can restart cleanly.
     private String previousDirection = "idle";
     private int movementAnimationSpeed = 8;
     private int idleAnimationSpeed = 13; // Slower for idle
 
-    public enum AttackType {
-        NONE,
-        NORMAL,
-        FORWARD,
-        SIDE,
-        DOWN
-    }
+    // Prevents one long key hold from repeatedly retriggering an attack.
+    private boolean attackedPressed = false;
 
-    private AttackType attackType = AttackType.NONE;
+    // Attack timing/state.
     private int attackCounter = 0;
     private final int attackDuration = 18;
+    private boolean attackActive = false;
+    private String attackDirection = "right"; // Store the direction of the current attack
 
     public Player(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
@@ -68,6 +70,7 @@ public class Player extends Entity{
         screenX = (Constants.screenWidth/2) - (Constants.tileSize/2);
         screenY = (Constants.screenHeight/2) - (Constants.tileSize/2);
 
+        // Slightly smaller than the sprite so the player does not feel like they collide on transparent pixels.
         solidArea = new Rectangle(8, 16, 30, 32);
 
         setDefaultValues();
@@ -75,6 +78,8 @@ public class Player extends Entity{
     }
 
     public void setDefaultValues() {
+        // Spawn the player at the screen anchor. Because the camera starts there too,
+        // this feels like spawning at the center of the view.
         worldX = screenX;
         worldY = screenY;
         speed = 3;
@@ -82,7 +87,7 @@ public class Player extends Entity{
     }
 
     public void getPlayerImages() {
-        //initialize lengths
+        // Allocate frame arrays based on how many sprite images exist per state.
         idle = new BufferedImage[7];
         down = new BufferedImage[4];
         up = new BufferedImage[6];
@@ -91,25 +96,30 @@ public class Player extends Entity{
 
         try {
             
-            // idle assets
+            // Load and resize every animation frame once at startup.
             for(int i = 0; i < 7; i++) {
                 idle[i] = ImageIO.read(new File(String.format("res/PlayerAssets/idle%d.png", i + 1)));
+                idle[i] = UtilityTool.resizeImage(idle[i], Constants.tileSize, Constants.tileSize);
             }
             // down assets
             for(int i = 0; i < 4; i++) {
                 down[i] = ImageIO.read(new File(String.format("res/PlayerAssets/down%d.png", i + 1)));
+                down[i] = UtilityTool.resizeImage(down[i], Constants.tileSize, Constants.tileSize);
             }
             // up assets
             for(int i = 0; i < 6; i++) {
                 up[i] = ImageIO.read(new File(String.format("res/PlayerAssets/up%d.png", i + 1)));
+                up[i] = UtilityTool.resizeImage(up[i], Constants.tileSize, Constants.tileSize);
             }
             // left assets
             for(int i = 0; i < 6; i++) {
                 left[i] = ImageIO.read(new File(String.format("res/PlayerAssets/left%d.png", i + 1)));
+                left[i] = UtilityTool.resizeImage(left[i], Constants.tileSize, Constants.tileSize);
             }
             // right assets
             for(int i = 0; i < 6; i++) {
                 right[i] = ImageIO.read(new File(String.format("res/PlayerAssets/right%d.png", i + 1)));
+                right[i] = UtilityTool.resizeImage(right[i], Constants.tileSize, Constants.tileSize);
             }
 
         } catch (IOException e) {
@@ -118,6 +128,15 @@ public class Player extends Entity{
     }
 
     public void update(){
+        // Every frame, cooldown timers tick down first.
+        updateCooldowns();
+
+        // Once the cooldown is done, a fresh attack input is allowed again.
+        if (!isOnCooldown("Player_attack")) {
+            attackedPressed = false;
+        }
+
+        // If the visible state changed, restart the animation counters so the new state begins from frame 0.
         if (!direction.equals(previousDirection)) {
             idleCounter = 0;
             upCounter = 0;
@@ -126,76 +145,102 @@ public class Player extends Entity{
             rightCounter = 0;
             spriteCounter = 0; 
         }
+
         previousDirection = direction;
         String oldDirection = direction;
-        // TODO: Movement logic
-        // update attack state first so movement can still happen while an attack button is held
+
+        /*
+         * Attack handling comes before movement resolution.
+         * That way the attack state is decided for this frame first,
+         * and movement can still happen in the same update if needed.
+         */
         AttackType requestedAttack = AttackType.NONE;
-        if (keyH.isActionPressed(KeyHandler.Action.ATTACK)) {
+        String requestedAttackDirection = facingDirection;
+        if (keyH.isActionPressed(KeyHandler.Action.ATTACK) && !attackedPressed && !isOnCooldown("Player_attack")) {
             if (keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
                 requestedAttack = AttackType.FORWARD;
-                System.out.println("Attack: FORWARD");
+                requestedAttackDirection = "up";
             } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
                 requestedAttack = AttackType.DOWN;
-                System.out.println("Attack: DOWN");
-            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
+                requestedAttackDirection = "down";
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT)) {
                 requestedAttack = AttackType.SIDE;
-                System.out.println("Attack: SIDE");
+                requestedAttackDirection = "left";
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
+                requestedAttack = AttackType.SIDE;
+                requestedAttackDirection = "right";
             } else {
                 requestedAttack = AttackType.NORMAL;
-                System.out.println("Attack: NORMAL");
+                requestedAttackDirection = facingDirection;
             }
+
+            attackedPressed = true;
+            startCooldown("Player_attack", 50); // Attack cannot be retriggered immediately.
         }
 
         if (requestedAttack != AttackType.NONE) {
+            // Reset the timer only if the attack pattern itself changed.
             if (attackType != requestedAttack) {
                 attackType = requestedAttack;
+                attackDirection = requestedAttackDirection;
                 attackCounter = 0;
             }
+            attackActive = true;
             attackCounter++;
             if (attackCounter > attackDuration) {
+                // Attack window has ended, so clear combat state.
                 attackCounter = 0;
                 attackType = AttackType.NONE;
+                attackActive = false;
             }
-            direction = "idle"; // Keep animation idle during attacks
+            attackHitbox = calculateAttackHitbox(attackDirection);
+            direction = "idle"; // Current art set keeps the player visually idle while attacking.
         } else {
+            // No attack requested this frame, so make sure hitbox/combat state is fully cleared.
             attackType = AttackType.NONE;
+            attackActive = false;
             attackCounter = 0;
+            attackHitbox.setBounds(0, 0, 0, 0);
         }
 
+        // Movement input uses simple "first matching direction wins" priority.
         if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
             keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
         ) {
 
             if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
                 direction = "up";
-                System.out.println("Moving: UP");
             } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT)) {
                 direction = "left";
-                System.out.println("Moving: LEFT");
             } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
                 direction = "right";
-                System.out.println("Moving: RIGHT");
             } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
                 direction = "down";
-                System.out.println("Moving: DOWN");
             }
 
             if (!oldDirection.equals(direction)) {
-                spriteCounter = movementAnimationSpeed; // Trigger animation immediately on direction change
+                spriteCounter = movementAnimationSpeed; // Makes the first frame swap happen without delay.
             }
 
-            // Collision feature code here...
-            // ... //
-
+            // Remember the last non-idle direction for normal attacks.
+            facingDirection = direction;
+            int nextX = worldX;
+            int nextY = worldY;
             switch (direction) {
-                case "up": worldY -= speed; break;
-                case "right": worldX += speed; break;
-                case "left": worldX -= speed; break;
-                case "down": worldY += speed; break;
+                case "up": nextY -= speed; break;
+                case "right": nextX += speed; break;
+                case "left": nextX -= speed; break;
+                case "down": nextY += speed; break;
             }
 
-            //for the rate at which the image is changing for the motion effect
+            // Collision is checked against the next predicted position before movement is committed.
+            Rectangle futureSolidArea = new Rectangle(nextX + solidArea.x, nextY + solidArea.y, solidArea.width, solidArea.height);
+            if (!CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)) {
+                worldX = nextX;
+                worldY = nextY;
+            }
+
+            // Advance the correct directional animation at a fixed rate.
             spriteCounter++;
             if(spriteCounter > movementAnimationSpeed) {
                 if(direction.equals("up")) {
@@ -212,8 +257,6 @@ public class Player extends Entity{
                     } else if (upCounter == 5) {
                         upCounter = 0;
                     }
-
-                    System.out.println("UP");
                 } else if (direction.equals("down")) {
                     if(downCounter == 0) {
                         downCounter = 1;
@@ -224,8 +267,6 @@ public class Player extends Entity{
                     } else if (downCounter == 3) {
                         downCounter = 0;
                     }
-
-                    System.out.println("DOWN");
                 } else if (direction.equals("left")) {
                     if(leftCounter == 0) {
                         leftCounter = 1;
@@ -240,8 +281,6 @@ public class Player extends Entity{
                     } else if (leftCounter == 5) {
                         leftCounter = 0;
                     }
-
-                    System.out.println("LEFT");
                 } else if (direction.equals("right")) {
                     if(rightCounter == 0) {
                         rightCounter = 1;
@@ -256,16 +295,13 @@ public class Player extends Entity{
                     } else if (rightCounter == 5) {
                         rightCounter = 0;
                     }
-
-                    System.out.println("RIGHT");
-                } else if (direction.equalsIgnoreCase("attack")) {
-                    System.out.println("ATTACK");
                 }
 
 
                 spriteCounter = 0;
             }
         } else {
+            // No movement keys pressed, so fall back to the idle animation loop.
             direction = "idle";
 
             if (!oldDirection.equals("idle")) {
@@ -291,10 +327,21 @@ public class Player extends Entity{
                 }
 
                 spriteCounter = 0;
-
-                System.out.println("IDLE");
             }
         }
+    }
+
+    @Override
+    protected Rectangle calculateAttackHitbox() {
+        return calculateAttackHitbox(attackDirection);
+    }
+
+    public boolean isAttackActive() {
+        return attackActive;
+    }
+
+    public Rectangle getAttackHitbox() {
+        return attackHitbox;
     }
 
     public void setDirection(String direction) {
@@ -302,7 +349,7 @@ public class Player extends Entity{
     }
 
     public void draw(Graphics2D g2){
-        // TODO: Draw player (box for now)
+        // Pick the current sprite frame based on the active state and animation counters.
 
         BufferedImage image = null;
 
@@ -330,7 +377,18 @@ public class Player extends Entity{
                 break;
         }
 
-        g2.drawImage(image, gp.getCameraX(), gp.getCameraY(), Constants.tileSize, Constants.tileSize, null);
+        // The player is drawn using camera-relative screen coordinates, not raw world coordinates.
+        g2.drawImage(image, gp.getCameraX(), gp.getCameraY(), null);
+
+        // Debug/feedback overlay to show the active attack area.
+        if (attackActive && attackHitbox.width > 0 && attackHitbox.height > 0) {
+            int screenX = attackHitbox.x - gp.getCameraWorldX();
+            int screenY = attackHitbox.y - gp.getCameraWorldY();
+            g2.setColor(new Color(255, 0, 0, 120));
+            g2.fillRect(screenX, screenY, attackHitbox.width, attackHitbox.height);
+            g2.setColor(Color.RED);
+            g2.drawRect(screenX, screenY, attackHitbox.width, attackHitbox.height);
+        }
 
         //Initial character
         // g2.setColor(Color.WHITE);

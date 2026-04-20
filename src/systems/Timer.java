@@ -4,11 +4,18 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 public class Timer {
+    // `startTime` stores when the current running segment began.
+    // `pausedTime` accumulates all finished running segments.
     private long startTime;
     private boolean running;
     private long pausedTime;
+
+    // `timeScore` is the best locked-in score for the level/session.
+    // `inGameTimeScore` is the live score that changes while the timer runs.
     private int timeScore;
     private int inGameTimeScore;
+
+    // Time limit is in seconds. A value of 0 means no limit.
     private int timeLimit;
     private boolean paused;
 
@@ -22,6 +29,7 @@ public class Timer {
     }
 
     public void stopTimer() {
+        // When pausing, fold the time since the last resume into `pausedTime`.
         if (running && !paused) {
             pausedTime += System.currentTimeMillis() - startTime;
             paused = true;
@@ -29,6 +37,7 @@ public class Timer {
     }
 
     public void resumeTimer() {
+        // Resume starts a fresh running segment but keeps previously accumulated time.
         if (paused) {
             startTime = System.currentTimeMillis();
             paused = false;
@@ -53,6 +62,7 @@ public class Timer {
         if (!running) return 0;
 
         if (paused) {
+            // While paused, elapsed time should stay frozen.
             return pausedTime;
         } else {
             return pausedTime + (System.currentTimeMillis() - startTime);
@@ -79,7 +89,7 @@ public class Timer {
         int elapsedSeconds = (int)(getElapsedTime() / 1000);
         int remaining = timeLimit - elapsedSeconds;
 
-        return Math.max(remaining, 0); // prevents negative
+        return Math.max(remaining, 0); // Keeps the HUD clean once the timer reaches zero.
     }
 
     public String getRemainingTimeFormatted() {
@@ -112,11 +122,11 @@ public class Timer {
 
     public void setTimeScore() {
         int remaining = getRemainingTime();
-        inGameTimeScore = remaining * 5; // reward faster clears
+        inGameTimeScore = remaining * 5; // Simple reward model: more time left means more score.
     }
 
     public void setFinalTimeScore() {
-        // records only the maximum point per game
+        // Stores only the highest captured score instead of replacing it blindly.
         if(inGameTimeScore > timeScore) {
             timeScore = inGameTimeScore;
         }
@@ -124,7 +134,8 @@ public class Timer {
     
     public void show(Graphics2D g2, int x, int y) {
 
-        if (getRemainingTime() <= 10) {
+        // Turn red near the end to make the time pressure obvious.
+        if (getRemainingTime() <= 10 && hasTimeLimit()) {
             g2.setColor(Color.RED);
         } else {
             g2.setColor(Color.WHITE);

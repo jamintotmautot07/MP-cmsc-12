@@ -20,15 +20,18 @@ import util.MethodUtilities;
 
 public class BaseFrame extends JFrame{
 
+    // CardLayout lets the app swap between menu, game, credits, and cutscene panels in one window.
     private CardLayout cardLayout;
     private JPanel container;
 
+    // Main screens owned by the application frame.
     public OpeningPanel openPanel;
     public GamePanel gamePanel;
     private CreditScroller credits;
     public IntroManager sceneManager;
     public ScenePanel scenePanel;
     // private LoadingPanel loadingPanel; // COMMENTED OUT - Cache system disabled
+    // Basic progress / selection values shared between the menu and game screens.
     private Level selectedLevel = Level.TUTORIAL;
     private int maxLevelReached = 3;
     private boolean tutorialPlayed = true;
@@ -38,7 +41,7 @@ public class BaseFrame extends JFrame{
         setResizable(false);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        // Placeholder for loading progress
+        // Placeholder for loading progress from disk once save support is enabled.
         // maxLevelReached = FileManager.loadMaxLevelReached();
         // tutorialPlayed = FileManager.loadTutorialPlayed();
 
@@ -53,7 +56,7 @@ public class BaseFrame extends JFrame{
         container = new JPanel(cardLayout);
         container.setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
 
-        // Add all panels to container
+        // Every major screen gets a named card.
         // container.add(loadingPanel, "Loading"); // COMMENTED OUT - Cache system disabled
         container.add(scenePanel, "Scene");
         container.add(openPanel, "Openning");
@@ -66,7 +69,7 @@ public class BaseFrame extends JFrame{
         // cardLayout.show(container, "Loading"); // COMMENTED OUT - Cache system disabled
         cardLayout.show(container, "Openning");
 
-        // Setup all button listeners BEFORE loading resources
+        // Wire events once, then show the startup scene if needed.
         setupButtonListeners();
         startStartupScene();
 
@@ -79,9 +82,11 @@ public class BaseFrame extends JFrame{
     }
 
     private void startStartupScene() {
+        // The opening cinematic only plays once per app session.
         if (!sceneManager.hasPlayed("gameIntro")) {
             openPanel.stopBackgroundAnimation();
             scenePanel.setOnSceneComplete(() -> {
+                // Return to the menu once the cutscene ends.
                 openPanel.startBackgroundAnimation();
                 cardLayout.show(container, "Openning");
                 openPanel.requestFocusInWindow();
@@ -92,6 +97,7 @@ public class BaseFrame extends JFrame{
     }
 
     private void setupButtonListeners() {
+        // Exit handling is shared between the exit button and the window close button.
         openPanel.exitButton.addActionListener(new MethodUtilities.exitAction(this));
 
         credits.getBackButton().addActionListener(e -> {
@@ -101,6 +107,7 @@ public class BaseFrame extends JFrame{
         });
 
         openPanel.levelButton.addActionListener(e -> {
+            // Open a modal selector, then start the chosen level if the user picked one.
             panels.LevelSelectionDialog dialog = new panels.LevelSelectionDialog(this, maxLevelReached);
             dialog.setVisible(true);
             if (dialog.selected != null) {
@@ -116,6 +123,7 @@ public class BaseFrame extends JFrame{
         });
 
         openPanel.playButton.addActionListener(e -> {
+            // "Play" always starts from the tutorial in the current version.
             selectedLevel = Level.TUTORIAL;
             openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
             gamePanel.setLevel(selectedLevel);
@@ -132,6 +140,7 @@ public class BaseFrame extends JFrame{
         });
 
         openPanel.scoreButton.addActionListener(e -> {
+            // Scoreboard uses simple placeholder values for unfinished systems.
             panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
             int timeScore = gamePanel.timer != null ? gamePanel.timer.getTimeScore() : 0;
             int enemyScore = 0; // placeholder
@@ -143,7 +152,7 @@ public class BaseFrame extends JFrame{
 
         addWindowListener(new MethodUtilities.exitAction(this));
 
-        // Placeholder for progress setup
+        // Placeholder for progress setup once save/load is turned back on.
         // gamePanel.onLevelComplete = this::updateProgress;
         openPanel.setContinueVisible(tutorialPlayed && maxLevelReached >= 2);
     }
@@ -181,6 +190,7 @@ public class BaseFrame extends JFrame{
     // }
 
     public void showOpeningScreen() {
+        // Central helper used when backing out of gameplay to the main menu.
         openPanel.startBackgroundAnimation();
         cardLayout.show(container, "Openning");
     }

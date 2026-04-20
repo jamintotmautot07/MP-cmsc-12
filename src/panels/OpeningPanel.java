@@ -30,14 +30,15 @@ import util.MethodUtilities.RoundedPanel;
 
 public class OpeningPanel extends JPanel {
 
-    //background of this panel
+    // Fallback still image used if the animated background is unavailable.
     private Image backgroundImage;
 
-    // Animated background for this panel
+    // Animated menu background.
     private Image[] backgroundFrames;
     private int currentBackgroundFrame;
     private javax.swing.Timer backgroundTimer;
 
+    // Main layout pieces that build the menu screen.
     private JPanel main;
     private MethodUtilities.RoundedPanel centerPanel;
     private JPanel header;
@@ -65,7 +66,7 @@ public class OpeningPanel extends JPanel {
         loadBackgroundFrames();
         startBackgroundAnimation();
 
-        //Fonts
+        // Title fonts are loaded manually so the menu keeps its custom visual style.
         // Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);
         // Font titleLowerFont = new Font("Papyrus", Font.BOLD, 35);
 
@@ -77,7 +78,7 @@ public class OpeningPanel extends JPanel {
             Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, titleLowerStream);
             Font titleUpperFont = Font.createFont(Font.TRUETYPE_FONT, titleUpperStream);
 
-            //set sizes
+            // Derive concrete sizes from the loaded font files.
             titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 50f);
             titleUpperFont = titleUpperFont.deriveFont(Font.BOLD, 35f);
 
@@ -93,7 +94,7 @@ public class OpeningPanel extends JPanel {
             e.printStackTrace();
         }
 
-        //buttons
+        // Main menu actions.
         playButton = new CustomButton("PLAY");
         exitButton = new CustomButton("EXIT");
         creditsButton = new CustomButton("CREDITS");
@@ -151,7 +152,7 @@ public class OpeningPanel extends JPanel {
 
         titlePanel.add(headerLabel1);
 
-        // space in-between texts
+        // Slight negative spacing pulls the two title lines closer together visually.
         titlePanel.add(Box.createRigidArea(new Dimension(0, -15)));
 
         titlePanel.add(headerLabel2);
@@ -171,7 +172,7 @@ public class OpeningPanel extends JPanel {
         add(southPanel, BorderLayout.SOUTH);
     }
 
-    // method for loading the frames of the background animation
+    // Loads the looping menu animation into memory.
     private void loadBackgroundFrames() {
         int frameCount = 22;
         backgroundFrames = new Image[frameCount];
@@ -180,7 +181,7 @@ public class OpeningPanel extends JPanel {
         }
     }
 
-    // method for starting background animation
+    // Starts the timer that advances the background frame index.
     public void startBackgroundAnimation() {
         backgroundTimer = new javax.swing.Timer(100, e -> {
             currentBackgroundFrame = (currentBackgroundFrame + 1) % backgroundFrames.length; // this makes sure it loops forever
@@ -195,12 +196,12 @@ public class OpeningPanel extends JPanel {
         }
     }
 
-    //overriding the default paint component
+    // Custom painting only handles the background; Swing components render on top afterward.
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        //for the background
+        // Prefer the animated background, fall back to the single image if needed.
         if(backgroundFrames != null && backgroundFrames.length > 0) {
             g.drawImage(backgroundFrames[currentBackgroundFrame], 0, 0, getWidth(), getHeight(), this);
         } else {
@@ -217,6 +218,7 @@ public class OpeningPanel extends JPanel {
     }
 
     public void setSelectedLevelIndex(int selectedLevelIndex, String levelName) {
+        // Only the index is stored right now, but the method signature leaves room for future UI updates.
         this.selectedLevelIndex = selectedLevelIndex;
     }
 }

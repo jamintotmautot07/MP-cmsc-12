@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 */
 
 public class ResourceCache {
+    // Two separate caches keep image and font lookups straightforward.
     private static final Map<String, BufferedImage> imageCache = new HashMap<>();
     private static final Map<String, Font> fontCache = new HashMap<>();
     
@@ -33,6 +34,7 @@ public class ResourceCache {
      * Load a single image into cache
      */
     public static void loadImage(String key, String path) {
+        // Load only once per key to avoid repeated disk access.
         if (!imageCache.containsKey(key)) {
             try {
                 BufferedImage img = ImageIO.read(new java.io.File(path));
@@ -55,6 +57,7 @@ public class ResourceCache {
      * Load a font from file into cache (for TTF/OTF files)
      */
     public static void loadFont(String key, String path, int style, float size) {
+        // Store the already-derived font so callers do not redo this work.
         if (!fontCache.containsKey(key)) {
             try (InputStream fontStream = new FileInputStream(path)) {
                 Font baseFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
@@ -72,6 +75,7 @@ public class ResourceCache {
      * Load a system font into cache (for fonts like "Papyrus", "Arial", etc.)
      */
     public static void loadSystemFont(String key, String fontName, int style, float size) {
+        // Useful when the project wants a quick built-in font without bundling a file.
         if (!fontCache.containsKey(key)) {
             try {
                 Font font = new Font(fontName, style, (int)size);
@@ -95,6 +99,7 @@ public class ResourceCache {
      * Preload all game resources - called once at startup
      */
     public static void preloadAll() {
+        // This method centralizes startup loading so lag is moved away from gameplay/screens.
         // Background images
         loadImage("background", "res/background.png");
         loadImage("text_background", "res/text_background.png");
@@ -164,6 +169,7 @@ public class ResourceCache {
      * Clear all cached resources (use when shutting down or for memory management)
      */
     public static void clear() {
+        // Frees references so the JVM can reclaim memory later.
         imageCache.clear();
         fontCache.clear();
     }

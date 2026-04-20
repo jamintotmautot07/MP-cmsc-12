@@ -25,6 +25,7 @@
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/Tile/Tiles.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/ui/IntroManager.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/Constants.java"
+"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/Cooldown.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/MethodUtilities.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/ResourceCache.java"
 "C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/UtilityTool.java"

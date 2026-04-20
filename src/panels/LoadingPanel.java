@@ -1,18 +1,18 @@
 package panels;
 
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JLabel;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.AlphaComposite;
+// import javax.swing.JProgressBar;
+// import javax.swing.JLabel;
+// import java.awt.BorderLayout;
+// import java.awt.Color;
+// import java.awt.Font;
+// import java.awt.Dimension;
+// import java.awt.Graphics;
+// import java.awt.Graphics2D;
+// import java.awt.RenderingHints;
+// import java.awt.AlphaComposite;
 
-import util.Constants;
+// import util.Constants;
 
 /*
  PURPOSE:
@@ -22,6 +22,11 @@ import util.Constants;
 */
 
 public class LoadingPanel extends JPanel {
+
+    /*
+     * This panel is intentionally left as a commented template.
+     * It documents one possible loading-screen approach without enabling it in the current build.
+     */
 
     // possible implementation... incomplete and unimplemented
     // although possible implementations are already added but still commmented

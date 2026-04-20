@@ -15,6 +15,7 @@ import java.awt.Color;
 
 public class ScoreboardDialog extends JDialog {
 
+    // Score labels are stored as fields so they can be updated whenever the dialog is shown.
     private JLabel timeScoreLabel;
     private JLabel enemyScoreLabel;
     private JLabel levelsClearedLabel;
@@ -30,6 +31,7 @@ public class ScoreboardDialog extends JDialog {
 
         textFont = MethodUtilities.getFont(16f);
 
+        // Simple stacked layout for a compact score summary.
         RoundedPanel panel = new RoundedPanel(new GridLayout(4, 1, 10, 10), 10);
         panel.setColor(new Color(159, 188, 143).darker());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -57,6 +59,7 @@ public class ScoreboardDialog extends JDialog {
     }
 
     public void updateScores(int timeScore, int enemyScore, int levelsCleared, int totalScore) {
+        // Refresh all labels in one place before showing the dialog.
         timeScoreLabel.setText("Time Score: " + timeScore);
         enemyScoreLabel.setText("Enemy Score: " + enemyScore + " (Placeholder)");
         levelsClearedLabel.setText("Levels Cleared: " + levelsCleared);

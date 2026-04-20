@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 
 import util.Constants;
+import util.UtilityTool;
 
 /*
  OWNER: Jamin
@@ -31,15 +32,18 @@ import util.Constants;
 */
 public class IntroManager {
 
+    // Scene playback state.
     private String activeSceneId;
     private BufferedImage[] frames;
     private int currentFrame;
     private long lastFrameTime;
     private int frameDelay;
     private boolean finished;
+
+    // Tracks which named scenes were already played during this app session.
     private final Set<String> completedScenes;
 
-    // Fade effect variables
+    // Fade-to-color values used when the sequence ends or gets skipped.
     private boolean isFading;
     private float fadeProgress;
     private long fadeStartTime;
@@ -67,12 +71,14 @@ public class IntroManager {
             return false;
         }
 
+        // If the same scene was already marked complete, refuse to replay it.
         if (completedScenes.contains(sceneId)) {
             this.activeSceneId = sceneId;
             this.finished = true;
             return false;
         }
 
+        // Reset playback state for a fresh run.
         this.activeSceneId = sceneId;
         this.frameDelay = Math.max(frameDelayMs, 16);
         this.currentFrame = 0;
@@ -92,6 +98,8 @@ public class IntroManager {
             for (int i = 0; i < frameCount; i++) {
                 String path = String.format(filePattern, i);
                 BufferedImage image = ImageIO.read(new File(path));
+                // Pre-scale to screen size so rendering is just one draw call per frame.
+                image = UtilityTool.resizeImage(image, Constants.screenWidth, Constants.screenHeight);
                 if (image != null) {
                     frames[loadedFrames++] = image;
                 }
@@ -101,6 +109,7 @@ public class IntroManager {
         }
 
         if (loadedFrames != frameCount) {
+            // Trim the array if some files were missing so playback only uses valid images.
             BufferedImage[] trimmed = new BufferedImage[loadedFrames];
             System.arraycopy(frames, 0, trimmed, 0, loadedFrames);
             frames = trimmed;
@@ -119,6 +128,7 @@ public class IntroManager {
         long now = System.currentTimeMillis();
 
         if (isFading) {
+            // Fade progress moves from 0.0 to 1.0 over `fadeDurationMs`.
             long elapsed = now - fadeStartTime;
             fadeProgress = Math.min(1.0f, (float) elapsed / fadeDurationMs);
             if (fadeProgress >= 1.0f) {
@@ -133,7 +143,7 @@ public class IntroManager {
                 lastFrameTime = now;
 
                 if (currentFrame >= frames.length) {
-                    // Start fading instead of finishing immediately
+                    // When the last frame ends, switch into fade mode instead of cutting out abruptly.
                     isFading = true;
                     fadeStartTime = now;
                     fadeProgress = 0.0f;
@@ -146,15 +156,15 @@ public class IntroManager {
     public void render(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        // Draw the current frame
+        // Draw the current frame if available, otherwise fall back to a plain black screen.
         if (frames != null && frames.length > 0 && currentFrame < frames.length && frames[currentFrame] != null) {
-            g2d.drawImage(frames[currentFrame], 0, 0, Constants.screenWidth, Constants.screenHeight, null);
+            g2d.drawImage(frames[currentFrame], 0, 0, null);
         } else {
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, Constants.screenWidth, Constants.screenHeight);
         }
 
-        // Draw fade overlay if fading
+        // Overlay the fade after the frame so it darkens the whole scene evenly.
         if (isFading) {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeProgress));
             g2d.setColor(fadeColor);
@@ -169,13 +179,13 @@ public class IntroManager {
         }
 
         if (!isFading) {
-            // First skip: start fading
+            // First skip jumps to the end frame and begins the fade.
             isFading = true;
             fadeStartTime = System.currentTimeMillis();
             fadeProgress = 0.0f;
             currentFrame = Math.max(0, frames.length - 1); // Jump to last frame
         } else {
-            // Second skip: skip the fade entirely
+            // A second skip means "don't even wait for the fade".
             fadeProgress = 1.0f;
             finished = true;
             if (activeSceneId != null) {
@@ -193,6 +203,7 @@ public class IntroManager {
     }
 
     public void reset() {
+        // Reset keeps the loaded frames but rewinds playback values.
         this.currentFrame = 0;
         this.lastFrameTime = System.currentTimeMillis();
         this.finished = false;

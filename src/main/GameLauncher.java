@@ -25,10 +25,7 @@ import javax.swing.SwingUtilities;
 
 public class GameLauncher {
     public static void main(String[] args) {
-        // Create JFrame
-        // Add GamePanel
-        // Set size, close operation
-        // Start game
+        // Optional command-line hook for opening a save file or passing future startup arguments.
 
         if (args.length > 0) {
             String filePath = args[0];
@@ -37,9 +34,11 @@ public class GameLauncher {
             // TODO: load save file here
         }
 
+        // Handy startup log so the running build is obvious in the console.
         System.out.println("VERSION: UPDATED BUILD");
 
         SwingUtilities.invokeLater(() -> {
+            // Swing UI creation should happen on the Event Dispatch Thread.
             BaseFrame frame = new BaseFrame();
             frame.setVisible(true);
         });
