@@ -5,7 +5,7 @@
 # highscore: integer
 
 introPlayed=false
-highscore=0
+highscore=1
 
 # TODO:
 # - FileManager reads/writes this file

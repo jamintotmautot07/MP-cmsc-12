@@ -18,14 +18,12 @@ import java.awt.Graphics;
  - Different enemy types
 */
 
-public class Enemy extends GameObject {
+public class Enemy extends Entity {
 
-    @Override
     public void update(){
         // TODO: Follow player
     }
 
-    @Override
     public void render(Graphics g){
         // TODO: Draw enemy
     }
