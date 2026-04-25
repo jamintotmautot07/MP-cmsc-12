@@ -23,6 +23,5 @@ public class AudioPlayer {
     /*
      * This class is currently a placeholder.
      * The project already reserves it as the future home for music and sound-effect playback.
-     */
-    // TODO: audio logic
+    */
 }
