@@ -28,8 +28,13 @@ import java.io.IOException;
 */
 
 public class FileManager {
+    // Default location for saved progress data.
     private static final String SAVE_FILE = "res/save.txt";
 
+    /*
+     * This class is mostly a scaffold right now.
+     * The commented methods show the intended save/load shape without enabling the feature yet.
+     */
     // This is a sample code, you can either reuse this or have a similar structure...
     // public static void saveProgress(int maxLevelReached, boolean tutorialPlayed) {
     //     // Placeholder for saving progress
