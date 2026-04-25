@@ -28,6 +28,9 @@ import util.MethodUtilities.GlowLabel;
 import util.MethodUtilities.RoundedPanel;
 // import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
+/**
+ * Main menu screen with animated background and navigation buttons.
+ */
 public class OpeningPanel extends JPanel {
 
     // Fallback still image used if the animated background is unavailable.
@@ -58,6 +61,9 @@ public class OpeningPanel extends JPanel {
     public CustomButton cutScenesButton;
     private int selectedLevelIndex = 0;
 
+    /**
+     * Builds the full opening screen UI and starts the background animation.
+     */
     public OpeningPanel() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
         this.backgroundImage = new ImageIcon("res/background.png").getImage();
@@ -173,6 +179,9 @@ public class OpeningPanel extends JPanel {
     }
 
     // Loads the looping menu animation into memory.
+    /**
+     * Loads the looping background sequence used behind the menu UI.
+     */
     private void loadBackgroundFrames() {
         int frameCount = 22;
         backgroundFrames = new Image[frameCount];
@@ -182,6 +191,9 @@ public class OpeningPanel extends JPanel {
     }
 
     // Starts the timer that advances the background frame index.
+    /**
+     * Starts the menu background animation timer.
+     */
     public void startBackgroundAnimation() {
         backgroundTimer = new javax.swing.Timer(100, e -> {
             currentBackgroundFrame = (currentBackgroundFrame + 1) % backgroundFrames.length; // this makes sure it loops forever
@@ -190,6 +202,9 @@ public class OpeningPanel extends JPanel {
         backgroundTimer.start();
     }
 
+    /**
+     * Stops the menu background animation timer.
+     */
     public void stopBackgroundAnimation() {
         if(backgroundTimer != null && backgroundTimer.isRunning()) {
             this.backgroundTimer.stop();
@@ -209,14 +224,24 @@ public class OpeningPanel extends JPanel {
         }
     }
 
+    /**
+     * Returns the level index currently highlighted by the menu flow.
+     */
     public int getSelectedLevelIndex() {
         return selectedLevelIndex;
     }
 
+    /**
+     * Shows or hides the Continue button depending on available progress.
+     */
     public void setContinueVisible(boolean visible) {
         continueButton.setVisible(visible);
     }
 
+    /**
+     * Stores the level currently chosen from the menu.
+     * `levelName` is kept in the signature as a placeholder for later UI text updates.
+     */
     public void setSelectedLevelIndex(int selectedLevelIndex, String levelName) {
         // Only the index is stored right now, but the method signature leaves room for future UI updates.
         this.selectedLevelIndex = selectedLevelIndex;

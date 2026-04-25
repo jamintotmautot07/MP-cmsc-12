@@ -8,6 +8,9 @@ import java.util.Map;
 
 import engine.GamePanel;
 
+/**
+ * Input adapter that translates raw keyboard events into logical gameplay actions.
+ */
 public class KeyHandler implements KeyListener {
     // Logical in-game actions. This makes the rest of the code care about intent, not raw key codes.
     public enum Action {
@@ -27,11 +30,17 @@ public class KeyHandler implements KeyListener {
 
     GamePanel gp;
 
+    /**
+     * Builds the handler and installs the default bindings.
+     */
     public KeyHandler(GamePanel gp) {
         this.gp = gp;
         initDefaultBindings();
     }
 
+    /**
+     * Sets the default keyboard layout for the current build.
+     */
     private void initDefaultBindings() {
         // Default movement scheme: WASD + Enter to attack.
         bindKey(Action.MOVE_UP, KeyEvent.VK_W);
@@ -42,6 +51,9 @@ public class KeyHandler implements KeyListener {
         bindKey(Action.ATTACK, KeyEvent.VK_ENTER);
     }
 
+    /**
+     * Binds one logical action to one physical key.
+     */
     public void bindKey(Action action, int keyCode) {
         // If the action was already bound, clear the old reverse mapping first.
         Integer previous = keyBindings.put(action, keyCode);
@@ -52,10 +64,16 @@ public class KeyHandler implements KeyListener {
         keyStates.put(action, false);
     }
 
+    /**
+     * Returns the key code currently mapped to the requested action.
+     */
     public int getBinding(Action action) {
         return keyBindings.getOrDefault(action, -1);
     }
 
+    /**
+     * Returns whether the action is currently being held down.
+     */
     public boolean isActionPressed(Action action) {
         return keyStates.getOrDefault(action, false);
     }
@@ -101,6 +119,9 @@ public class KeyHandler implements KeyListener {
         }
     }
 
+    /**
+     * Clears all action states, usually when pausing or switching screens.
+     */
     public void resetKeys() {
         // Useful when switching screens or pausing so stale key holds do not leak into the next state.
         for (Action action : Action.values()) {

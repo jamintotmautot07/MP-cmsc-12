@@ -14,7 +14,6 @@ public class Cooldown {
 
     /**
      * Start a cooldown with the specified duration in frames.
-     * @param frames The number of frames this cooldown should last
      */
     public void start(int frames) {
         // The caller decides the cooldown duration in update frames, not milliseconds.
@@ -33,7 +32,6 @@ public class Cooldown {
 
     /**
      * Check if the cooldown is currently active.
-     * @return true if cooldown is active, false if ready to use
      */
     public boolean isActive() {
         return remainingFrames > 0;
@@ -41,7 +39,6 @@ public class Cooldown {
 
     /**
      * Get the remaining frames.
-     * @return remaining frames, 0 if not active
      */
     public int getRemainingFrames() {
         return remainingFrames;

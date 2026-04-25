@@ -13,6 +13,9 @@ import java.awt.event.ActionListener;
 import util.Constants;
 import util.MethodUtilities.CustomButton;
 
+/**
+ * Simple auto-scrolling credits screen.
+ */
 public class CreditScroller extends JPanel implements ActionListener {
     // Vertical offset of the first credit line.
     private int y; // Start below the panel
@@ -24,6 +27,9 @@ public class CreditScroller extends JPanel implements ActionListener {
         "MEMBERS:", "", "   UI:", "     JAMIN", "",  "   MUSIC:", "     INOY", "", "   FILE:", "     ALTHEA", "", "   MOVEMENT:", "     ALLAN"
     };
 
+    /**
+     * Builds the credits panel and its scroll timer.
+     */
     public CreditScroller() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
         setLayout(null);
@@ -36,18 +42,27 @@ public class CreditScroller extends JPanel implements ActionListener {
         timer = new Timer(8, this); // ~30 FPS
     }
 
+    /**
+     * Starts the credits scroll from the bottom.
+     */
     public void startTimer() {
         // Reset scroll position whenever the credits screen opens.
         this.y = 600;
         timer.start();
     }
     
+    /**
+     * Stops the credits scroll timer.
+     */
     public void stopTimer() {
         if (timer != null) {
             timer.stop();
         }
     }
     
+    /**
+     * Lets the outer frame attach its own navigation behavior.
+     */
     public JButton getBackButton() {
         return backButton;
     }
@@ -77,6 +92,9 @@ public class CreditScroller extends JPanel implements ActionListener {
     }
 
     @Override
+    /**
+     * Advances the scroll position and requests repaint.
+     */
     public void actionPerformed(ActionEvent e) {
         y--; // Scroll speed
         if (y < -400) y = getHeight(); // Loop back to the bottom once everything scrolls off-screen.

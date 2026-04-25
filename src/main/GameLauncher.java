@@ -23,6 +23,10 @@ import javax.swing.SwingUtilities;
 
 //main class that calls the other operations
 
+/**
+ * Application entry point.
+ * Keeps startup logic minimal so the rest of the program stays inside dedicated classes.
+ */
 public class GameLauncher {
     public static void main(String[] args) {
         // Optional command-line hook for opening a save file or passing future startup arguments.

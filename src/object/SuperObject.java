@@ -1,5 +1,8 @@
 package object;
 
+/**
+ * Placeholder root type for non-entity world objects.
+ */
 public class SuperObject {
     /*
      * Placeholder parent for world objects.

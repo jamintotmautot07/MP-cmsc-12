@@ -30,6 +30,9 @@ import util.UtilityTool;
  - skip() when player requests it
  - isFinished() to detect completion
 */
+/**
+ * Scene player for intro/cutscene image sequences, including once-per-session playback tracking.
+ */
 public class IntroManager {
 
     // Scene playback state.
@@ -50,6 +53,9 @@ public class IntroManager {
     private int fadeDurationMs;
     private Color fadeColor;
 
+    /**
+     * Creates a manager with no active scene and default fade settings.
+     */
     public IntroManager() {
         this.currentFrame = 0;
         this.lastFrameTime = System.currentTimeMillis();
@@ -62,10 +68,16 @@ public class IntroManager {
         this.fadeColor = Color.BLACK;
     }
 
+    /**
+     * Returns whether the named scene already finished once this app session.
+     */
     public boolean hasPlayed(String sceneId) {
         return completedScenes.contains(sceneId);
     }
 
+    /**
+     * Starts loading and playing a scene sequence.
+     */
     public boolean startScene(String sceneId, String filePattern, int frameCount, int frameDelayMs) {
         if (sceneId == null || filePattern == null || frameCount <= 0) {
             return false;
@@ -90,6 +102,9 @@ public class IntroManager {
         return frames != null && frames.length > 0;
     }
 
+    /**
+     * Loads the cutscene frames from disk and scales them to the screen size.
+     */
     private void loadSceneFrames(String filePattern, int frameCount) {
         frames = new BufferedImage[frameCount];
         int loadedFrames = 0;
@@ -120,6 +135,9 @@ public class IntroManager {
         }
     }
 
+    /**
+     * Advances playback or fade state by one frame.
+     */
     public void update() {
         if (finished || frames == null || frames.length == 0) {
             return;
@@ -143,7 +161,7 @@ public class IntroManager {
                 lastFrameTime = now;
 
                 if (currentFrame >= frames.length) {
-                    // When the last frame ends, switch into fade mode instead of cutting out abruptly.
+                    // When the last frame ends, switch into fade mode.
                     isFading = true;
                     fadeStartTime = now;
                     fadeProgress = 0.0f;
@@ -153,6 +171,9 @@ public class IntroManager {
         }
     }
 
+    /**
+     * Draws the current frame plus fade overlay.
+     */
     public void render(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
@@ -173,6 +194,9 @@ public class IntroManager {
         }
     }
 
+    /**
+     * First call starts the end fade; second call finishes immediately.
+     */
     public void skip() {
         if (finished) {
             return;
@@ -194,14 +218,23 @@ public class IntroManager {
         }
     }
 
+    /**
+     * Indicates whether the current scene is fully done.
+     */
     public boolean isFinished() {
         return finished;
     }
 
+    /**
+     * Indicates whether a scene is actively playing or fading out.
+     */
     public boolean isRunning() {
         return !finished && (frames != null && frames.length > 0 || isFading);
     }
 
+    /**
+     * Rewinds the current scene state without reloading the frame assets.
+     */
     public void reset() {
         // Reset keeps the loaded frames but rewinds playback values.
         this.currentFrame = 0;

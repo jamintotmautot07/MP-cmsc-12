@@ -3,6 +3,7 @@ package entity;
 
 import java.awt.image.BufferedImage;
 import util.Constants;
+import util.UtilityTool;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,10 @@ import util.Cooldown;
  - All entities MUST extend this
 */
 
+/**
+ * Root gameplay object for anything that occupies world space and may animate, collide, or attack.
+ * Player and enemy types inherit common positioning, rendering, and cooldown helpers from here.
+ */
 public class Entity {
 
     /*
@@ -45,6 +50,10 @@ public class Entity {
     public int worldX, worldY;
     public int speed;
 
+    // Render size can differ from the base tile size for larger enemies.
+    public int renderWidth = Constants.tileSize;
+    public int renderHeight = Constants.tileSize;
+
     // Animation frames grouped by direction/state.
     public BufferedImage up[], right[], left[], down[], idle[];
     public String direction;
@@ -56,6 +65,11 @@ public class Entity {
     // Rectangle used for physical collisions against solid tiles.
     public Rectangle solidArea;
     public boolean collisionOn = false;
+
+    public int solidAreaDefaultX, solidAreaDefaultY;
+
+    public boolean invincible = false;
+    public int invincibleCounter = 0;
 
     // Stores per-action cooldown timers like attack delays.
     protected Map<String, Cooldown> cooldowns = new HashMap<>();
@@ -158,4 +172,20 @@ public class Entity {
         return attackHitbox;
     }
 
+    /**
+     * Resize a sprite array to a fixed render size.
+     */
+    protected BufferedImage[] resizeSpriteArray(BufferedImage[] frames, int width, int height) {
+        if (frames == null || width <= 0 || height <= 0) {
+            return frames;
+        }
+
+        BufferedImage[] result = new BufferedImage[frames.length];
+        for (int i = 0; i < frames.length; i++) {
+            if (frames[i] != null) {
+                result[i] = UtilityTool.resizeImage(frames[i], width, height);
+            }
+        }
+        return result;
+    }
 }

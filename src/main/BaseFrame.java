@@ -18,6 +18,9 @@ import util.Constants;
 import util.MethodUtilities;
 // import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
+/**
+ * Top-level application window that swaps between menu, cutscene, credits, and gameplay screens.
+ */
 public class BaseFrame extends JFrame{
 
     // CardLayout lets the app swap between menu, game, credits, and cutscene panels in one window.
@@ -36,6 +39,9 @@ public class BaseFrame extends JFrame{
     private int maxLevelReached = 3;
     private boolean tutorialPlayed = true;
 
+    /**
+     * Builds all major screens once and wires the application flow between them.
+     */
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
         setResizable(false);
@@ -81,6 +87,9 @@ public class BaseFrame extends JFrame{
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Plays the opening scene the first time the app is shown.
+     */
     private void startStartupScene() {
         // The opening cinematic only plays once per app session.
         if (!sceneManager.hasPlayed("gameIntro")) {
@@ -96,6 +105,9 @@ public class BaseFrame extends JFrame{
         }
     }
 
+    /**
+     * Centralizes the menu button wiring so screen transitions stay in one place.
+     */
     private void setupButtonListeners() {
         // Exit handling is shared between the exit button and the window close button.
         openPanel.exitButton.addActionListener(new MethodUtilities.exitAction(this));
@@ -189,6 +201,9 @@ public class BaseFrame extends JFrame{
     //     }.execute();
     // }
 
+    /**
+     * Returns the app to the opening menu card.
+     */
     public void showOpeningScreen() {
         // Central helper used when backing out of gameplay to the main menu.
         openPanel.startBackgroundAnimation();
@@ -207,6 +222,9 @@ public class BaseFrame extends JFrame{
     //     FileManager.saveProgress(maxLevelReached, tutorialPlayed);
     // }
 
+    /**
+     * Exposes the credits panel for shutdown cleanup.
+     */
     public CreditScroller getCredits() {
         return credits;
     }

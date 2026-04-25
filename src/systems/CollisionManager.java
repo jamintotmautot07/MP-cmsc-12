@@ -21,6 +21,10 @@ import util.Constants;
  - Separate hitboxes
 */
 
+/**
+ * Shared collision helpers for tile checks and simple rectangle intersection tests.
+ * Right now this is intentionally small and focused on map solidity.
+ */
 public class CollisionManager {
 
     /*
@@ -54,6 +58,10 @@ public class CollisionManager {
         if (a == null || b == null) {
             return false;
         }
+        // BUG NOTE: callers must pass rectangles in the same coordinate space.
+        // Several current enemy/player checks pass local solid-area rectangles directly,
+        // so intersection results can be misleading even though this helper itself is correct.
+        // A later improvement could add a helper that builds world-space rectangles from entity position + solidArea.
         // Uses Java's built-in rectangle overlap check for axis-aligned hitboxes.
         return a.intersects(b);
     }

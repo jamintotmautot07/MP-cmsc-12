@@ -13,6 +13,9 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.Color;
 
+/**
+ * Small summary dialog for time score, enemy score, and level progress.
+ */
 public class ScoreboardDialog extends JDialog {
 
     // Score labels are stored as fields so they can be updated whenever the dialog is shown.
@@ -23,6 +26,9 @@ public class ScoreboardDialog extends JDialog {
 
     private Font textFont;
 
+    /**
+     * Builds the scoreboard dialog UI.
+     */
     public ScoreboardDialog(java.awt.Frame parent) {
         super(parent, "Scoreboard", true);
         setSize(300, 200);
@@ -58,6 +64,9 @@ public class ScoreboardDialog extends JDialog {
         add(panel, BorderLayout.CENTER);
     }
 
+    /**
+     * Refreshes every label before the dialog is shown.
+     */
     public void updateScores(int timeScore, int enemyScore, int levelsCleared, int totalScore) {
         // Refresh all labels in one place before showing the dialog.
         timeScoreLabel.setText("Time Score: " + timeScore);

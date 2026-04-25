@@ -4,8 +4,14 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
+/**
+ * Small image helper utilities shared across sprite/tile loading code.
+ */
 public class UtilityTool {
 
+    /**
+     * Resizes one image to the requested pixel size.
+     */
     public static BufferedImage resizeImage(BufferedImage originalImage, int width, int height) {
         // Null-safe guard so callers do not need to repeat this check themselves.
         if (originalImage == null) {

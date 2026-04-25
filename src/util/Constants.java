@@ -8,6 +8,9 @@ package util;
  - Store global constants
 */
 
+/**
+ * Central place for the project's shared sizing and world-dimension constants.
+ */
 public class Constants {
     // Base art size before scaling.
     public static final int originalTileSize = 16; //16x16 tiles

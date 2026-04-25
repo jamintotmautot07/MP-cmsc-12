@@ -13,6 +13,9 @@ import javax.swing.Timer;
 import ui.IntroManager;
 import util.Constants;
 
+/**
+ * Swing wrapper that gives IntroManager a drawable panel and update timer.
+ */
 public class ScenePanel extends JPanel implements KeyListener {
     private static final long serialVersionUID = 1L;
 
@@ -21,6 +24,9 @@ public class ScenePanel extends JPanel implements KeyListener {
     private Timer updateTimer;
     private Runnable onSceneComplete;
 
+    /**
+     * Creates the scene playback panel.
+     */
     public ScenePanel(IntroManager introManager) {
         this.introManager = introManager;
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
@@ -45,10 +51,16 @@ public class ScenePanel extends JPanel implements KeyListener {
         });
     }
 
+    /**
+     * Registers a callback to run when the scene finishes.
+     */
     public void setOnSceneComplete(Runnable callback) {
         this.onSceneComplete = callback;
     }
 
+    /**
+     * Starts a cutscene through IntroManager and begins polling updates.
+     */
     public void startScene(String sceneId, String filePattern, int frameCount, int frameDelayMs) {
         boolean started = introManager.startScene(sceneId, filePattern, frameCount, frameDelayMs);
         if (!started) {
@@ -98,6 +110,9 @@ public class ScenePanel extends JPanel implements KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {}
 
+    /**
+     * Stops scene polling immediately.
+     */
     public void stopScene() {
         // Safe cleanup helper used when the whole app is closing or switching away abruptly.
         if (updateTimer != null && updateTimer.isRunning()) {

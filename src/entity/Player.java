@@ -32,6 +32,10 @@ import util.UtilityTool;
  - Add health system
 */
 
+/**
+ * Player-controlled entity.
+ * Handles input-driven movement, attack timing, animation state, and player rendering.
+ */
 public class Player extends Entity{
 
     // Back-references the player needs to read input and query the world/camera.
@@ -63,6 +67,9 @@ public class Player extends Entity{
     private boolean attackActive = false;
     private String attackDirection = "right"; // Store the direction of the current attack
 
+    /**
+     * Creates the player and loads all animation frames up front.
+     */
     public Player(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
@@ -77,6 +84,9 @@ public class Player extends Entity{
         getPlayerImages();
     }
 
+    /**
+     * Resets the player to default movement values.
+     */
     public void setDefaultValues() {
         // Spawn the player at the screen anchor. Because the camera starts there too,
         // this feels like spawning at the center of the view.
@@ -86,6 +96,21 @@ public class Player extends Entity{
         direction = "idle";
     }
 
+    /**
+     * Sets the spawn point chosen by the current level definition.
+     */
+    public void setLevelStartPosition(int x, int y) {
+        worldX = x;
+        worldY = y;
+
+        // redundancy for safety
+        speed = 3;
+        direction = "idle";
+    }
+
+    /**
+     * Loads and scales the player's sprite sheets from disk.
+     */
     public void getPlayerImages() {
         // Allocate frame arrays based on how many sprite images exist per state.
         idle = new BufferedImage[7];
@@ -127,6 +152,9 @@ public class Player extends Entity{
         }
     }
 
+    /**
+     * One frame of player input, movement, attack, and animation logic.
+     */
     public void update(){
         // Every frame, cooldown timers tick down first.
         updateCooldowns();
@@ -194,6 +222,9 @@ public class Player extends Entity{
                 attackActive = false;
             }
             attackHitbox = calculateAttackHitbox(attackDirection);
+            // BUG NOTE: the player attack hitbox is computed in world coordinates, which is good,
+            // but enemy damage never fires yet because there is no world-space attack-vs-enemy resolution pass.
+            // If combat gets finished later, keep the hitbox generation here and add the actual enemy checks in GamePanel.
             direction = "idle"; // Current art set keeps the player visually idle while attacking.
         } else {
             // No attack requested this frame, so make sure hitbox/combat state is fully cleared.
@@ -336,18 +367,30 @@ public class Player extends Entity{
         return calculateAttackHitbox(attackDirection);
     }
 
+    /**
+     * Exposes whether the attack hitbox should currently be considered live.
+     */
     public boolean isAttackActive() {
         return attackActive;
     }
 
+    /**
+     * Returns the current attack box in world coordinates.
+     */
     public Rectangle getAttackHitbox() {
         return attackHitbox;
     }
 
+    /**
+     * Utility setter used by panel-level resets.
+     */
     public void setDirection(String direction) {
         this.direction = direction;
     }
 
+    /**
+     * Draws the player at the camera-relative anchor point and optionally shows the debug attack box.
+     */
     public void draw(Graphics2D g2){
         // Pick the current sprite frame based on the active state and animation counters.
 

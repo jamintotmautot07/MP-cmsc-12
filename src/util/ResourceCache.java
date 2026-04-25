@@ -22,6 +22,10 @@ import javax.swing.ImageIcon;
  - Single source of truth for all resources
 */
 
+/**
+ * Optional startup cache for images and fonts.
+ * The project currently keeps this available as infrastructure for future optimization work.
+ */
 public class ResourceCache {
     // Two separate caches keep image and font lookups straightforward.
     private static final Map<String, BufferedImage> imageCache = new HashMap<>();

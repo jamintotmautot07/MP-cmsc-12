@@ -29,7 +29,13 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JComponent;
 
+/**
+ * Collection of reusable Swing helpers and lightweight custom UI components.
+ */
 public class MethodUtilities {
+    /**
+     * Shared exit handler used by buttons and the main window close event.
+     */
     public static class exitAction implements ActionListener, WindowListener {
         // Shared frame reference so one exit helper can be attached to multiple exit triggers.
         private static BaseFrame frame;
@@ -88,6 +94,9 @@ public class MethodUtilities {
         }
     }
 
+    /**
+     * JLabel variant that paints a simple glow behind the text.
+     */
     public static class GlowLabel extends JLabel {
         // Simple text glow effect settings.
         private Color glowColor = Color.CYAN;
@@ -134,6 +143,9 @@ public class MethodUtilities {
     }
 
     // RoundedPanel is a reusable painted background panel used across dialogs and menu sections.
+    /**
+     * Panel with a painted rounded rectangle background.
+     */
     public static class RoundedPanel extends JPanel {
         private int radius;
         private Color color = new Color(159, 188, 143);
@@ -173,6 +185,9 @@ public class MethodUtilities {
         }
     }
 
+    /**
+     * JButton variant with a custom flat color treatment and hover/press feedback.
+     */
     public static class CustomButton extends JButton {
         // Default and pressed colors for the custom flat-looking buttons.
         private Color backColor = new Color(129, 167, 109);
@@ -234,6 +249,9 @@ public class MethodUtilities {
         
     }
 
+    /**
+     * Loads the project's UI font and immediately applies it to the supplied component.
+     */
     public static Font getFont(float size, JComponent component) {
         // Loads the project's button/body font and applies it directly to the given component.
         Font textFont;
@@ -259,6 +277,9 @@ public class MethodUtilities {
         }
     }
 
+    /**
+     * Returns the project's UI font without mutating any component.
+     */
     public static Font getFont(float size) {
         // Variant that only returns the font object without touching a component.
         Font textFont;

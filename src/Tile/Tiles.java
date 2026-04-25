@@ -3,6 +3,9 @@ package Tile;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
+/**
+ * Plain data holder for one tile type.
+ */
 public class Tiles {
     
     // Optional fallback color if a tile is ever rendered without an image.

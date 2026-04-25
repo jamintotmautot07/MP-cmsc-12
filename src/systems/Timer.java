@@ -3,6 +3,9 @@ package systems;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+/**
+ * Lightweight gameplay timer that supports pause/resume and time-based scoring.
+ */
 public class Timer {
     // `startTime` stores when the current running segment began.
     // `pausedTime` accumulates all finished running segments.
@@ -19,6 +22,9 @@ public class Timer {
     private int timeLimit;
     private boolean paused;
 
+    /**
+     * Creates a timer for a level. A limit of 0 means open-ended.
+     */
     public Timer(int timeLimit) {
         this.timeLimit = timeLimit;
         timeScore = 0;
@@ -28,6 +34,9 @@ public class Timer {
         paused = false;
     }
 
+    /**
+     * Pauses elapsed-time accumulation without destroying the current run.
+     */
     public void stopTimer() {
         // When pausing, fold the time since the last resume into `pausedTime`.
         if (running && !paused) {
@@ -36,6 +45,9 @@ public class Timer {
         }
     }
 
+    /**
+     * Continues a previously paused timer.
+     */
     public void resumeTimer() {
         // Resume starts a fresh running segment but keeps previously accumulated time.
         if (paused) {
@@ -44,6 +56,9 @@ public class Timer {
         }
     }
 
+    /**
+     * Clears all runtime timer state.
+     */
     public void resetTimer() {
         startTime = 0;
         pausedTime = 0;
@@ -51,6 +66,9 @@ public class Timer {
         paused = false;
     }
 
+    /**
+     * Starts timing from a fresh zero state.
+     */
     public void startTimer() {
         startTime = System.currentTimeMillis();
         pausedTime = 0;
@@ -58,6 +76,9 @@ public class Timer {
         paused = false;
     }
 
+    /**
+     * Returns elapsed time in milliseconds.
+     */
     public long getElapsedTime() {
         if (!running) return 0;
 
@@ -69,6 +90,9 @@ public class Timer {
         }
     }
 
+    /**
+     * Formats elapsed time as `MM:SS`.
+     */
     public String getFormattedTime() {
         long seconds = getElapsedTime() / 1000;
         long minutes = seconds / 60;
@@ -77,10 +101,16 @@ public class Timer {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
+    /**
+     * Indicates whether countdown rules should apply.
+     */
     public boolean hasTimeLimit() {
         return timeLimit > 0;
     }
 
+    /**
+     * Returns remaining time in seconds for timed levels.
+     */
     public int getRemainingTime() {
         if (!hasTimeLimit()) {
             return 0;
@@ -92,6 +122,9 @@ public class Timer {
         return Math.max(remaining, 0); // Keeps the HUD clean once the timer reaches zero.
     }
 
+    /**
+     * Formats the remaining time as `MM:SS`.
+     */
     public String getRemainingTimeFormatted() {
         if (!hasTimeLimit()) {
             return "--:--";
@@ -104,27 +137,45 @@ public class Timer {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
+    /**
+     * True once the countdown reaches zero.
+     */
     public boolean isTimeUp() {
         return hasTimeLimit() && getRemainingTime() <= 0;
     }
 
+    /**
+     * Returns the best locked-in time score.
+     */
     public int getTimeScore() {
         return timeScore;
     }
 
+    /**
+     * Returns the live time score before it is finalized.
+     */
     public int getInGameTimeScore() {
         return inGameTimeScore;
     }
 
+    /**
+     * Debug helper for printing the live score.
+     */
     public void showTimeScore() {
         System.out.println("Time Score: " + inGameTimeScore);
     }
 
+    /**
+     * Recomputes the live score from the current remaining time.
+     */
     public void setTimeScore() {
         int remaining = getRemainingTime();
         inGameTimeScore = remaining * 5; // Simple reward model: more time left means more score.
     }
 
+    /**
+     * Commits the highest live score seen this run.
+     */
     public void setFinalTimeScore() {
         // Stores only the highest captured score instead of replacing it blindly.
         if(inGameTimeScore > timeScore) {
@@ -132,6 +183,9 @@ public class Timer {
         }
     }
     
+    /**
+     * Draws the timer HUD text.
+     */
     public void show(Graphics2D g2, int x, int y) {
 
         // Turn red near the end to make the time pressure obvious.

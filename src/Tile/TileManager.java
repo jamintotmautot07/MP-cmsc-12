@@ -17,6 +17,9 @@ import javax.imageio.ImageIO;
 import util.Constants;
 import util.UtilityTool;
 
+/**
+ * Loads tile art, loads map text files, and renders the visible slice of the world grid.
+ */
 public class TileManager {
     // Folder and expected tile count for the current asset naming scheme.
     private static final String TILE_FOLDER = "res/TILES/";
@@ -30,6 +33,9 @@ public class TileManager {
     public final List<Tiles> tiles;
     public final int[][] mapTileNum;
 
+    /**
+     * Creates the tile palette and allocates the world map grid.
+     */
     public TileManager(GamePanel gamePanel) {
         this.gamePanel = gamePanel;
         this.tiles = new ArrayList<>();
@@ -37,12 +43,18 @@ public class TileManager {
         this.loadAllTiles();
     }
 
+    /**
+     * Loads the full tile set expected by the current asset naming convention.
+     */
     private void loadAllTiles() {
         // Ground tiles are loaded first, then solid tiles are appended after them.
         this.loadTilesByPrefix("ground", false, GROUND_TILE_COUNT);
         this.loadTilesByPrefix("solid", true, Integer.MAX_VALUE);
     }
 
+    /**
+     * Loads one family of tiles that share a filename prefix.
+     */
     private void loadTilesByPrefix(String prefix, boolean solid, int maxTiles) {
         int tileIndex = 1;
 
@@ -69,6 +81,9 @@ public class TileManager {
         }
     }
 
+    /**
+     * Loads one tile image from disk or classpath.
+     */
     private BufferedImage loadImage(String resourcePath) {
         try {
             // First try plain file-system loading. This is convenient during development.
@@ -88,6 +103,9 @@ public class TileManager {
         return null;
     }
 
+    /**
+     * Reads a text map file into the 2D tile-number grid.
+     */
     public void loadMap(String filePath) {
         try {
             InputStream resourceStream = this.getClass().getResourceAsStream(filePath);
@@ -116,6 +134,9 @@ public class TileManager {
         }
     }
 
+    /**
+     * Draws only the tiles near the camera view.
+     */
     public void draw(Graphics2D g2) {
         int cameraWorldX = this.gamePanel.getCameraWorldX();
         int cameraWorldY = this.gamePanel.getCameraWorldY();
@@ -148,6 +169,9 @@ public class TileManager {
         }
     }
 
+    /**
+     * Resolves one map number into a loaded tile definition.
+     */
     private Tiles getTileByMapNumber(int tileNum) {
         if (tileNum <= 0) {
             // Fall back to the first loaded tile if the map contains an invalid or empty value.
@@ -162,6 +186,9 @@ public class TileManager {
         return this.tiles.isEmpty() ? null : this.tiles.get(0);
     }
 
+    /**
+     * Checks whether the tile at a grid position blocks movement.
+     */
     public boolean isTileSolid(int row, int col) {
         // Out-of-bounds is treated as non-solid here.
         // That keeps this method simple, while world clamping is handled elsewhere.
@@ -173,6 +200,9 @@ public class TileManager {
         return tile != null && tile.Collision;
     }
 
+    /**
+     * Returns the full tile object at the requested map cell.
+     */
     public Tiles getTileAt(int row, int col) {
         // Convenience helper for any future logic that needs the full tile object at a grid position.
         if (row < 0 || row >= Constants.worldMaxRow || col < 0 || col >= Constants.worldMaxCol) {
