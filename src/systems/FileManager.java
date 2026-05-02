@@ -144,7 +144,7 @@ public final class FileManager {
     private static int clampLevel(int level) {
         if(level < TUTORIAL_INDEX) {
             return TUTORIAL_INDEX;
-        }
+        } 
         if(level > FINAL_LEVEL_INDEX) {
             return FINAL_LEVEL_INDEX;
         }

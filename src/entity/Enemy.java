@@ -347,4 +347,8 @@ public class Enemy extends Entity {
     public boolean isAlive() {
         return alive;
     }
+
+    public int getDamage() {
+        return this.damage;
+    }
 }

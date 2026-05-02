@@ -67,6 +67,12 @@ public class Player extends Entity{
     private boolean attackActive = false;
     private String attackDirection = "right"; // Store the direction of the current attack
 
+    // Health system
+    private int hp = 10;
+    private int maxHp = 10;
+    private int invincibilityFrames = 0;
+    private final int invincibilityDuration = 120; // 2 seconds at 60 FPS
+
     /**
      * Creates the player and loads all animation frames up front.
      */
@@ -158,6 +164,11 @@ public class Player extends Entity{
     public void update(){
         // Every frame, cooldown timers tick down first.
         updateCooldowns();
+
+        // Update invincibility frames
+        if (invincibilityFrames > 0) {
+            invincibilityFrames--;
+        }
 
         // Once the cooldown is done, a fresh attack input is allowed again.
         if (!isOnCooldown("Player_attack")) {
@@ -360,6 +371,9 @@ public class Player extends Entity{
                 spriteCounter = 0;
             }
         }
+
+        // System.out.println("x-coord: " + worldX/Constants.tileSize);
+        // System.out.println("y-coord: " + worldY/Constants.tileSize);
     }
 
     @Override
@@ -386,6 +400,41 @@ public class Player extends Entity{
      */
     public void setDirection(String direction) {
         this.direction = direction;
+    }
+
+    /**
+     * Apply damage to the player if not currently invincible.
+     */
+    public void takeDamage(int damage) {
+        if (invincibilityFrames <= 0) {
+            hp -= damage;
+            invincibilityFrames = invincibilityDuration;
+            if (hp < 0) {
+                hp = 0;
+            }
+            System.out.println("Player health: " + hp + "/" + maxHp);
+        }
+    }
+
+    /**
+     * Get the player's current health.
+     */
+    public int getHp() {
+        return hp;
+    }
+
+    /**
+     * Get the player's maximum health.
+     */
+    public int getMaxHp() {
+        return maxHp;
+    }
+
+    /**
+     * Check if the player is currently invincible.
+     */
+    public boolean isInvincible() {
+        return invincibilityFrames > 0;
     }
 
     /**
@@ -422,6 +471,13 @@ public class Player extends Entity{
 
         // The player is drawn using camera-relative screen coordinates, not raw world coordinates.
         g2.drawImage(image, gp.getCameraX(), gp.getCameraY(), null);
+
+        // Flash effect when invincible
+        if (isInvincible() && (invincibilityFrames / 10) % 2 == 0) {
+            // Draw semi-transparent white flash
+            g2.setColor(new Color(255, 255, 255, 100));
+            g2.fillRect(gp.getCameraX(), gp.getCameraY(), Constants.tileSize, Constants.tileSize);
+        }
 
         // Debug/feedback overlay to show the active attack area.
         if (attackActive && attackHitbox.width > 0 && attackHitbox.height > 0) {

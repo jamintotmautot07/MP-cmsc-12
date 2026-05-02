@@ -2,8 +2,13 @@
 package systems;
 
 import Tile.TileManager;
+import entity.Enemy;
+import entity.Entity;
+import entity.Player;
+
 import java.awt.Rectangle;
 import util.Constants;
+import util.UtilityTool;
 
 /*
  OWNER: Allan
@@ -65,4 +70,91 @@ public class CollisionManager {
         // Uses Java's built-in rectangle overlap check for axis-aligned hitboxes.
         return a.intersects(b);
     }
+
+    /**
+     * Check if the player collides with an enemy.
+     */
+    // public static void checkPlayerEnemyCollision(Enemy enemy, Player player) {
+    //     // Convert both player and enemy solidAreas to world coordinates for proper collision detection
+    //     java.awt.Rectangle playerWorldSolid = new java.awt.Rectangle(
+    //         player.worldX + player.solidArea.x,
+    //         player.worldY + player.solidArea.y,
+    //         player.solidArea.width,
+    //         player.solidArea.height
+    //     );
+
+    //     java.awt.Rectangle enemyWorldSolid = new java.awt.Rectangle(
+    //         enemy.worldX + enemy.solidArea.x,
+    //         enemy.worldY + enemy.solidArea.y,
+    //         enemy.solidArea.width,
+    //         enemy.solidArea.height
+    //     );
+
+    //     if (CollisionManager.rectanglesIntersect(playerWorldSolid, enemyWorldSolid)) {
+    //         String enemyName = UtilityTool.getEnemyName(enemy);
+    //         System.out.println("hit with " + enemyName + "!!!");
+    //         enemy.damageReaction();
+    //         player.takeDamage(enemy.getDamage());
+    //     }
+    // }
+
+    // /**
+    //  * Check if two enemies collide.
+    //  */
+    // public static void checkEnemyEnemyCollision(Enemy enemy1, Enemy enemy2) {
+    //     java.awt.Rectangle enemy1WorldSolid = new java.awt.Rectangle(
+    //         enemy1.worldX + enemy1.solidArea.x,
+    //         enemy1.worldY + enemy1.solidArea.y,
+    //         enemy1.solidArea.width,
+    //         enemy1.solidArea.height
+    //     );
+
+    //     java.awt.Rectangle enemy2WorldSolid = new java.awt.Rectangle(
+    //         enemy2.worldX + enemy2.solidArea.x,
+    //         enemy2.worldY + enemy2.solidArea.y,
+    //         enemy2.solidArea.width,
+    //         enemy2.solidArea.height
+    //     );
+
+    //     if (CollisionManager.rectanglesIntersect(enemy1WorldSolid, enemy2WorldSolid)) {
+    //         String enemy1Name = UtilityTool.getEnemyName(enemy1);
+    //         String enemy2Name = UtilityTool.getEnemyName(enemy2);
+    //         System.out.println(enemy1Name + " hit with " + enemy2Name + "!!!");
+    //     }
+    // }
+
+    /*
+        Collision method that handles every type of interaction
+    */
+   public static void checkCollisionBetweenEntities(Entity entity1, Entity entity2) {
+// Convert both player and enemy solidAreas to world coordinates for proper collision detection
+        java.awt.Rectangle entity1SolidWorld = new java.awt.Rectangle(
+            entity1.worldX + entity1.solidArea.x,
+            entity1.worldY + entity1.solidArea.y,
+            entity1.solidArea.width,
+            entity1.solidArea.height
+        );
+
+        java.awt.Rectangle entity2SolidWorld = new java.awt.Rectangle(
+            entity2.worldX + entity2.solidArea.x,
+            entity2.worldY + entity2.solidArea.y,
+            entity2.solidArea.width,
+            entity2.solidArea.height
+        );
+
+        if (CollisionManager.rectanglesIntersect(entity1SolidWorld, entity2SolidWorld)) {
+            String entity1Name = UtilityTool.getEntityName(entity1);
+            String entity2name = UtilityTool.getEntityName(entity2);
+
+            if(entity1 instanceof Enemy && entity2 instanceof Player) {
+                Enemy enemy = (Enemy)entity1;
+                Player player = (Player)entity2;
+
+                enemy.damageReaction();
+                player.takeDamage(enemy.getDamage());
+            }
+            
+            System.out.println(entity1Name + " hit with " + entity2name);
+        }
+   }
 }

@@ -20,12 +20,20 @@ import java.awt.Color;
 import util.Constants;
 import util.MethodUtilities.CustomButton;
 import util.MethodUtilities;
+import util.UtilityTool;
 import ui.IntroManager;
 import systems.KeyHandler;
 import entity.Enemy;
 import entity.Player;
+import entity.Worm;
+import entity.Trojan;
+import entity.VirusDrone;
+import entity.CoreBoss;
 import systems.Timer;
+import systems.CollisionManager;
 import Tile.TileManager;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  OWNER: Jamin
@@ -71,6 +79,7 @@ public class GamePanel extends JPanel implements Runnable {
     //Entities
     public Player player = new Player(this, keyH);
     public TileManager tileM;
+    public List<Enemy> enemies = new ArrayList<>();
     private int cameraX;
     private int cameraY;
     private int cameraWorldX;
@@ -117,6 +126,11 @@ public class GamePanel extends JPanel implements Runnable {
         this.timer.startTimer();
         tileM.loadMap(level.mapPath);
         this.player.setLevelStartPosition(level.positionX, level.positionY);
+        
+        // Initialize enemies for the level
+        enemies.clear();
+        initializeEnemiesForLevel(level);
+        
         updateCamera();
     }
 
@@ -129,7 +143,92 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void addEnemy(Enemy enemy) {
-        // Enemy list management is not wired into this GamePanel version yet.
+        // Enemy list management is now wired into this GamePanel version.
+        if (enemy != null) {
+            enemies.add(enemy);
+        }
+    }
+
+    /**
+     * Initialize enemies based on the current level.
+     */
+    private void initializeEnemiesForLevel(Level level) {
+        if (level == Level.LEVEL_1) {
+            initializeLevel1();
+        } else if (level == Level.LEVEL_2) {
+            initializeLevel2();
+        } else if (level == Level.LEVEL_3) {
+            initializeLevel3();
+        }
+        // Tutorial level has no enemies
+    }
+
+    /**
+     * Level 1: 20 worms with predefined positions.
+     */
+    private void initializeLevel1() {
+        // Define predefined positions for 20 worms
+        for(int i = 0; i < 20; i++) {
+            Worm worm = new Worm(this);
+            UtilityTool.setRandomEnemyPosition(worm, tileM);
+            addEnemy(worm);
+        }
+    }
+
+    /**
+     * Level 2: 15 worms, 1 trojan, 6 virus enemies with random positions.
+     */
+    private void initializeLevel2() {
+        // Add 15 worms
+        for (int i = 0; i < 15; i++) {
+            Worm worm = new Worm(this);
+            UtilityTool.setRandomEnemyPosition(worm, tileM);
+            addEnemy(worm);
+        }
+
+        // Add 1 trojan
+        Trojan trojan = new Trojan(this);
+        UtilityTool.setRandomEnemyPosition(trojan, tileM);
+        addEnemy(trojan);
+
+        // Add 6 virus enemies
+        for (int i = 0; i < 6; i++) {
+            VirusDrone virus = new VirusDrone(this);
+            UtilityTool.setRandomEnemyPosition(virus, tileM);
+            addEnemy(virus);
+        }
+    }
+
+    /**
+     * Level 3: 10 worms, 5 virus, 3 trojans, and the boss.
+     */
+    private void initializeLevel3() {
+        // Add 10 worms
+        for (int i = 0; i < 10; i++) {
+            Worm worm = new Worm(this);
+            UtilityTool.setRandomEnemyPosition(worm, tileM);
+            addEnemy(worm);
+        }
+
+        // Add 5 virus enemies
+        for (int i = 0; i < 5; i++) {
+            VirusDrone virus = new VirusDrone(this);
+            UtilityTool.setRandomEnemyPosition(virus, tileM);
+            addEnemy(virus);
+        }
+
+        // Add 3 trojans
+        for (int i = 0; i < 3; i++) {
+            Trojan trojan = new Trojan(this);
+            UtilityTool.setRandomEnemyPosition(trojan, tileM);
+            addEnemy(trojan);
+        }
+
+        // Add the boss
+        CoreBoss boss = new CoreBoss(this);
+        boss.worldX = 24 * Constants.tileSize;
+        boss.worldY = 10 * Constants.tileSize;
+        addEnemy(boss);
     }
 
     public int getLevelsCleared() {
@@ -329,10 +428,50 @@ public class GamePanel extends JPanel implements Runnable {
         if (gameState == playState) {
             player.update();
 
+            // Update all enemies
+            for (int i = 0; i < enemies.size(); i++) {
+                Enemy enemy = enemies.get(i);
+                if (enemy.isAlive()) {
+                    enemy.update();
+                }
+            }
+
+            // Check player-to-enemy collisions
+            for (Enemy enemy : enemies) {
+                if (enemy.isAlive()) {
+                    CollisionManager.checkCollisionBetweenEntities(enemy, player);
+                }
+            }
+
+            // Check enemy-to-enemy collisions
+            for (int i = 0; i < enemies.size(); i++) {
+                for (int j = i + 1; j < enemies.size(); j++) {
+                    Enemy enemy1 = enemies.get(i);
+                    Enemy enemy2 = enemies.get(j);
+                    if (enemy1.isAlive() && enemy2.isAlive()) {
+                        CollisionManager.checkCollisionBetweenEntities(enemy1, enemy2);
+                    }
+                }
+            }
+
+            // Remove dead enemies
+            enemies.removeIf(enemy -> !enemy.isAlive());
+
             // clamp player world position to the tilemap bounds
             player.worldX = Math.max(0, Math.min(player.worldX, Constants.maxWorldWidth - Constants.tileSize));
             player.worldY = Math.max(0, Math.min(player.worldY, Constants.maxWorldHeight - Constants.tileSize));
             updateCamera();
+
+            if(currentLevel == Level.TUTORIAL){    
+                if(this.player.worldX/Constants.tileSize == 0
+                    && (this.player.worldY/Constants.tileSize == 47 || this.player.worldY/Constants.tileSize == 48)) 
+                {
+                    player.setDirection("idle");
+                    levelsCleared++;
+                    if(onLevelComplete != null) onLevelComplete.run();
+                    setLevel(Level.LEVEL_1);
+                }
+            }
 
             if (timer != null) {
                 timer.setTimeScore(); // time based score
@@ -437,6 +576,13 @@ public class GamePanel extends JPanel implements Runnable {
             int textWidth = g2.getFontMetrics().stringWidth(text);
             g2.drawString(text, (getWidth() - textWidth) / 2, getHeight() - 40);
             return;
+        }
+
+        // Draw enemies
+        for (Enemy enemy : enemies) {
+            if (enemy.isAlive()) {
+                enemy.render(g2);
+            }
         }
 
         // player
