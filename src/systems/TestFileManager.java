@@ -13,10 +13,8 @@ public class TestFileManager {
             // Step 2: save data
             FileManager.saveData(999, true);
 
-            System.out.println("Save successful!");
 
         } catch (GameException e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 }

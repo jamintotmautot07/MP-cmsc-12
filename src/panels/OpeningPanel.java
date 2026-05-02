@@ -2,7 +2,6 @@ package panels;
 
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
@@ -46,7 +45,7 @@ public class OpeningPanel extends JPanel {
     private MethodUtilities.RoundedPanel centerPanel;
     private JPanel header;
     private JPanel instructions;
-    private MethodUtilities.RoundedPanel titlePanel;
+    private JPanel titlePanel;
 
     private MethodUtilities.GlowLabel headerLabel1;
     private MethodUtilities.GlowLabel headerLabel2;
@@ -77,7 +76,7 @@ public class OpeningPanel extends JPanel {
         // Font titleLowerFont = new Font("Papyrus", Font.BOLD, 35);
 
         headerLabel1 = new GlowLabel(String.format("Hawak ko ang Bit:"));
-        headerLabel2 = new GlowLabel(String.format("THE FINAL BIT"), new Color(255, 153, 51));
+        headerLabel2 = new GlowLabel(String.format("THE FINAL BIT"), new Color(150, 166, 150));
 
         try (InputStream titleLowerStream = new FileInputStream("res/Font/Those_Glitch_Regular.ttf");
              InputStream titleUpperStream = new FileInputStream("res/Font/TopTitle_Font.ttf")) {
@@ -88,16 +87,15 @@ public class OpeningPanel extends JPanel {
             titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 50f);
             titleUpperFont = titleUpperFont.deriveFont(Font.BOLD, 35f);
 
-            headerLabel1.setForeground(new Color(153, 204, 255));
+            headerLabel1.setForeground(new Color(128, 136, 213));
             headerLabel1.setFont(titleUpperFont);
             headerLabel1.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            headerLabel2.setForeground(new Color(255, 51, 0));
+            headerLabel2.setForeground(new Color(57, 67, 57));
             headerLabel2.setFont(titleLowerFont);
             headerLabel2.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         } catch (Exception e) {
-            e.printStackTrace();
         }
 
         // Main menu actions.
@@ -126,9 +124,10 @@ public class OpeningPanel extends JPanel {
         main.setBackground(null);
         main.setOpaque(false);
 
-        titlePanel = new RoundedPanel(15);
+        titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 12, 10,12));
+        titlePanel.setBackground(new Color(159, 188, 143));
+        titlePanel.setBorder(BorderFactory.createEtchedBorder(new Color(223, 233, 218), new Color(77, 104, 62)));
 
         centerPanel = new RoundedPanel(new GridLayout(4, 1, 10, 10), 15);
         centerPanel.setPreferredSize(new Dimension(280, 220));

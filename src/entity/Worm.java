@@ -13,6 +13,9 @@ import engine.GamePanel;
  */
 public class Worm extends Enemy {
 
+    private static final int AGGRO_RANGE_TILES = 3;
+    private static final int BITE_COOLDOWN_FRAMES = 60 * 3;
+
     public Worm(GamePanel gp) {
         super(gp);
         setDefaultValues();
@@ -24,6 +27,7 @@ public class Worm extends Enemy {
         super.setDefaultValues();
         speed = 1; // Slow, organic movement
         hp = 2;    // Weaker health
+        maxHp = 2;
         damage = 1;
     }
 
@@ -48,6 +52,21 @@ public class Worm extends Enemy {
 
     @Override
     public void setAction() {
+        String attackDirection = getCardinalDirectionTowardPlayer();
+        if (!isOnCooldown("Worm_bite") && canHitPlayerWithMelee(attackDirection)) {
+            direction = attackDirection;
+            startEnemyAttack(AttackType.NORMAL, attackDirection);
+            startCooldown("Worm_bite", BITE_COOLDOWN_FRAMES);
+            actionLockCounter = 0;
+            return;
+        }
+
+        if (getTileDistanceToPlayer() <= AGGRO_RANGE_TILES) {
+            direction = attackDirection;
+            actionLockCounter = 0;
+            return;
+        }
+
         actionLockCounter++;
 
         // More frequent direction changes for organic feel

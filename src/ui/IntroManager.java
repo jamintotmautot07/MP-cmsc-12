@@ -120,7 +120,6 @@ public class IntroManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
         }
 
         if (loadedFrames != frameCount) {

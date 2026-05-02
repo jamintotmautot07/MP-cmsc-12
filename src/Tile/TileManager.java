@@ -130,7 +130,6 @@ public class TileManager {
 
             reader.close();
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

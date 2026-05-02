@@ -2,7 +2,6 @@ package panels;
 
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import util.MethodUtilities;
 import util.MethodUtilities.RoundedPanel;

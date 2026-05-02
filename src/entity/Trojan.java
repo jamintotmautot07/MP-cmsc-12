@@ -1,5 +1,6 @@
 package entity;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,20 @@ public class Trojan extends Enemy {
         super.setDefaultValues();
         speed = 0; // Stationary
         hp = 5;    // Tougher than basic enemies
+        maxHp = 5;
         damage = 0; // Doesn't attack directly
+        renderWidth = Constants.tileSize * 3;
+        renderHeight = Constants.tileSize * 3;
+
+        int padding = Constants.tileSize / 4;
+        solidArea = new Rectangle(
+            padding,
+            padding,
+            renderWidth - (padding * 2),
+            renderHeight - (padding * 2)
+        );
+        solidAreaDefaultX = solidArea.x;
+        solidAreaDefaultY = solidArea.y;
     }
 
     @Override

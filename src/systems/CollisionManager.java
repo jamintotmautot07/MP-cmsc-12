@@ -7,8 +7,8 @@ import entity.Entity;
 import entity.Player;
 
 import java.awt.Rectangle;
+import java.util.List;
 import util.Constants;
-import util.UtilityTool;
 
 /*
  OWNER: Allan
@@ -71,6 +71,56 @@ public class CollisionManager {
         return a.intersects(b);
     }
 
+    public static Rectangle getWorldSolidArea(Entity entity) {
+        if (entity == null) {
+            return new Rectangle();
+        }
+
+        return getWorldSolidArea(entity, entity.worldX, entity.worldY);
+    }
+
+    public static Rectangle getWorldSolidArea(Entity entity, int worldX, int worldY) {
+        if (entity == null) {
+            return new Rectangle();
+        }
+
+        if (entity.solidArea == null) {
+            return new Rectangle(worldX, worldY, entity.renderWidth, entity.renderHeight);
+        }
+
+        return new Rectangle(
+            worldX + entity.solidArea.x,
+            worldY + entity.solidArea.y,
+            entity.solidArea.width,
+            entity.solidArea.height
+        );
+    }
+
+    public static boolean willCollideWithEntity(Rectangle futureSolidArea, Entity entity) {
+        if (futureSolidArea == null || entity == null || entity.solidArea == null) {
+            return false;
+        }
+
+        return rectanglesIntersect(futureSolidArea, getWorldSolidArea(entity));
+    }
+
+    public static boolean willCollideWithAnyEnemy(Rectangle futureSolidArea, List<Enemy> enemies, Enemy ignoredEnemy) {
+        if (futureSolidArea == null || enemies == null) {
+            return false;
+        }
+
+        for (Enemy enemy : enemies) {
+            if (enemy == null || enemy == ignoredEnemy || !enemy.isAlive()) {
+                continue;
+            }
+            if (willCollideWithEntity(futureSolidArea, enemy)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Check if the player collides with an enemy.
      */
@@ -92,7 +142,6 @@ public class CollisionManager {
 
     //     if (CollisionManager.rectanglesIntersect(playerWorldSolid, enemyWorldSolid)) {
     //         String enemyName = UtilityTool.getEnemyName(enemy);
-    //         System.out.println("hit with " + enemyName + "!!!");
     //         enemy.damageReaction();
     //         player.takeDamage(enemy.getDamage());
     //     }
@@ -119,7 +168,6 @@ public class CollisionManager {
     //     if (CollisionManager.rectanglesIntersect(enemy1WorldSolid, enemy2WorldSolid)) {
     //         String enemy1Name = UtilityTool.getEnemyName(enemy1);
     //         String enemy2Name = UtilityTool.getEnemyName(enemy2);
-    //         System.out.println(enemy1Name + " hit with " + enemy2Name + "!!!");
     //     }
     // }
 
@@ -143,8 +191,6 @@ public class CollisionManager {
         );
 
         if (CollisionManager.rectanglesIntersect(entity1SolidWorld, entity2SolidWorld)) {
-            String entity1Name = UtilityTool.getEntityName(entity1);
-            String entity2name = UtilityTool.getEntityName(entity2);
 
             if(entity1 instanceof Enemy && entity2 instanceof Player) {
                 Enemy enemy = (Enemy)entity1;
@@ -154,7 +200,6 @@ public class CollisionManager {
                 player.takeDamage(enemy.getDamage());
             }
             
-            System.out.println(entity1Name + " hit with " + entity2name);
         }
    }
 }

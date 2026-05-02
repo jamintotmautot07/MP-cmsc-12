@@ -10,8 +10,6 @@ import javax.imageio.ImageIO;
 
 import engine.GamePanel;
 import util.Constants;
-import util.UtilityTool;
-import systems.CollisionManager;
 import java.awt.Color;
 
 /**
@@ -58,6 +56,7 @@ public class EnemyPath extends Enemy {
         speed = 2; // Slightly faster than basic enemy
         direction = "down";
         hp = 3;
+        maxHp = 3;
         damage = 1;
         alive = true;
         dying = false;
@@ -242,17 +241,16 @@ public class EnemyPath extends Enemy {
      */
     private void checkCollision() {
         collisionOn = false;
-        // Check tile collision
-        Rectangle futureSolidArea = new Rectangle(
-            solidArea.x + worldX,
-            solidArea.y + worldY,
-            solidArea.width,
-            solidArea.height
-        );
-        // BUG NOTE: this helper only checks solid map tiles, not other enemies or the player.
-        // That is why chase enemies can overlap one another even when they should feel physically separate.
-        // If collision is expanded later, this method is one of the best places to add enemy-body checks.
-        if (CollisionManager.willCollideWithSolidTile(gp.tileM, futureSolidArea)) {
+        int nextX = worldX;
+        int nextY = worldY;
+        switch (direction) {
+            case "up":    nextY -= speed; break;
+            case "down":  nextY += speed; break;
+            case "left":  nextX -= speed; break;
+            case "right": nextX += speed; break;
+        }
+
+        if (!canMoveTo(nextX, nextY)) {
             collisionOn = true;
         }
     }
@@ -267,37 +265,29 @@ public class EnemyPath extends Enemy {
         setAction();
 
         collisionOn = false;
-        // Check tile collision
-        Rectangle futureSolidArea = new Rectangle(
-            solidArea.x + worldX,
-            solidArea.y + worldY,
-            solidArea.width,
-            solidArea.height
-        );
-        // Same caveat as the base Enemy: this rectangle is not offset by the candidate movement step yet.
-        if (CollisionManager.willCollideWithSolidTile(gp.tileM, futureSolidArea)) {
+        int nextX = worldX;
+        int nextY = worldY;
+        if (!attackActive) {
+            switch (direction) {
+                case "up":    nextY -= speed; break;
+                case "down":  nextY += speed; break;
+                case "left":  nextX -= speed; break;
+                case "right": nextX += speed; break;
+            }
+        }
+
+        if (!attackActive && !canMoveTo(nextX, nextY)) {
             collisionOn = true;
         }
 
-        // Check player collision
-        // BUG NOTE: still comparing local-space hitboxes rather than world-space rectangles.
-        // This prevents reliable touch damage and also makes later enemy/player collision rules hard to trust.
-        if (CollisionManager.rectanglesIntersect(gp.player.solidArea, solidArea)) {
-            // Handle player collision (damage player, etc.)
-            // TODO: Implement player damage
-        }
-
-        if (!collisionOn) {
-            switch (direction) {
-                case "up":    worldY -= speed; break;
-                case "down":  worldY += speed; break;
-                case "left":  worldX -= speed; break;
-                case "right": worldX += speed; break;
-            }
+        if (!collisionOn && !attackActive) {
+            worldX = nextX;
+            worldY = nextY;
         }
 
         // Update animation
         updateAnimation();
+        updateAttackState();
 
         if (invincible) {
             invincibleCounter++;
@@ -360,23 +350,32 @@ public class EnemyPath extends Enemy {
         if (image == null) {
             // Fallback: draw a colored rectangle
             g2.setColor(Color.BLUE);
-            g2.fillRect(worldX - gp.player.worldX + gp.player.screenX,
-                       worldY - gp.player.worldY + gp.player.screenY,
+            g2.fillRect(worldX - gp.getCameraWorldX(),
+                       worldY - gp.getCameraWorldY(),
                        Constants.tileSize, Constants.tileSize);
+            renderHealthBar(g2, worldX - gp.getCameraWorldX(), worldY - gp.getCameraWorldY());
             return;
         }
 
-        // BUG NOTE: like Enemy.render(), this still uses a player-relative transform.
-        // If chase enemies appear to warp near map edges, the later rendering fix should mirror
-        // the camera-based conversion used elsewhere in GamePanel and TileManager.
-        int screenX = worldX - gp.player.worldX + gp.player.screenX;
-        int screenY = worldY - gp.player.worldY + gp.player.screenY;
+        // Draw with the same camera transform used by tiles and player hitboxes.
+        int screenX = worldX - gp.getCameraWorldX();
+        int screenY = worldY - gp.getCameraWorldY();
 
         if (invincible) {
             g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.5f));
         }
 
         g2.drawImage(image, screenX, screenY, renderWidth, renderHeight, null);
+        renderHealthBar(g2, screenX, screenY);
+
+        if (attackActive && attackHitbox.width > 0 && attackHitbox.height > 0) {
+            int hitX = attackHitbox.x - gp.getCameraWorldX();
+            int hitY = attackHitbox.y - gp.getCameraWorldY();
+            g2.setColor(new Color(255, 0, 0, 120));
+            g2.fillRect(hitX, hitY, attackHitbox.width, attackHitbox.height);
+            g2.setColor(Color.RED);
+            g2.drawRect(hitX, hitY, attackHitbox.width, attackHitbox.height);
+        }
 
         if (invincible) {
             g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1f));

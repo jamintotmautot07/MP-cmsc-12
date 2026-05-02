@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.Color;
@@ -266,7 +265,6 @@ public class MethodUtilities {
             return textFont;
 
         } catch (Exception e) {
-            e.printStackTrace();
 
             // If the custom font fails, fall back to a standard bold sans-serif font.
             Font fallbackFont = new Font("SansSerif", Font.BOLD, (int) size);
@@ -291,7 +289,6 @@ public class MethodUtilities {
             return textFont;
 
         } catch (Exception e) {
-            e.printStackTrace();
 
             // Fallback for places that still need a usable font even when assets are missing.
             Font fallbackFont = new Font("Arial", Font.BOLD, (int) size);

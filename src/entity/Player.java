@@ -60,12 +60,22 @@ public class Player extends Entity{
 
     // Prevents one long key hold from repeatedly retriggering an attack.
     private boolean attackedPressed = false;
+    private boolean firePressed = false;
+    private boolean dashPressed = false;
 
     // Attack timing/state.
     private int attackCounter = 0;
     private final int attackDuration = 18;
     private boolean attackActive = false;
     private String attackDirection = "right"; // Store the direction of the current attack
+
+    // Dash state
+    private boolean dashing = false;
+    private int dashCounter = 0;
+    private final int dashDuration = 12;
+    private final int dashDistanceTiles = 5;
+    private float dashPrevProgress = 0f;
+    private String dashDirection = "right";
 
     // Health system
     private int hp = 10;
@@ -100,6 +110,8 @@ public class Player extends Entity{
         worldY = screenY;
         speed = 3;
         direction = "idle";
+        maxHp = 10;
+        hp = maxHp;
     }
 
     /**
@@ -112,6 +124,15 @@ public class Player extends Entity{
         // redundancy for safety
         speed = 3;
         direction = "idle";
+        maxHp = 10;
+        hp = maxHp;
+        invincibilityFrames = 0;
+    }
+
+    private boolean canOccupyPosition(int nextX, int nextY) {
+        Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(this, nextX, nextY);
+        return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)
+            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.enemies, null);
     }
 
     /**
@@ -154,7 +175,6 @@ public class Player extends Entity{
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -164,6 +184,14 @@ public class Player extends Entity{
     public void update(){
         // Every frame, cooldown timers tick down first.
         updateCooldowns();
+
+        // Reset held-button state flags when the keys are released.
+        if (!keyH.isActionPressed(KeyHandler.Action.FIRE)) {
+            firePressed = false;
+        }
+        if (!keyH.isActionPressed(KeyHandler.Action.DASH)) {
+            dashPressed = false;
+        }
 
         // Update invincibility frames
         if (invincibilityFrames > 0) {
@@ -245,8 +273,95 @@ public class Player extends Entity{
             attackHitbox.setBounds(0, 0, 0, 0);
         }
 
-        // Movement input uses simple "first matching direction wins" priority.
-        if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
+        // Ability input: projectile fire and dash.
+        if (keyH.isActionPressed(KeyHandler.Action.FIRE) && !firePressed && !isOnCooldown("Player_fire")) {
+            firePressed = true;
+            startCooldown("Player_fire", 40);
+            String fireDirection = facingDirection;
+            if (keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
+                fireDirection = "up";
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
+                fireDirection = "down";
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT)) {
+                fireDirection = "left";
+            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
+                fireDirection = "right";
+            }
+
+            int projectileSize = Constants.tileSize - 12;
+            int startX = worldX + (Constants.tileSize / 2) - (projectileSize / 2);
+            int startY = worldY + (Constants.tileSize / 2) - (projectileSize / 2);
+            Projectile projectile = new Projectile(
+                gp,
+                Projectile.OwnerType.PLAYER,
+                fireDirection,
+                startX,
+                startY,
+                1,
+                6,
+                5 * Constants.tileSize,
+                projectileSize,
+                projectileSize
+            );
+            gp.spawnProjectile(projectile);
+        }
+
+        if (!dashing && keyH.isActionPressed(KeyHandler.Action.DASH) && !dashPressed && !isOnCooldown("Player_dash")) {
+            dashPressed = true;
+            startCooldown("Player_dash", 30);
+            dashing = true;
+            dashCounter = 0;
+            dashPrevProgress = 0f;
+            dashDirection = facingDirection;
+        }
+
+        // Handle dash motion first if dashing.
+        if (dashing) {
+            direction = dashDirection;
+            facingDirection = dashDirection;
+            float nextProgress = Math.min(1f, (dashCounter + 1) / (float) dashDuration);
+            float eased = nextProgress * nextProgress * (3 - 2 * nextProgress);
+            float previous = dashPrevProgress;
+            float totalDistance = dashDistanceTiles * Constants.tileSize;
+            float delta = totalDistance * eased - totalDistance * previous;
+            dashPrevProgress = eased;
+            dashCounter++;
+
+            int nextX = worldX;
+            int nextY = worldY;
+            int move = Math.round(delta);
+            switch (dashDirection) {
+                case "up": nextY -= move; break;
+                case "down": nextY += move; break;
+                case "left": nextX -= move; break;
+                case "right": nextX += move; break;
+            }
+
+            if (canOccupyPosition(nextX, nextY)) {
+                worldX = nextX;
+                worldY = nextY;
+            } else {
+                dashing = false;
+            }
+
+            if (dashCounter >= dashDuration) {
+                dashing = false;
+            }
+
+            spriteCounter++;
+            if (spriteCounter > movementAnimationSpeed) {
+                spriteCounter = 0;
+                if (direction.equals("up")) {
+                    upCounter = (upCounter + 1) % 6;
+                } else if (direction.equals("down")) {
+                    downCounter = (downCounter + 1) % 4;
+                } else if (direction.equals("left")) {
+                    leftCounter = (leftCounter + 1) % 6;
+                } else if (direction.equals("right")) {
+                    rightCounter = (rightCounter + 1) % 6;
+                }
+            }
+        } else if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
             keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
         ) {
 
@@ -276,8 +391,7 @@ public class Player extends Entity{
             }
 
             // Collision is checked against the next predicted position before movement is committed.
-            Rectangle futureSolidArea = new Rectangle(nextX + solidArea.x, nextY + solidArea.y, solidArea.width, solidArea.height);
-            if (!CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)) {
+            if (canOccupyPosition(nextX, nextY)) {
                 worldX = nextX;
                 worldY = nextY;
             }
@@ -339,7 +453,6 @@ public class Player extends Entity{
                     }
                 }
 
-
                 spriteCounter = 0;
             }
         } else {
@@ -372,8 +485,6 @@ public class Player extends Entity{
             }
         }
 
-        // System.out.println("x-coord: " + worldX/Constants.tileSize);
-        // System.out.println("y-coord: " + worldY/Constants.tileSize);
     }
 
     @Override
@@ -395,6 +506,10 @@ public class Player extends Entity{
         return attackHitbox;
     }
 
+    public boolean isDashing() {
+        return dashing;
+    }
+
     /**
      * Utility setter used by panel-level resets.
      */
@@ -412,7 +527,6 @@ public class Player extends Entity{
             if (hp < 0) {
                 hp = 0;
             }
-            System.out.println("Player health: " + hp + "/" + maxHp);
         }
     }
 
@@ -470,6 +584,7 @@ public class Player extends Entity{
         }
 
         // The player is drawn using camera-relative screen coordinates, not raw world coordinates.
+        drawGlow(g2, gp.getCameraX(), gp.getCameraY());
         g2.drawImage(image, gp.getCameraX(), gp.getCameraY(), null);
 
         // Flash effect when invincible
@@ -483,14 +598,30 @@ public class Player extends Entity{
         if (attackActive && attackHitbox.width > 0 && attackHitbox.height > 0) {
             int screenX = attackHitbox.x - gp.getCameraWorldX();
             int screenY = attackHitbox.y - gp.getCameraWorldY();
-            g2.setColor(new Color(255, 0, 0, 120));
+            g2.setColor(new Color(0, 120, 255, 150));
             g2.fillRect(screenX, screenY, attackHitbox.width, attackHitbox.height);
-            g2.setColor(Color.RED);
+            g2.setColor(new Color(0, 80, 220));
             g2.drawRect(screenX, screenY, attackHitbox.width, attackHitbox.height);
         }
 
         //Initial character
         // g2.setColor(Color.WHITE);
         // g2.fillRect(worldX, worldY, Constants.tileSize, Constants.tileSize);
+    }
+
+    private void drawGlow(Graphics2D g2, int screenX, int screenY) {
+        java.awt.Composite oldComposite = g2.getComposite();
+        int centerX = screenX + Constants.tileSize / 2;
+        int centerY = screenY + Constants.tileSize / 2;
+
+        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.22f));
+        g2.setColor(new Color(80, 190, 255));
+        g2.fillOval(centerX - 34, centerY - 34, 68, 68);
+
+        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.18f));
+        g2.setColor(new Color(180, 245, 255));
+        g2.fillOval(centerX - 24, centerY - 24, 48, 48);
+
+        g2.setComposite(oldComposite);
     }
 }

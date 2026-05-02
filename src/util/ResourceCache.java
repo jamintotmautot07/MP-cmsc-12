@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 /*
  PURPOSE:
@@ -44,8 +43,6 @@ public class ResourceCache {
                 BufferedImage img = ImageIO.read(new java.io.File(path));
                 imageCache.put(key, img);
             } catch (Exception e) {
-                System.err.println("Failed to load image: " + path);
-                e.printStackTrace();
             }
         }
     }
@@ -67,10 +64,7 @@ public class ResourceCache {
                 Font baseFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
                 Font derivedFont = baseFont.deriveFont(style, size);
                 fontCache.put(key, derivedFont);
-                System.out.println("Loaded font from file: " + key + " (" + path + ")");
             } catch (Exception e) {
-                System.err.println("Failed to load font from file: " + path);
-                e.printStackTrace();
             }
         }
     }
@@ -84,10 +78,7 @@ public class ResourceCache {
             try {
                 Font font = new Font(fontName, style, (int)size);
                 fontCache.put(key, font);
-                System.out.println("Loaded system font: " + key + " (" + fontName + ")");
             } catch (Exception e) {
-                System.err.println("Failed to load system font: " + fontName);
-                e.printStackTrace();
             }
         }
     }
@@ -182,6 +173,5 @@ public class ResourceCache {
      * Get cache statistics for debugging
      */
     public static void printStats() {
-        System.out.println("ResourceCache loaded: " + imageCache.size() + " images, " + fontCache.size() + " fonts");
     }
 }

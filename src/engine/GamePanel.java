@@ -16,6 +16,7 @@ import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Rectangle;
 
 import util.Constants;
 import util.MethodUtilities.CustomButton;
@@ -29,11 +30,16 @@ import entity.Worm;
 import entity.Trojan;
 import entity.VirusDrone;
 import entity.CoreBoss;
+import entity.Projectile;
+import entity.Laser;
 import systems.Timer;
 import systems.CollisionManager;
 import Tile.TileManager;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /*
  OWNER: Jamin
@@ -75,15 +81,21 @@ public class GamePanel extends JPanel implements Runnable {
     public final int playState = 0;
     public final int pausedState = 1;
     public final int cutsceneState = 2;
+    public final int defeatState = 3;
 
     //Entities
     public Player player = new Player(this, keyH);
     public TileManager tileM;
     public List<Enemy> enemies = new ArrayList<>();
+    public List<Projectile> projectiles = new ArrayList<>();
+    public List<Laser> lasers = new ArrayList<>();
     private int cameraX;
     private int cameraY;
     private int cameraWorldX;
     private int cameraWorldY;
+    private final Map<String, Integer> enemyTotals = new LinkedHashMap<>();
+    private boolean resolvingLevelOutcome = false;
+    private boolean resolvingDefeat = false;
 
     //FPS
     final int fps = 60; //60 frames per second
@@ -129,9 +141,17 @@ public class GamePanel extends JPanel implements Runnable {
         
         // Initialize enemies for the level
         enemies.clear();
+        projectiles.clear();
+        lasers.clear();
+        enemyTotals.clear();
+        resolvingLevelOutcome = false;
+        resolvingDefeat = false;
         initializeEnemiesForLevel(level);
         
         updateCamera();
+        if (gameState != cutsceneState) {
+            gameState = playState;
+        }
     }
 
     public Level getCurrentLevel() {
@@ -146,6 +166,20 @@ public class GamePanel extends JPanel implements Runnable {
         // Enemy list management is now wired into this GamePanel version.
         if (enemy != null) {
             enemies.add(enemy);
+            String type = UtilityTool.getEntityName(enemy);
+            enemyTotals.put(type, enemyTotals.getOrDefault(type, 0) + 1);
+        }
+    }
+
+    public void spawnProjectile(Projectile projectile) {
+        if (projectile != null) {
+            projectiles.add(projectile);
+        }
+    }
+
+    public void spawnLaser(Laser laser) {
+        if (laser != null) {
+            lasers.add(laser);
         }
     }
 
@@ -167,8 +201,7 @@ public class GamePanel extends JPanel implements Runnable {
      * Level 1: 20 worms with predefined positions.
      */
     private void initializeLevel1() {
-        // Define predefined positions for 20 worms
-        for(int i = 0; i < 20; i++) {
+        for (int i = 0; i < 15; i++) {
             Worm worm = new Worm(this);
             UtilityTool.setRandomEnemyPosition(worm, tileM);
             addEnemy(worm);
@@ -180,7 +213,7 @@ public class GamePanel extends JPanel implements Runnable {
      */
     private void initializeLevel2() {
         // Add 15 worms
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 10; i++) {
             Worm worm = new Worm(this);
             UtilityTool.setRandomEnemyPosition(worm, tileM);
             addEnemy(worm);
@@ -226,13 +259,84 @@ public class GamePanel extends JPanel implements Runnable {
 
         // Add the boss
         CoreBoss boss = new CoreBoss(this);
-        boss.worldX = 24 * Constants.tileSize;
-        boss.worldY = 10 * Constants.tileSize;
+        boss.setStartTilePosition(24, 21);
         addEnemy(boss);
     }
 
     public int getLevelsCleared() {
         return levelsCleared;
+    }
+
+    private void handleLevelCleared() {
+        if (resolvingLevelOutcome) {
+            return;
+        }
+
+        resolvingLevelOutcome = true;
+        keyH.resetKeys();
+        timer.stopTimer();
+        timer.setFinalTimeScore();
+        currentLevel.setMaxTimeScore(timer.getTimeScore());
+        gameState = pausedState;
+        repaint();
+
+        boolean hasNextLevel = currentLevel.nextLevel != null;
+        String message = hasNextLevel
+            ? "All enemies eliminated. Proceed to the next level?"
+            : "All enemies eliminated. Return to home screen?";
+        int result = JOptionPane.showConfirmDialog(this, message, "Level Cleared", JOptionPane.YES_NO_OPTION);
+
+        if (result == JOptionPane.YES_OPTION) {
+            player.setDirection("idle");
+            levelsCleared++;
+            if (onLevelComplete != null) onLevelComplete.run();
+
+            if (hasNextLevel) {
+                setLevel(currentLevel.nextLevel);
+            } else {
+                exitToHome();
+            }
+        } else {
+            exitToHome();
+        }
+    }
+
+    private void handleDefeat() {
+        if (resolvingDefeat) {
+            return;
+        }
+
+        resolvingDefeat = true;
+        keyH.resetKeys();
+        timer.stopTimer();
+        gameState = defeatState;
+        repaint();
+
+        Object[] options = {"Restart", "Exit"};
+        int result = JOptionPane.showOptionDialog(
+            this,
+            "You were defeated.",
+            "Defeat",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        if (result == JOptionPane.YES_OPTION) {
+            setLevel(currentLevel);
+        } else {
+            exitToHome();
+        }
+    }
+
+    private void exitToHome() {
+        stopGameThread();
+        Window ownerFrame = SwingUtilities.getWindowAncestor(this);
+        if (ownerFrame instanceof main.BaseFrame) {
+            ((main.BaseFrame) ownerFrame).showOpeningScreen();
+        }
     }
 
     public void startGameThread() {
@@ -293,6 +397,7 @@ public class GamePanel extends JPanel implements Runnable {
         keyH.resetKeys();
         timer.stopTimer();
         gameState = pausedState;
+        repaint();
         showPauseDialog();
     }
 
@@ -417,7 +522,6 @@ public class GamePanel extends JPanel implements Runnable {
 
             if(timer >= 1000000000) {
                 System.out.println("FPS: " + drawCount);
-                this.timer.showTimeScore();
                 drawCount = 0;
                 timer = 0;
             }
@@ -428,6 +532,10 @@ public class GamePanel extends JPanel implements Runnable {
         if (gameState == playState) {
             player.update();
 
+            // clamp player world position to the tilemap bounds
+            player.worldX = Math.max(0, Math.min(player.worldX, Constants.maxWorldWidth - Constants.tileSize));
+            player.worldY = Math.max(0, Math.min(player.worldY, Constants.maxWorldHeight - Constants.tileSize));
+
             // Update all enemies
             for (int i = 0; i < enemies.size(); i++) {
                 Enemy enemy = enemies.get(i);
@@ -436,31 +544,159 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
 
-            // Check player-to-enemy collisions
-            for (Enemy enemy : enemies) {
-                if (enemy.isAlive()) {
-                    CollisionManager.checkCollisionBetweenEntities(enemy, player);
+            // Update projectiles and resolve their collisions.
+            Iterator<Projectile> projectileIterator = projectiles.iterator();
+            while (projectileIterator.hasNext()) {
+                Projectile projectile = projectileIterator.next();
+                projectile.update();
+                if (!projectile.isAlive()) {
+                    projectileIterator.remove();
+                    continue;
+                }
+
+                Rectangle projectileBounds = projectile.getBounds();
+                if (projectile.getOwnerType() == Projectile.OwnerType.PLAYER) {
+                    for (Enemy enemy : enemies) {
+                        if (!enemy.isAlive()) {
+                            continue;
+                        }
+                        Rectangle enemyBounds = new Rectangle(
+                            enemy.worldX + enemy.solidArea.x,
+                            enemy.worldY + enemy.solidArea.y,
+                            enemy.solidArea.width,
+                            enemy.solidArea.height
+                        );
+                        if (CollisionManager.rectanglesIntersect(projectileBounds, enemyBounds)) {
+                            enemy.takeDamage(projectile.getDamage());
+                            enemy.damageReaction();
+                            projectile.kill();
+                            projectileIterator.remove();
+                            break;
+                        }
+                    }
+                    continue;
+                }
+
+                Rectangle playerBounds = new Rectangle(
+                    player.worldX + player.solidArea.x,
+                    player.worldY + player.solidArea.y,
+                    player.solidArea.width,
+                    player.solidArea.height
+                );
+                if (CollisionManager.rectanglesIntersect(projectileBounds, playerBounds)) {
+                    player.takeDamage(projectile.getDamage());
+                    projectile.kill();
+                    projectileIterator.remove();
                 }
             }
 
-            // Check enemy-to-enemy collisions
-            for (int i = 0; i < enemies.size(); i++) {
-                for (int j = i + 1; j < enemies.size(); j++) {
-                    Enemy enemy1 = enemies.get(i);
-                    Enemy enemy2 = enemies.get(j);
-                    if (enemy1.isAlive() && enemy2.isAlive()) {
-                        CollisionManager.checkCollisionBetweenEntities(enemy1, enemy2);
+            // Update lasers and resolve laser hits.
+            Iterator<Laser> laserIterator = lasers.iterator();
+            while (laserIterator.hasNext()) {
+                Laser laser = laserIterator.next();
+                laser.update();
+                if (!laser.isAlive()) {
+                    laserIterator.remove();
+                    continue;
+                }
+
+                Rectangle playerBounds = new Rectangle(
+                    player.worldX + player.solidArea.x,
+                    player.worldY + player.solidArea.y,
+                    player.solidArea.width,
+                    player.solidArea.height
+                );
+                if (laser.getOwnerType() == Laser.OwnerType.ENEMY && CollisionManager.rectanglesIntersect(laser.getBounds(), playerBounds)) {
+                    player.takeDamage(laser.getDamage());
+                }
+            }
+
+            // Player melee attack hits enemies.
+            if (player.isAttackActive()) {
+                Rectangle playerAttack = player.getAttackHitbox();
+                for (Enemy enemy : enemies) {
+                    if (!enemy.isAlive()) {
+                        continue;
                     }
+                    Rectangle enemyBounds = new Rectangle(
+                        enemy.worldX + enemy.solidArea.x,
+                        enemy.worldY + enemy.solidArea.y,
+                        enemy.solidArea.width,
+                        enemy.solidArea.height
+                    );
+                    if (CollisionManager.rectanglesIntersect(playerAttack, enemyBounds)) {
+                        enemy.takeDamage(1);
+                        enemy.damageReaction();
+                    }
+                }
+            }
+
+            // Enemy melee attack boxes hit the player.
+            Rectangle playerBounds = new Rectangle(
+                player.worldX + player.solidArea.x,
+                player.worldY + player.solidArea.y,
+                player.solidArea.width,
+                player.solidArea.height
+            );
+            for (Enemy enemy : enemies) {
+                if (!enemy.isAlive()) {
+                    continue;
+                }
+                if (enemy.isAttackActive() && CollisionManager.rectanglesIntersect(enemy.getAttackHitbox(), playerBounds)) {
+                    player.takeDamage(enemy.getDamage());
+                }
+            }
+
+            // Player dash collision with enemies.
+            if (player.isDashing()) {
+                Rectangle dashBounds = new Rectangle(
+                    player.worldX + player.solidArea.x,
+                    player.worldY + player.solidArea.y,
+                    player.solidArea.width,
+                    player.solidArea.height
+                );
+                for (Enemy enemy : enemies) {
+                    if (!enemy.isAlive()) {
+                        continue;
+                    }
+                    Rectangle enemyBounds = new Rectangle(
+                        enemy.worldX + enemy.solidArea.x,
+                        enemy.worldY + enemy.solidArea.y,
+                        enemy.solidArea.width,
+                        enemy.solidArea.height
+                    );
+                    if (CollisionManager.rectanglesIntersect(dashBounds, enemyBounds)) {
+                        enemy.takeDamage(1);
+                        enemy.damageReaction();
+                    }
+                }
+            }
+
+            // Enemy body collisions against player.
+            for (Enemy enemy : enemies) {
+                if (!enemy.isAlive()) {
+                    continue;
+                }
+                Rectangle enemyBounds = new Rectangle(
+                    enemy.worldX + enemy.solidArea.x,
+                    enemy.worldY + enemy.solidArea.y,
+                    enemy.solidArea.width,
+                    enemy.solidArea.height
+                );
+                if (CollisionManager.rectanglesIntersect(playerBounds, enemyBounds)) {
+                    player.takeDamage(enemy.getDamage());
                 }
             }
 
             // Remove dead enemies
             enemies.removeIf(enemy -> !enemy.isAlive());
 
-            // clamp player world position to the tilemap bounds
-            player.worldX = Math.max(0, Math.min(player.worldX, Constants.maxWorldWidth - Constants.tileSize));
-            player.worldY = Math.max(0, Math.min(player.worldY, Constants.maxWorldHeight - Constants.tileSize));
             updateCamera();
+
+            if (player.getHp() <= 0) {
+                handleDefeat();
+                return;
+            }
 
             if(currentLevel == Level.TUTORIAL){    
                 if(this.player.worldX/Constants.tileSize == 0
@@ -475,32 +711,10 @@ public class GamePanel extends JPanel implements Runnable {
 
             if (timer != null) {
                 timer.setTimeScore(); // time based score
+            }
 
-                // for now, the goal first is to survive
-                if (timer.isTimeUp()) {
-                    boolean hasNextLevel = currentLevel.nextLevel != null;
-                    String message = hasNextLevel ? "Time's up! Proceed to next level?" : "Final boss cleared! Return to home screen?";
-                    int result = JOptionPane.showConfirmDialog(this, message, "Level Complete", JOptionPane.YES_NO_OPTION);
-                    if (result == JOptionPane.YES_OPTION) {
-                        player.setDirection("idle");
-                        levelsCleared++;
-                        if (onLevelComplete != null) onLevelComplete.run();
-                        timer.setFinalTimeScore();
-                        currentLevel.setMaxTimeScore(timer.getTimeScore());
-                        if(hasNextLevel) {
-                            setLevel(currentLevel.nextLevel);
-                        } else{
-                            stopGameThread();
-                            Window ownerFrame = SwingUtilities.getWindowAncestor(this);
-                            if(ownerFrame instanceof main.BaseFrame) {
-                                ((main.BaseFrame) ownerFrame).showOpeningScreen();
-                            }
-                        }
-                    } else {
-                        // Stop the game or go back to menu
-                        running = false;
-                    }
-                }
+            if (currentLevel != Level.TUTORIAL && enemies.isEmpty()) {
+                handleLevelCleared();
             }
         } else if (gameState == pausedState) {
             // Pause state: game logic is frozen and timer is already stopped.
@@ -578,6 +792,19 @@ public class GamePanel extends JPanel implements Runnable {
             return;
         }
 
+        // Draw projectiles and lasers before characters so effects appear under the player/enemies.
+        for (Projectile projectile : projectiles) {
+            if (projectile.isAlive()) {
+                projectile.draw(g2, cameraWorldX, cameraWorldY);
+            }
+        }
+
+        for (Laser laser : lasers) {
+            if (laser.isAlive()) {
+                laser.draw(g2, cameraWorldX, cameraWorldY);
+            }
+        }
+
         // Draw enemies
         for (Enemy enemy : enemies) {
             if (enemy.isAlive()) {
@@ -585,8 +812,16 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
+        if (gameState == playState) {
+            drawDarkOverlay(g2, 55);
+        }
+
         // player
         player.draw(g2);
+
+        if (gameState == pausedState || gameState == defeatState) {
+            drawDarkOverlay(g2, 145);
+        }
 
         g2.setColor(Color.WHITE);
         g2.drawString("Level: " + (currentLevel != null ? currentLevel.name : "Unknown"), 20, 20);
@@ -594,5 +829,123 @@ public class GamePanel extends JPanel implements Runnable {
         if (timer != null) {
             timer.show(g2, 20, 40);
         }
+
+        drawPlayerLife(g2);
+        drawEnemyCounter(g2);
+    }
+
+    private void drawPlayerLife(Graphics2D g2) {
+        int heartSize = 20;
+        int spacing = 27;
+        int startX = 20;
+        int startY = 60;
+        int hp = player.getHp();
+        int maxHp = player.getMaxHp();
+        int heartCount = (maxHp + 1) / 2;
+        int panelWidth = 48 + heartCount * spacing;
+        int panelHeight = 34;
+
+        g2.setColor(new Color(0, 0, 0, 145));
+        g2.fillRoundRect(startX - 8, startY - 8, panelWidth, panelHeight, 14, 14);
+        g2.setColor(new Color(255, 255, 255, 45));
+        g2.drawRoundRect(startX - 8, startY - 8, panelWidth, panelHeight, 14, 14);
+
+        g2.setColor(Color.WHITE);
+        g2.setFont(MethodUtilities.getFont(14f, this));
+        g2.drawString("HP", startX, startY + 14);
+
+        int heartX = startX + 30;
+        for (int i = 0; i < heartCount; i++) {
+            int heartLife = hp - (i * 2);
+            drawHeart(g2, heartX + (i * spacing), startY, heartSize, heartLife);
+        }
+    }
+
+    private void drawHeart(Graphics2D g2, int x, int y, int size, int heartLife) {
+        if (heartLife > 0) {
+            g2.setColor(new Color(255, 70, 90, 85));
+            fillHeart(g2, x - 3, y - 3, size + 6);
+        }
+
+        g2.setColor(new Color(45, 45, 45, 190));
+        fillHeart(g2, x, y, size);
+
+        if (heartLife > 0) {
+            Graphics2D clipped = (Graphics2D) g2.create();
+            int fillWidth = heartLife >= 2 ? size : size / 2;
+            clipped.setClip(x, y, fillWidth, size);
+            clipped.setColor(new Color(220, 30, 45));
+            fillHeart(clipped, x, y, size);
+            clipped.dispose();
+        }
+
+        g2.setColor(Color.BLACK);
+        drawHeartOutline(g2, x, y, size);
+    }
+
+    private void fillHeart(Graphics2D g2, int x, int y, int size) {
+        int half = size / 2;
+        g2.fillOval(x, y, half, half);
+        g2.fillOval(x + half, y, half, half);
+
+        int[] xPoints = {x, x + size, x + half};
+        int[] yPoints = {y + half / 2, y + half / 2, y + size};
+        g2.fillPolygon(xPoints, yPoints, 3);
+    }
+
+    private void drawHeartOutline(Graphics2D g2, int x, int y, int size) {
+        int half = size / 2;
+        g2.drawOval(x, y, half, half);
+        g2.drawOval(x + half, y, half, half);
+
+        int[] xPoints = {x, x + size, x + half};
+        int[] yPoints = {y + half / 2, y + half / 2, y + size};
+        g2.drawPolygon(xPoints, yPoints, 3);
+    }
+
+    private void drawEnemyCounter(Graphics2D g2) {
+        if (enemyTotals.isEmpty()) {
+            return;
+        }
+
+        int aliveTotal = 0;
+        Map<String, Integer> aliveByType = new LinkedHashMap<>();
+        for (Enemy enemy : enemies) {
+            if (!enemy.isAlive()) {
+                continue;
+            }
+            String type = UtilityTool.getEntityName(enemy);
+            aliveByType.put(type, aliveByType.getOrDefault(type, 0) + 1);
+            aliveTotal++;
+        }
+
+        int width = 210;
+        int lineHeight = 18;
+        int rows = Math.max(1, enemyTotals.size());
+        int height = 34 + rows * lineHeight;
+        int x = Constants.screenWidth - width - 18;
+        int y = 18;
+
+        g2.setColor(new Color(0, 0, 0, 155));
+        g2.fillRoundRect(x, y, width, height, 16, 16);
+        g2.setColor(new Color(255, 255, 255, 55));
+        g2.drawRoundRect(x, y, width, height, 16, 16);
+
+        g2.setFont(MethodUtilities.getFont(14f, this));
+        g2.setColor(new Color(245, 245, 245));
+        g2.drawString("Enemies: " + aliveTotal, x + 12, y + 20);
+
+        int textY = y + 40;
+        for (Map.Entry<String, Integer> entry : enemyTotals.entrySet()) {
+            int alive = aliveByType.getOrDefault(entry.getKey(), 0);
+            g2.setColor(new Color(210, 230, 255));
+            g2.drawString(entry.getKey() + ": " + alive + "/" + entry.getValue(), x + 12, textY);
+            textY += lineHeight;
+        }
+    }
+
+    private void drawDarkOverlay(Graphics2D g2, int alpha) {
+        g2.setColor(new Color(0, 0, 0, alpha));
+        g2.fillRect(0, 0, Constants.screenWidth, Constants.screenHeight);
     }
 }
