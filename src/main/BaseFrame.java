@@ -4,14 +4,18 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 // import javax.swing.SwingWorker; // COMMENTED OUT - Cache system disabled
 
 import engine.GamePanel;
 import engine.Level;
+import exception.GameException;
 import panels.CreditScroller;
 import panels.OpeningPanel;
 import panels.ScenePanel;
+import systems.FileManager;
 import ui.IntroManager;
 // import panels.LoadingPanel; // COMMENTED OUT - Cache system disabled
 import util.Constants;
@@ -30,17 +34,15 @@ public class BaseFrame extends JFrame{
     public ScenePanel scenePanel;
     // private LoadingPanel loadingPanel; // COMMENTED OUT - Cache system disabled
     private Level selectedLevel = Level.TUTORIAL;
-    private int maxLevelReached = 3;
-    private boolean tutorialPlayed = true;
+    private int maxLevelReached = 0;
+    private boolean tutorialPlayed = false;
 
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
         setResizable(false);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        // Placeholder for loading progress
-        // maxLevelReached = FileManager.loadMaxLevelReached();
-        // tutorialPlayed = FileManager.loadTutorialPlayed();
+        loadProgress();
 
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
@@ -105,14 +107,36 @@ public class BaseFrame extends JFrame{
             dialog.setVisible(true);
             if (dialog.selected != null) {
                 openPanel.stopBackgroundAnimation();
-                tutorialPlayed = true;
                 selectedLevel = dialog.selected;
                 openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
+                saveProgress(Level.getIndex(selectedLevel));
                 gamePanel.setLevel(selectedLevel);
                 cardLayout.show(container, "Game");
-                gamePanel.requestFocusInWindow();
+                SwingUtilities.invokeLater(() -> {
+                    gamePanel.requestFocusInWindow();
+                });
+
                 gamePanel.startGameThread();
             }
+        });
+
+        openPanel.continueButton.addActionListener(e -> {
+            try {
+                int savedLevelIndex = Math.min(FileManager.loadSelectedLevel(), maxLevelReached);
+                selectedLevel = Level.LEVELS[savedLevelIndex];
+            } catch(GameException ex) {
+                selectedLevel = Level.TUTORIAL;
+            }
+
+            openPanel.stopBackgroundAnimation();
+            gamePanel.setLevel(selectedLevel);
+            cardLayout.show(container, "Game");
+
+            SwingUtilities.invokeLater(() -> {
+                gamePanel.requestFocusInWindow();
+            });
+
+            gamePanel.startGameThread();
         });
 
         openPanel.playButton.addActionListener(e -> {
@@ -121,7 +145,10 @@ public class BaseFrame extends JFrame{
             gamePanel.setLevel(selectedLevel);
             openPanel.stopBackgroundAnimation();
             cardLayout.show(container, "Game");
-            gamePanel.requestFocusInWindow();
+            SwingUtilities.invokeLater(() -> {
+                gamePanel.requestFocusInWindow();
+            });
+
             gamePanel.startGameThread();
         });
 
@@ -143,9 +170,8 @@ public class BaseFrame extends JFrame{
 
         addWindowListener(new MethodUtilities.exitAction(this));
 
-        // Placeholder for progress setup
-        // gamePanel.onLevelComplete = this::updateProgress;
-        openPanel.setContinueVisible(tutorialPlayed && maxLevelReached >= 2);
+        gamePanel.onLevelComplete = this::updateProgress;
+        openPanel.setContinueVisible(hasSavedProgress());
     }
 
     // COMMENTED OUT - Cache system disabled
@@ -185,17 +211,48 @@ public class BaseFrame extends JFrame{
         cardLayout.show(container, "Openning");
     }
 
-    // Placeholder for updateProgress method
-    // private void updateProgress() {
-    //     Level current = gamePanel.getCurrentLevel();
-    //     if (current == Level.TUTORIAL) {
-    //         tutorialPlayed = true;
-    //     }
-    //     if (current.nextLevel != null) {
-    //         maxLevelReached = Math.max(maxLevelReached, Level.getIndex(current.nextLevel));
-    //     }
-    //     FileManager.saveProgress(maxLevelReached, tutorialPlayed);
-    // }
+    private void loadProgress() {
+        try {
+            FileManager.createSaveFile();
+            maxLevelReached = FileManager.loadMaxLevelReached();
+            tutorialPlayed = FileManager.loadTutorialPlayed();
+            int selectedLevelIndex = Math.min(FileManager.loadSelectedLevel(), maxLevelReached);
+            selectedLevel = Level.LEVELS[selectedLevelIndex];
+        } catch(GameException e) {
+            maxLevelReached = 0;
+            tutorialPlayed = false;
+            selectedLevel = Level.TUTORIAL;
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void updateProgress() {
+        Level clearedLevel = gamePanel.getCurrentLevel();
+        int clearedIndex = Level.getIndex(clearedLevel);
+        int nextIndex = clearedLevel.nextLevel != null ? Level.getIndex(clearedLevel.nextLevel) : clearedIndex;
+
+        if(clearedLevel == Level.TUTORIAL) {
+            tutorialPlayed = true;
+        }
+
+        maxLevelReached = Math.max(maxLevelReached, nextIndex);
+        selectedLevel = Level.LEVELS[nextIndex];
+        openPanel.setSelectedLevelIndex(nextIndex, selectedLevel.name);
+        openPanel.setContinueVisible(hasSavedProgress());
+        saveProgress(nextIndex);
+    }
+
+    private void saveProgress(int selectedLevelIndex) {
+        try {
+            FileManager.saveProgress(maxLevelReached, tutorialPlayed, selectedLevelIndex);
+        } catch(GameException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private boolean hasSavedProgress() {
+        return tutorialPlayed || maxLevelReached >0;
+    }
 
     public CreditScroller getCredits() {
         return credits;

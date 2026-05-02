@@ -22,6 +22,7 @@ import util.MethodUtilities.CustomButton;
 import util.MethodUtilities;
 import ui.IntroManager;
 import systems.KeyHandler;
+import entity.Enemy;
 import entity.Player;
 import systems.Timer;
 import Tile.TileManager;
@@ -69,7 +70,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     //Entities
     public Player player = new Player(this, keyH);
-    TileManager tileM;
+    public TileManager tileM;
     private int cameraX;
     private int cameraY;
     private int cameraWorldX;
@@ -115,12 +116,20 @@ public class GamePanel extends JPanel implements Runnable {
         this.timer = new Timer(level.timeLimitSeconds);
         this.timer.startTimer();
         tileM.loadMap(level.mapPath);
-        this.player.setDefaultValues();
+        this.player.setLevelStartPosition(level.positionX, level.positionY);
         updateCamera();
     }
 
     public Level getCurrentLevel() {
         return currentLevel;
+    }
+
+    public TileManager getTileManager() {
+        return tileM;
+    }
+
+    public void addEnemy(Enemy enemy) {
+        // Enemy list management is not wired into this GamePanel version yet.
     }
 
     public int getLevelsCleared() {
@@ -329,15 +338,25 @@ public class GamePanel extends JPanel implements Runnable {
                 timer.setTimeScore(); // time based score
 
                 // for now, the goal first is to survive
-                if (timer.isTimeUp() && currentLevel.nextLevel != null) {
-                    int result = JOptionPane.showConfirmDialog(this, "Time's up! Proceed to next level?", "Level Complete", JOptionPane.YES_NO_OPTION);
+                if (timer.isTimeUp()) {
+                    boolean hasNextLevel = currentLevel.nextLevel != null;
+                    String message = hasNextLevel ? "Time's up! Proceed to next level?" : "Final boss cleared! Return to home screen?";
+                    int result = JOptionPane.showConfirmDialog(this, message, "Level Complete", JOptionPane.YES_NO_OPTION);
                     if (result == JOptionPane.YES_OPTION) {
                         player.setDirection("idle");
                         levelsCleared++;
                         if (onLevelComplete != null) onLevelComplete.run();
                         timer.setFinalTimeScore();
                         currentLevel.setMaxTimeScore(timer.getTimeScore());
-                        setLevel(currentLevel.nextLevel);
+                        if(hasNextLevel) {
+                            setLevel(currentLevel.nextLevel);
+                        } else{
+                            stopGameThread();
+                            Window ownerFrame = SwingUtilities.getWindowAncestor(this);
+                            if(ownerFrame instanceof main.BaseFrame) {
+                                ((main.BaseFrame) ownerFrame).showOpeningScreen();
+                            }
+                        }
                     } else {
                         // Stop the game or go back to menu
                         running = false;

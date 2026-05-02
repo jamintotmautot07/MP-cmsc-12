@@ -31,8 +31,7 @@ public class LevelSelectionDialog extends JDialog {
 
         for (int i = 0; i < Level.LEVELS.length; i++) {
             levelButtons[i] = new CustomButton(Level.LEVELS[i].name);
-            // levelButtons[i].setEnabled(i <= maxLevelReached);
-            levelButtons[i].setEnabled(true);
+            levelButtons[i].setEnabled(i <= maxLevelReached);
             final int index = i;
             levelButtons[i].addActionListener(new ActionListener() {
                 @Override
