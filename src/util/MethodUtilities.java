@@ -1,36 +1,37 @@
 package util;
-import main.BaseFrame;
-
-import java.io.FileInputStream;
-import java.io.InputStream;
-
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.LayoutManager;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.FontMetrics;
-import java.awt.AlphaComposite;
-import java.awt.LayoutManager;
-import java.awt.Component;
-
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JComponent;
+import main.BaseFrame;
 
+/**
+ * Collection of reusable Swing helpers and lightweight custom UI components.
+ */
 public class MethodUtilities {
+    /**
+     * Shared exit handler used by buttons and the main window close event.
+     */
     public static class exitAction implements ActionListener, WindowListener {
+        // Shared frame reference so one exit helper can be attached to multiple exit triggers.
         private static BaseFrame frame;
 
         public exitAction(BaseFrame frame) {
@@ -62,10 +63,12 @@ public class MethodUtilities {
         public void windowIconified(WindowEvent e) {}
 
         public void exit() {
+            // Keep the exit flow in one place so button exit and window close behave the same.
             makeOptionDialog();
         }
 
         private void makeOptionDialog() {
+            // Confirm before shutting down because the project may later include save-sensitive progress.
             int choice = JOptionPane.showConfirmDialog(
                 frame,
                 "Are you sure you want to exit?",
@@ -75,6 +78,7 @@ public class MethodUtilities {
             );
 
             if(choice == JOptionPane.YES_OPTION) {
+                // Stop any running timers/threads before disposing the frame.
                 frame.scenePanel.stopScene();
                 frame.gamePanel.stopGameThread();
                 frame.getCredits().stopTimer();
@@ -84,7 +88,11 @@ public class MethodUtilities {
         }
     }
 
+    /**
+     * JLabel variant that paints a simple glow behind the text.
+     */
     public static class GlowLabel extends JLabel {
+        // Simple text glow effect settings.
         private Color glowColor = Color.CYAN;
         private int glowSize = 6;
 
@@ -104,11 +112,12 @@ public class MethodUtilities {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // 1. Draw the "Glow" layers
+            // Compute centered text coordinates once, then reuse them for glow and foreground.
             FontMetrics fm = g2.getFontMetrics();
             int x = (getWidth() - fm.stringWidth(getText())) / 2; // Center alignment example
             int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
 
+            // Draw a few translucent offset copies to fake a glow halo.
             for (int i = glowSize; i > 0; i--) {
                 float alpha = 0.1f * (1.0f - (float) i / glowSize); // Fade out
                 g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
@@ -118,7 +127,7 @@ public class MethodUtilities {
                 g2.drawString(getText(), x + i, y + i);
             }
 
-            // 2. Draw the foreground text
+            // Finally draw the readable text on top.
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
             g2.setColor(getForeground());
             g2.drawString(getText(), x, y);
@@ -127,7 +136,10 @@ public class MethodUtilities {
         }
     }
 
-    //custom panels for the buttons
+    // RoundedPanel is a reusable painted background panel used across dialogs and menu sections.
+    /**
+     * Panel with a painted rounded rectangle background.
+     */
     public static class RoundedPanel extends JPanel {
         private int radius;
         private Color color = new Color(159, 188, 143);
@@ -153,12 +165,12 @@ public class MethodUtilities {
 
             Graphics2D g2 = (Graphics2D)g;
 
-            //makes the drawing smooth
+            // Anti-aliasing keeps the rounded corners from looking jagged.
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             g2.setColor(color);
 
-            //fill the entire panel with the rounded rect
+            // Paint the whole panel as one rounded rectangle.
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
 
             // //make a line border
@@ -167,7 +179,11 @@ public class MethodUtilities {
         }
     }
 
+    /**
+     * JButton variant with a custom flat color treatment and hover/press feedback.
+     */
     public static class CustomButton extends JButton {
+        // Default and pressed colors for the custom flat-looking buttons.
         private Color backColor = new Color(129, 167, 109);
         private Color temp = new Color(129, 167, 109);
         
@@ -180,7 +196,7 @@ public class MethodUtilities {
             setOpaque(false);
             setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED, new Color(175, 199, 162), new Color(51, 69, 41)));
 
-
+            // Mouse feedback changes border style and fill color so the button feels interactive.
             addMouseListener(new MouseAdapter(){
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -217,6 +233,7 @@ public class MethodUtilities {
                 RenderingHints.VALUE_ANTIALIAS_ON
             );
 
+            // Paint the custom background first, then let JButton draw text and border details.
             g2.setColor(temp);
             g2.fillRect(0, 0, getWidth(), getHeight());
 
@@ -226,44 +243,32 @@ public class MethodUtilities {
         
     }
 
+    /**
+     * Loads the project's UI font and immediately applies it to the supplied component.
+     */
     public static Font getFont(float size, JComponent component) {
+        // Loads the project's button/body font and applies it directly to the given component.
         Font textFont;
 
-        try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
-            textFont = Font.createFont(Font.TRUETYPE_FONT, font);
-            textFont = textFont.deriveFont(Font.BOLD, size);
+        textFont = ResourceCache.getFont("button_text");
+        textFont = textFont.deriveFont(Font.BOLD, size);
 
-            component.setFont(textFont);
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
+        component.setFont(textFont);
+        component.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            return textFont;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            Font fallbackFont = new Font("SansSerif", Font.BOLD, (int) size);
-            component.setFont(fallbackFont);
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            return fallbackFont;
-        }
+        return textFont;
     }
 
+    /**
+     * Returns the project's UI font without mutating any component.
+     */
     public static Font getFont(float size) {
+        // Variant that only returns the font object without touching a component.
         Font textFont;
 
-        try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
-            textFont = Font.createFont(Font.TRUETYPE_FONT, font);
-            textFont = textFont.deriveFont(Font.BOLD, size);
+        textFont = ResourceCache.getFont("button_text");
+        textFont = textFont.deriveFont(Font.BOLD, size);
 
-            return textFont;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            Font fallbackFont = new Font("Arial", Font.BOLD, (int) size);
-
-            return fallbackFont;
-        }
+        return textFont;
     }
 }

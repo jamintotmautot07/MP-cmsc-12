@@ -12,11 +12,18 @@ import engine.Level;
 import util.MethodUtilities;
 import util.MethodUtilities.CustomButton;
 
+/**
+ * Modal level picker used by the opening menu.
+ */
 public class LevelSelectionDialog extends JDialog {
 
+    // The caller reads this after the dialog closes to know what the user picked.
     public Level selected = null;
     private CustomButton[] levelButtons;
 
+    /**
+     * Builds one button per predefined level.
+     */
     public LevelSelectionDialog(java.awt.Frame parent, int maxLevelReached) {
         super(parent, "Select Level", true);
         setSize(300, 250);
@@ -27,10 +34,12 @@ public class LevelSelectionDialog extends JDialog {
         panel.setColor(new Color(159, 188, 143).darker());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        // One button per predefined level.
         levelButtons = new CustomButton[Level.LEVELS.length];
 
         for (int i = 0; i < Level.LEVELS.length; i++) {
             levelButtons[i] = new CustomButton(Level.LEVELS[i].name);
+            // Progress locking is currently disabled, so every level button is clickable.
             // levelButtons[i].setEnabled(i <= maxLevelReached);
             levelButtons[i].setEnabled(true);
             final int index = i;

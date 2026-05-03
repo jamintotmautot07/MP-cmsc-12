@@ -1,14 +1,10 @@
 package Tile;
 
 import engine.GamePanel;
-import util.Constants;
-import util.UtilityTool;
-// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
-
-import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -17,62 +13,73 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import javax.imageio.ImageIO;
+import util.Constants;
+import util.ResourceCache;
+import util.UtilityTool;
 
+/**
+ * Loads tile art, loads map text files, and renders the visible slice of the world grid.
+ */
 public class TileManager {
 
-    private static final String TILE_FOLDER = "res/TILES/";
-    private static final int GROUND_TILE_COUNT = 180;
+    // The manager needs the panel mainly for camera values during drawing.
+    private final GamePanel gamePanel;
 
-    GamePanel gp;
-    public List<Tiles> tiles;
-    public int[][] mapTileNum;
+    // `tiles` is the palette of loaded tile definitions.
+    // `mapTileNum` is the world grid that says which tile appears at each row/column.
+    public final List<Tiles> tiles;
+    public final int[][] mapTileNum;
 
-    public TileManager(GamePanel gp) {
-        this.gp = gp;
-
-        tiles = new ArrayList<>();
-        mapTileNum = new int[Constants.worldMaxRow][Constants.worldMaxCol];
-
-        loadAllTiles();
+    /**
+     * Creates the tile palette and allocates the world map grid.
+     */
+    public TileManager(GamePanel gamePanel) {
+        this.gamePanel = gamePanel;
+        this.tiles = new ArrayList<>();
+        this.mapTileNum = new int[Constants.worldMaxRow][Constants.worldMaxCol];
+        this.loadAllTiles();
     }
 
+    /**
+     * Loads the full tile set expected by the current asset naming convention.
+     */
     private void loadAllTiles() {
-        loadTilesByPrefix("ground", false, GROUND_TILE_COUNT);
-        loadTilesByPrefix("solid", true, Integer.MAX_VALUE);
+        // Ground tiles are loaded first, then solid tiles are appended after them.
+        this.loadTilesByPrefix("ground", false, 180);
+        this.loadTilesByPrefix("solid", true, 166);
     }
 
+    /**
+     * Loads one family of tiles that share a filename prefix.
+     */
     private void loadTilesByPrefix(String prefix, boolean solid, int maxTiles) {
-        int index = 1;
-
-        while (index <= maxTiles) {
-            String fileName = TILE_FOLDER + prefix + String.format("%03d", index) + ".png";
-            BufferedImage image = loadImage(fileName);
-
-            if (image == null) {
-                if (maxTiles == Integer.MAX_VALUE) {
-                    break;
-                }
-                index++;
-                continue;
-            }
+        for (int tileIndex = 1; tileIndex <= maxTiles; tileIndex++) {
+            String cacheKey = "tile_" + prefix + "_" + tileIndex;
+            BufferedImage image = ResourceCache.getImage(cacheKey);
 
             Tiles tile = solid ? new SolidTiles() : new GroundTiles();
             tile.image = UtilityTool.resizeImage(image, Constants.tileSize, Constants.tileSize);
-            tiles.add(tile);
-            index++;
+
+            this.tiles.add(tile);
         }
     }
 
-    private BufferedImage loadImage(String path) {
+    /**
+     * Loads one tile image from disk or classpath.
+     */
+    private BufferedImage loadImage(String resourcePath) {
         try {
-            File file = new File(path);
+            // First try plain file-system loading. This is convenient during development.
+            File file = new File(resourcePath);
             if (file.exists()) {
                 return ImageIO.read(file);
             }
 
-            InputStream is = getClass().getResourceAsStream("/" + path.replace("\\", "/"));
-            if (is != null) {
-                return ImageIO.read(is);
+            // Fallback to classpath loading for packaged runs.
+            InputStream inputStream = this.getClass().getResourceAsStream("/" + resourcePath.replace("\\", "/"));
+            if (inputStream != null) {
+                return ImageIO.read(inputStream);
             }
         } catch (IOException ignored) {
         }
@@ -80,55 +87,64 @@ public class TileManager {
         return null;
     }
 
+    /**
+     * Reads a text map file into the 2D tile-number grid.
+     */
     public void loadMap(String filePath) {
         try {
-            BufferedReader br;
-            InputStream is = getClass().getResourceAsStream(filePath);
-            if (is != null) {
-                br = new BufferedReader(new InputStreamReader(is));
+            InputStream resourceStream = this.getClass().getResourceAsStream(filePath);
+            BufferedReader reader;
+
+            // Like image loading, map loading supports both bundled resources and plain files.
+            if (resourceStream != null) {
+                reader = new BufferedReader(new InputStreamReader(resourceStream));
             } else {
                 File mapFile = new File(filePath.startsWith("/") ? filePath.substring(1) : filePath);
-                br = new BufferedReader(new FileReader(mapFile));
+                reader = new BufferedReader(new FileReader(mapFile));
             }
 
             String line;
-            int row = 0;
-
-            while (row < Constants.worldMaxRow && (line = br.readLine()) != null) {
-                String[] numbers = line.trim().split("\\s+");
-                for (int col = 0; col < Constants.worldMaxCol && col < numbers.length; col++) {
-                    mapTileNum[row][col] = Integer.parseInt(numbers[col]) + 1;
+            for (int row = 0; row < Constants.worldMaxRow && (line = reader.readLine()) != null; row++) {
+                String[] tokens = line.trim().split("\\s+");
+                for (int col = 0; col < Constants.worldMaxCol && col < tokens.length; col++) {
+                    // Map files use zero-based tile ids, so the code shifts them by +1 for its internal lookup.
+                    this.mapTileNum[row][col] = Integer.parseInt(tokens[col]) + 1;
                 }
-                row++;
             }
 
-            br.close();
+            reader.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Draws only the tiles near the camera view.
+     */
     public void draw(Graphics2D g2) {
-        int cameraWorldX = gp.getCameraWorldX();
-        int cameraWorldY = gp.getCameraWorldY();
+        int cameraWorldX = this.gamePanel.getCameraWorldX();
+        int cameraWorldY = this.gamePanel.getCameraWorldY();
 
-        for (int worldRow = 0; worldRow < Constants.worldMaxRow; worldRow++) {
-            for (int worldCol = 0; worldCol < Constants.worldMaxCol; worldCol++) {
-                int tileNum = mapTileNum[worldRow][worldCol];
-                int worldX = Constants.tileSize * worldCol;
-                int worldY = Constants.tileSize * worldRow;
+        // Walk the full map grid, but only draw the tiles that are near the camera view.
+        for (int row = 0; row < Constants.worldMaxRow; row++) {
+            for (int col = 0; col < Constants.worldMaxCol; col++) {
+                int tileNum = this.mapTileNum[row][col];
+                int worldX = Constants.tileSize * col;
+                int worldY = Constants.tileSize * row;
                 int screenX = worldX - cameraWorldX;
                 int screenY = worldY - cameraWorldY;
 
+                // Simple visibility culling so off-screen tiles do not get drawn every frame.
                 if (worldX + Constants.tileSize > cameraWorldX - Constants.screenWidth &&
                     worldX - Constants.tileSize < cameraWorldX + Constants.screenWidth &&
                     worldY + Constants.tileSize > cameraWorldY - Constants.screenHeight &&
                     worldY - Constants.tileSize < cameraWorldY + Constants.screenHeight) {
 
-                    Tiles currentTile = getTileByMapNumber(tileNum);
-                    if (currentTile != null && currentTile.image != null) {
-                        g2.drawImage(currentTile.image, screenX, screenY, null);
+                    Tiles tile = this.getTileByMapNumber(tileNum);
+                    if (tile != null && tile.image != null) {
+                        g2.drawImage(tile.image, screenX, screenY, (ImageObserver) null);
                     } else {
+                        // Missing tile data is rendered as black so the bug is visible instead of failing silently.
                         g2.setColor(Color.BLACK);
                         g2.fillRect(screenX, screenY, Constants.tileSize, Constants.tileSize);
                     }
@@ -137,16 +153,46 @@ public class TileManager {
         }
     }
 
+    /**
+     * Resolves one map number into a loaded tile definition.
+     */
     private Tiles getTileByMapNumber(int tileNum) {
         if (tileNum <= 0) {
-            return tiles.isEmpty() ? null : tiles.get(0);
+            // Fall back to the first loaded tile if the map contains an invalid or empty value.
+            return this.tiles.isEmpty() ? null : this.tiles.get(0);
         }
 
-        int index = tileNum - 1;
-        if (index >= 0 && index < tiles.size()) {
-            return tiles.get(index);
+        int tileIndex = tileNum - 1;
+        if (tileIndex >= 0 && tileIndex < this.tiles.size()) {
+            return this.tiles.get(tileIndex);
         }
 
-        return tiles.isEmpty() ? null : tiles.get(0);
+        return this.tiles.isEmpty() ? null : this.tiles.get(0);
+    }
+
+    /**
+     * Checks whether the tile at a grid position blocks movement.
+     */
+    public boolean isTileSolid(int row, int col) {
+        // Out-of-bounds is treated as non-solid here.
+        // That keeps this method simple, while world clamping is handled elsewhere.
+        if (row < 0 || row >= Constants.worldMaxRow || col < 0 || col >= Constants.worldMaxCol) {
+            return false;
+        }
+
+        Tiles tile = this.getTileByMapNumber(this.mapTileNum[row][col]);
+        return tile != null && tile.Collision;
+    }
+
+    /**
+     * Returns the full tile object at the requested map cell.
+     */
+    public Tiles getTileAt(int row, int col) {
+        // Convenience helper for any future logic that needs the full tile object at a grid position.
+        if (row < 0 || row >= Constants.worldMaxRow || col < 0 || col >= Constants.worldMaxCol) {
+            return null;
+        }
+
+        return this.getTileByMapNumber(this.mapTileNum[row][col]);
     }
 }

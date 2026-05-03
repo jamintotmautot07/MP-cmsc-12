@@ -20,5 +20,8 @@ package audio;
 */
 
 public class AudioPlayer {
-    // TODO: audio logic
+    /*
+     * This class is currently a placeholder.
+     * The project already reserves it as the future home for music and sound-effect playback.
+    */
 }
