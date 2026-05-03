@@ -29,14 +29,6 @@ import javax.swing.SwingUtilities;
  */
 public class GameLauncher {
     public static void main(String[] args) {
-        // Optional command-line hook for opening a save file or passing future startup arguments.
-
-        if (args.length > 0) {
-            String filePath = args[0];
-            System.out.println("Opening save file: " + filePath);
-
-            // TODO: load save file here
-        }
 
         // Handy startup log so the running build is obvious in the console.
         System.out.println("VERSION: UPDATED BUILD");

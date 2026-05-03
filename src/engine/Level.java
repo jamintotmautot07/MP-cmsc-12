@@ -33,9 +33,9 @@ public class Level {
     // public final String objective;
 
     // Static level definitions keep setup simple for a small project.
-    public static final Level LEVEL_3 = new Level("Level 3 (Boss)", 1 * 20, "/res/mapLvl3.txt", null, 0, 24 * Constants.tileSize);
-    public static final Level LEVEL_2 = new Level("Level 2", 2 * 20, "/res/mapLvl2.txt", LEVEL_3, 24* Constants.tileSize, 3 * Constants.tileSize);
-    public static final Level LEVEL_1 = new Level("Level 1", 3 * 20, "/res/mapLvl1.txt", LEVEL_2, 2 * Constants.tileSize, 4 * Constants.tileSize);
+    public static final Level LEVEL_3 = new Level("Level 3 (Boss)", 2 * 60, "/res/mapLvl3.txt", null, 0, 24 * Constants.tileSize);
+    public static final Level LEVEL_2 = new Level("Level 2", 3 * 60, "/res/mapLvl2.txt", LEVEL_3, 24* Constants.tileSize, 3 * Constants.tileSize);
+    public static final Level LEVEL_1 = new Level("Level 1", 4 * 60, "/res/mapLvl1.txt", LEVEL_2, 2 * Constants.tileSize, 4 * Constants.tileSize);
     public static final Level TUTORIAL = new Level("Tutorial", 0, "/res/mapTutorial.txt", LEVEL_1, 1 * Constants.tileSize, 2 * Constants.tileSize);
 
     public static final Level[] LEVELS = new Level[] {

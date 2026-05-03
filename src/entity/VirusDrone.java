@@ -14,6 +14,15 @@ import util.Constants;
  */
 public class VirusDrone extends EnemyPath {
 
+    private static final int AGGRO_START_TILES = 7;
+    private static final int AGGRO_STOP_TILES = 12;
+    private static final int NO_FIRE_RANGE_TILES = 5;
+    private static final int MELEE_COOLDOWN_FRAMES = 60 * 2;
+    private static final int FIRE_COOLDOWN_FRAMES = 60 * 2;
+    private static final int PROJECTILE_RANGE_TILES = 7;
+    private static final int PROJECTILE_SPEED = 2;
+    private static final int PROJECTILE_SIZE = Constants.tileSize / 3;
+
     public VirusDrone(GamePanel gp) {
         super(gp);
         setDefaultValues();
@@ -23,22 +32,23 @@ public class VirusDrone extends EnemyPath {
     @Override
     public void setDefaultValues() {
         super.setDefaultValues();
-        speed = 2; // Faster than basic enemies
+        speed = 1; // Faster than basic enemies
         hp = 3;
+        maxHp = 3;
         damage = 1;
     }
 
     @Override
     protected void loadSprites() {
-        String basePath = "res/EnemyAssets/virus/";
 
         // Load sprite arrays with appropriate frame counts
-        idleFrames = loadSpriteArray(basePath, "idle", 13);
-        upFrames = loadSpriteArray(basePath, "up", 11);
-        downFrames = loadSpriteArray(basePath, "down", 13);
-        leftFrames = loadSpriteArray(basePath, "left", 11);
-        rightFrames = loadSpriteArray(basePath, "right", 11);
-        // No damaged frames for virus, use idle as fallback
+        idleFrames = loadCachedSpriteArray("virus", "idle", 13);
+        upFrames = loadCachedSpriteArray("virus", "up", 11);
+        downFrames = loadCachedSpriteArray("virus", "down", 13);
+        leftFrames = loadCachedSpriteArray("virus", "left", 11);
+        rightFrames = loadCachedSpriteArray("virus", "right", 11);
+
+        damagedFrames = idleFrames;
 
         // Fallback: if no sprites loaded, use parent's fallback
         if (idleFrames == null && upFrames == null && downFrames == null &&
@@ -49,19 +59,31 @@ public class VirusDrone extends EnemyPath {
 
     @Override
     public void setAction() {
-        int distanceX = Math.abs(worldX - gp.player.worldX);
-        int distanceY = Math.abs(worldY - gp.player.worldY);
+        int tileDistance = getTileDistanceToPlayer();
+        String attackDirection = getCardinalDirectionTowardPlayer();
 
-        int tileDistance = (distanceX + distanceY) / Constants.tileSize;
+        if (!isOnCooldown("Virus_slash") && canHitPlayerWithMelee(attackDirection)) {
+            direction = attackDirection;
+            onPath = true;
+            startEnemyAttack(AttackType.NORMAL, attackDirection);
+            startCooldown("Virus_slash", MELEE_COOLDOWN_FRAMES);
+            actionLockCounter = 0;
+            return;
+        }
 
         // Start chasing at longer range than default
-        if (tileDistance < 8) {
+        if (tileDistance < AGGRO_START_TILES) {
             onPath = true;
-        } else if (tileDistance > 12) {
+        } else if (tileDistance > AGGRO_STOP_TILES) {
             onPath = false;
         }
 
         if (onPath) {
+            if (tileDistance > NO_FIRE_RANGE_TILES && !isOnCooldown("Virus_fire")) {
+                fireProjectileAtPlayer(1, PROJECTILE_SPEED, PROJECTILE_RANGE_TILES, PROJECTILE_SIZE);
+                startCooldown("Virus_fire", FIRE_COOLDOWN_FRAMES);
+            }
+
             searchPath(
                 gp.player.worldX / Constants.tileSize,
                 gp.player.worldY / Constants.tileSize

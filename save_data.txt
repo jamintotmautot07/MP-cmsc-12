@@ -1,0 +1,4 @@
+highscore=0
+tutorialPlayed=true
+maxLevelReached=3
+selectedLevel=3

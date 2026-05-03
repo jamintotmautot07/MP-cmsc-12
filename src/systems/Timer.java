@@ -162,7 +162,6 @@ public class Timer {
      * Debug helper for printing the live score.
      */
     public void showTimeScore() {
-        System.out.println("Time Score: " + inGameTimeScore);
     }
 
     /**

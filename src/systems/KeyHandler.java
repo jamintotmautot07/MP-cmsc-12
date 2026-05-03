@@ -18,7 +18,9 @@ public class KeyHandler implements KeyListener {
         MOVE_DOWN,
         MOVE_LEFT,
         MOVE_RIGHT,
-        ATTACK
+        ATTACK,
+        FIRE,
+        DASH
     }
 
     // `keyBindings` maps game actions to physical keyboard keys.
@@ -49,6 +51,8 @@ public class KeyHandler implements KeyListener {
         bindKey(Action.MOVE_RIGHT, KeyEvent.VK_D);
 
         bindKey(Action.ATTACK, KeyEvent.VK_ENTER);
+        bindKey(Action.FIRE, KeyEvent.VK_BACK_SPACE);
+        bindKey(Action.DASH, KeyEvent.VK_LEFT);
     }
 
     /**
@@ -123,7 +127,7 @@ public class KeyHandler implements KeyListener {
      * Clears all action states, usually when pausing or switching screens.
      */
     public void resetKeys() {
-        // Useful when switching screens or pausing so stale key holds do not leak into the next state.
+        // when switching screens or pausing so stale key holds do not leak into the next state.
         for (Action action : Action.values()) {
             keyStates.put(action, false);
         }

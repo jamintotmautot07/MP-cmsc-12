@@ -6,15 +6,14 @@ import java.awt.Rectangle;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
 
 import engine.GamePanel;
-import util.UtilityTool;
 import util.Constants;
 import systems.CollisionManager;
+import util.ResourceCache;
 
 /*
  OWNER: Allan
@@ -45,7 +44,13 @@ public class Enemy extends Entity {
     protected boolean alive = true;
     protected boolean dying = false;
     protected int hp = 3;
+    protected int maxHp = 3;
     protected int damage = 1;
+
+    protected boolean attackActive = false;
+    protected int attackCounter = 0;
+    protected int attackDuration = 18;
+    protected String attackDirection = "down";
 
     // Sprite arrays for different states
     protected BufferedImage[] idleFrames;
@@ -80,9 +85,29 @@ public class Enemy extends Entity {
         speed = 1;
         direction = "down";
         hp = 3;
+        maxHp = 3;
         damage = 1;
         alive = true;
         dying = false;
+    }
+
+    protected BufferedImage[] loadCachedSpriteArray(String enemyKey, String state, int frameCount) {
+        BufferedImage[] frames = new BufferedImage[frameCount];
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = ResourceCache.getImage("enemy_" + enemyKey + "_" + state + "_" + i);
+        }
+
+        return frames;
+    }
+
+    public void setStartPosition(int worldX, int worldY) {
+        this.worldX = worldX;
+        this.worldY = worldY;
+    }
+
+    public void setStartTilePosition(int col, int row) {
+        setStartPosition(col * Constants.tileSize, row * Constants.tileSize);
     }
 
     /**
@@ -101,7 +126,7 @@ public class Enemy extends Entity {
 
         // Try to load a default sprite if available
         try {
-            idleFrames[0] = ImageIO.read(new File("res/EnemyAssets/default.png"));
+            idleFrames[0] = ResourceCache.getImage("enemy_default");
             upFrames[0] = idleFrames[0];
             downFrames[0] = idleFrames[0];
             leftFrames[0] = idleFrames[0];
@@ -169,6 +194,119 @@ public class Enemy extends Entity {
     }
 
     /**
+     * Returns this enemy's collision body in world coordinates.
+     */
+    protected Rectangle getWorldSolidArea() {
+        return new Rectangle(
+            worldX + solidArea.x,
+            worldY + solidArea.y,
+            solidArea.width,
+            solidArea.height
+        );
+    }
+
+    /**
+     * Returns the player's collision body in world coordinates.
+     */
+    protected Rectangle getPlayerWorldSolidArea() {
+        return new Rectangle(
+            gp.player.worldX + gp.player.solidArea.x,
+            gp.player.worldY + gp.player.solidArea.y,
+            gp.player.solidArea.width,
+            gp.player.solidArea.height
+        );
+    }
+
+    protected int getCenterX() {
+        return worldX + renderWidth / 2;
+    }
+
+    protected int getCenterY() {
+        return worldY + renderHeight / 2;
+    }
+
+    protected int getPlayerCenterX() {
+        return gp.player.worldX + Constants.tileSize / 2;
+    }
+
+    protected int getPlayerCenterY() {
+        return gp.player.worldY + Constants.tileSize / 2;
+    }
+
+    protected int getTileDistanceToPlayer() {
+        int distanceX = Math.abs(getCenterX() - getPlayerCenterX());
+        int distanceY = Math.abs(getCenterY() - getPlayerCenterY());
+        return (distanceX + distanceY) / Constants.tileSize;
+    }
+
+    protected String getCardinalDirectionTowardPlayer() {
+        int distanceX = getPlayerCenterX() - getCenterX();
+        int distanceY = getPlayerCenterY() - getCenterY();
+
+        if (Math.abs(distanceX) > Math.abs(distanceY)) {
+            return distanceX < 0 ? "left" : "right";
+        }
+
+        return distanceY < 0 ? "up" : "down";
+    }
+
+    protected String getEightWayDirectionTowardPlayer() {
+        int distanceX = getPlayerCenterX() - getCenterX();
+        int distanceY = getPlayerCenterY() - getCenterY();
+        int deadZone = Constants.tileSize / 3;
+
+        boolean horizontal = Math.abs(distanceX) > deadZone;
+        boolean vertical = Math.abs(distanceY) > deadZone;
+
+        if (horizontal && vertical) {
+            if (distanceX < 0 && distanceY < 0) return "up-left";
+            if (distanceX > 0 && distanceY < 0) return "up-right";
+            if (distanceX < 0) return "down-left";
+            return "down-right";
+        }
+
+        if (horizontal) {
+            return distanceX < 0 ? "left" : "right";
+        }
+
+        return distanceY < 0 ? "up" : "down";
+    }
+
+    /**
+     * A melee attack is allowed only when the attack box itself reaches the player.
+     */
+    protected boolean canHitPlayerWithMelee(String attackDirection) {
+        Rectangle candidateHitbox = calculateAttackHitbox(attackDirection);
+        return CollisionManager.rectanglesIntersect(candidateHitbox, getPlayerWorldSolidArea());
+    }
+
+    protected boolean canMoveTo(int nextX, int nextY) {
+        Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(this, nextX, nextY);
+        return !CollisionManager.willCollideWithSolidTile(gp.tileM, futureSolidArea)
+            && !CollisionManager.willCollideWithEntity(futureSolidArea, gp.player)
+            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.enemies, this);
+    }
+
+    protected void fireProjectileAtPlayer(int damage, int projectileSpeed, int rangeTiles, int size) {
+        String projectileDirection = getEightWayDirectionTowardPlayer();
+        int startX = getCenterX() - size / 2;
+        int startY = getCenterY() - size / 2;
+
+        gp.spawnProjectile(new Projectile(
+            gp,
+            Projectile.OwnerType.ENEMY,
+            projectileDirection,
+            startX,
+            startY,
+            damage,
+            projectileSpeed,
+            rangeTiles * Constants.tileSize,
+            size,
+            size
+        ));
+    }
+
+    /**
      * Runs one frame of enemy logic: choose an action, test collisions, move, animate, and update timers.
      */
     public void update() {
@@ -177,42 +315,29 @@ public class Enemy extends Entity {
         setAction();
 
         collisionOn = false;
-        // Check tile collision
-        Rectangle futureSolidArea = new Rectangle(
-            solidArea.x + worldX,
-            solidArea.y + worldY,
-            solidArea.width,
-            solidArea.height
-        );
-        // NOTE: `futureSolidArea` is currently built from the current world position only.
-        // Because the next movement step is not applied to this rectangle before collision testing,
-        // tile collision can miss or feel late by one frame.
-        // If this is revisited, compute the rectangle from the predicted next X/Y for the current direction.
-        if (CollisionManager.willCollideWithSolidTile(gp.tileM, futureSolidArea)) {
+        int nextX = worldX;
+        int nextY = worldY;
+        if (!attackActive) {
+            switch (direction) {
+                case "up":    nextY -= speed; break;
+                case "down":  nextY += speed; break;
+                case "left":  nextX -= speed; break;
+                case "right": nextX += speed; break;
+            }
+        }
+
+        if (!attackActive && !canMoveTo(nextX, nextY)) {
             collisionOn = true;
         }
 
-        // Check player collision
-        // NOTE: This compares local solid-area rectangles instead of world-space hitboxes.
-        // That means enemy-vs-player contact is not being tested in the same coordinate system,
-        // which is one likely reason enemy attacks / damage registration still do not work.
-        // The place to fix that later is here or in CollisionManager by converting both hitboxes to world coordinates first.
-        if (CollisionManager.rectanglesIntersect(gp.player.solidArea, solidArea)) {
-            // Handle player collision (damage player, etc.)
-            // TODO: Implement player damage
-        }
-
-        if (!collisionOn) {
-            switch (direction) {
-                case "up":    worldY -= speed; break;
-                case "down":  worldY += speed; break;
-                case "left":  worldX -= speed; break;
-                case "right": worldX += speed; break;
-            }
+        if (!collisionOn && !attackActive) {
+            worldX = nextX;
+            worldY = nextY;
         }
 
         // Update animation
         updateAnimation();
+        updateAttackState();
 
         if (invincible) {
             invincibleCounter++;
@@ -240,6 +365,47 @@ public class Enemy extends Entity {
                 spriteNum = 0;
             }
         }
+    }
+
+    /**
+     * Starts an enemy melee attack or directional attack.
+     */
+    protected void startEnemyAttack(AttackType type, String direction) {
+        if (!attackActive) {
+            attackType = type;
+            attackDirection = direction;
+            attackActive = true;
+            attackCounter = 0;
+            attackHitbox.setBounds(0, 0, 0, 0);
+        }
+    }
+
+    protected void updateAttackState() {
+        if (!attackActive) {
+            return;
+        }
+
+        attackCounter++;
+        attackHitbox = calculateAttackHitbox(attackDirection);
+
+        if (attackCounter > attackDuration) {
+            attackActive = false;
+            attackCounter = 0;
+            attackType = AttackType.NONE;
+            attackHitbox.setBounds(0, 0, 0, 0);
+        }
+    }
+
+    public boolean isAttackActive() {
+        return attackActive;
+    }
+
+    public Rectangle getAttackHitbox() {
+        return attackHitbox;
+    }
+
+    public int getDamage() {
+        return damage;
     }
 
     /**
@@ -275,32 +441,63 @@ public class Enemy extends Entity {
         if (image == null) {
             // Fallback: draw a colored rectangle
             g2.setColor(Color.RED);
-            g2.fillRect(worldX - gp.player.worldX + gp.player.screenX,
-                       worldY - gp.player.worldY + gp.player.screenY,
+            g2.fillRect(worldX - gp.getCameraWorldX(),
+                       worldY - gp.getCameraWorldY(),
                        renderWidth, renderHeight);
+            renderHealthBar(g2, worldX - gp.getCameraWorldX(), worldY - gp.getCameraWorldY());
             return;
         }
 
-        // Draw the sprite.
-        // BUG NOTE: enemy rendering is still tied to player-relative conversion here:
-        // `world - player.world + player.screen`.
-        // That usually matches the camera while the player is centered, but it can drift or "warp"
-        // near map edges where GamePanel deliberately stops centering the player.
-        // If the visual warping near the end of the map gets fixed later, start here and switch to the
-        // same camera transform used by tiles and the player attack box:
-        // `screen = world - gp.getCameraWorldX/Y()`.
-        int screenX = worldX - gp.player.worldX + gp.player.screenX;
-        int screenY = worldY - gp.player.worldY + gp.player.screenY;
+        // Draw with the same camera transform used by tiles and player hitboxes.
+        int screenX = worldX - gp.getCameraWorldX();
+        int screenY = worldY - gp.getCameraWorldY();
 
         if (invincible) {
             g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.5f));
         }
 
         g2.drawImage(image, screenX, screenY, renderWidth, renderHeight, null);
+        renderHealthBar(g2, screenX, screenY);
+
+        if (attackActive && attackHitbox.width > 0 && attackHitbox.height > 0) {
+            int hitX = attackHitbox.x - gp.getCameraWorldX();
+            int hitY = attackHitbox.y - gp.getCameraWorldY();
+            g2.setColor(new Color(255, 0, 0, 120));
+            g2.fillRect(hitX, hitY, attackHitbox.width, attackHitbox.height);
+            g2.setColor(Color.RED);
+            g2.drawRect(hitX, hitY, attackHitbox.width, attackHitbox.height);
+        }
 
         if (invincible) {
             g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1f));
         }
+    }
+
+    protected void renderHealthBar(Graphics2D g2, int screenX, int screenY) {
+        if (maxHp <= 0 || hp <= 0) {
+            return;
+        }
+
+        int barWidth = Math.max(34, Math.min(renderWidth, Constants.tileSize * 3));
+        int barHeight = 7;
+        int barX = screenX + (renderWidth - barWidth) / 2;
+        int barY = screenY - 14;
+        int fillWidth = Math.max(0, Math.min(barWidth, (int) Math.round((hp / (double) maxHp) * barWidth)));
+
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.fillRoundRect(barX - 4, barY - 4, barWidth + 8, barHeight + 8, 8, 8);
+        g2.setColor(new Color(80, 10, 10, 230));
+        g2.fillRoundRect(barX, barY, barWidth, barHeight, 6, 6);
+        g2.setColor(new Color(45, 245, 105, 240));
+        g2.fillRoundRect(barX, barY, fillWidth, barHeight, 6, 6);
+        g2.setColor(new Color(190, 255, 205, 170));
+        g2.drawLine(barX + 1, barY + 1, barX + Math.max(1, fillWidth - 2), barY + 1);
+        g2.setColor(new Color(15, 15, 15, 240));
+        g2.drawRoundRect(barX - 1, barY - 1, barWidth + 1, barHeight + 1, 7, 7);
+    }
+
+    public void draw(Graphics2D g2) {
+        render(g2);
     }
 
     /**
@@ -331,12 +528,10 @@ public class Enemy extends Entity {
             hp -= amount;
             invincible = true;
             damageReaction();
-            System.out.println(getClass().getSimpleName() + " damaged by " + amount + ". HP left: " + Math.max(hp, 0));
 
             if (hp <= 0) {
                 dying = true;
                 alive = false;
-                System.out.println(getClass().getSimpleName() + " destroyed.");
             }
         }
     }
@@ -347,4 +542,13 @@ public class Enemy extends Entity {
     public boolean isAlive() {
         return alive;
     }
+
+    public int getHp() {
+        return hp;
+    }
+
+    public int getMaxHp() {
+        return maxHp;
+    }
+
 }

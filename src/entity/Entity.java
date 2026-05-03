@@ -118,10 +118,13 @@ public class Entity {
         // Base attack shape starts from the entity's current tile footprint.
         int tileSize = Constants.tileSize;
         int range = attackType == AttackType.NORMAL ? 1 : attackRangeTiles;
+        int hitSize = tileSize - 8;
+        int bodyWidth = renderWidth > 0 ? renderWidth : tileSize;
+        int bodyHeight = renderHeight > 0 ? renderHeight : tileSize;
         int x = worldX;
         int y = worldY;
-        int width = tileSize;
-        int height = tileSize;
+        int width = hitSize;
+        int height = hitSize;
 
         // Some attack types override the requested direction to force a fixed shape.
         String directionForAttack = attackDirection;
@@ -137,34 +140,34 @@ public class Entity {
 
         switch (directionForAttack) {
             case "left":
-                // Horizontal attack extending to the left of the entity.
-                x = worldX - range * tileSize;
-                width = range * tileSize;
-                height = tileSize;
+                x = worldX - (hitSize * range);
+                y = worldY + (bodyHeight - hitSize) / 2;
+                width = hitSize;
+                height = hitSize;
                 break;
             case "right":
-                // Horizontal attack extending to the right of the entity.
-                x = worldX + tileSize;
-                width = range * tileSize;
-                height = tileSize;
+                x = worldX + bodyWidth;
+                y = worldY + (bodyHeight - hitSize) / 2;
+                width = hitSize;
+                height = hitSize;
                 break;
             case "up":
-                // Vertical attack extending above the entity.
-                y = worldY - range * tileSize;
-                width = tileSize;
-                height = range * tileSize;
+                x = worldX + (bodyWidth - hitSize) / 2;
+                y = worldY - (hitSize * range);
+                width = hitSize;
+                height = hitSize;
                 break;
             case "down":
-                // Vertical attack extending below the entity.
-                y = worldY + tileSize;
-                width = tileSize;
-                height = range * tileSize;
+                x = worldX + (bodyWidth - hitSize) / 2;
+                y = worldY + bodyHeight;
+                width = hitSize;
+                height = hitSize;
                 break;
             default:
-                // Safe fallback so the hitbox still exists even if the direction string is unexpected.
-                x = worldX + tileSize;
-                width = range * tileSize;
-                height = tileSize;
+                x = worldX + bodyWidth;
+                y = worldY + (bodyHeight - hitSize) / 2;
+                width = hitSize;
+                height = hitSize;
                 break;
         }
 
