@@ -48,12 +48,12 @@ public class CoreBoss extends Enemy {
         alive = true;
         dying = false;
 
-        int padding = Constants.tileSize / 4;
+        int padding = Constants.tileSize / 2;
         solidArea = new Rectangle(
             padding,
             padding,
-            renderWidth - (padding * 3),
-            renderHeight - (padding * 3)
+            renderWidth - (padding * 4),
+            renderHeight - (padding * 4)
         );
         solidAreaDefaultX = solidArea.x;
         solidAreaDefaultY = solidArea.y;

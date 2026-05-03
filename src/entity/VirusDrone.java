@@ -14,12 +14,12 @@ import util.Constants;
  */
 public class VirusDrone extends EnemyPath {
 
-    private static final int AGGRO_START_TILES = 6;
+    private static final int AGGRO_START_TILES = 7;
     private static final int AGGRO_STOP_TILES = 12;
     private static final int NO_FIRE_RANGE_TILES = 5;
     private static final int MELEE_COOLDOWN_FRAMES = 60 * 2;
-    private static final int FIRE_COOLDOWN_FRAMES = 60 * 4;
-    private static final int PROJECTILE_RANGE_TILES = 4;
+    private static final int FIRE_COOLDOWN_FRAMES = 60 * 2;
+    private static final int PROJECTILE_RANGE_TILES = 7;
     private static final int PROJECTILE_SPEED = 2;
     private static final int PROJECTILE_SIZE = Constants.tileSize / 3;
 

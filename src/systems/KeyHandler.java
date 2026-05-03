@@ -127,7 +127,7 @@ public class KeyHandler implements KeyListener {
      * Clears all action states, usually when pausing or switching screens.
      */
     public void resetKeys() {
-        // Useful when switching screens or pausing so stale key holds do not leak into the next state.
+        // when switching screens or pausing so stale key holds do not leak into the next state.
         for (Action action : Action.values()) {
             keyStates.put(action, false);
         }

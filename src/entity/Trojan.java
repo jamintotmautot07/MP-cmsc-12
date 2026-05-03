@@ -195,6 +195,8 @@ public class Trojan extends Enemy {
      * Spawn an enemy during the PRODUCING state.
      */
     private void spawnEnemy() {
+        int spawnPositionNum = 0;
+
         // Check spawn limits
         if (currentSpawnCount >= totalSpawnLimit) {
             return; // Reached total limit
@@ -232,8 +234,31 @@ public class Trojan extends Enemy {
         // BUG NOTE: children currently spawn essentially on the same exit point with no spacing logic.
         // Combined with missing enemy-vs-enemy collision, that makes spawned enemies clump together quickly.
         // If this gets fixed later, check this spawn placement plus EnemyPath.searchPath/checkCollision.
-        newEnemy.worldX = worldX + (Constants.tileSize / 2) - (Constants.tileSize / 2);
-        newEnemy.worldY = worldY + Constants.tileSize; // Spawn below
+
+        if(spawnPositionNum == 0) {
+            // spawns above the trojan
+            newEnemy.worldX = (worldX + renderWidth) - (renderWidth / 2);
+            newEnemy.worldY = worldY - Constants.tileSize;
+            spawnPositionNum = 1;
+
+        } else if (spawnPositionNum == 1) {
+            // spawns to the left
+            newEnemy.worldX = worldX + Constants.tileSize;
+            newEnemy.worldY = (worldY + Constants.tileSize);
+            spawnPositionNum = 2;
+
+        } else if (spawnPositionNum == 2) {
+            // spawns to the right
+            newEnemy.worldX = (worldX + renderWidth);
+            newEnemy.worldY = (worldY + Constants.tileSize);
+            spawnPositionNum = 3;
+        } else if (spawnPositionNum == 3) {
+            // Spawn below
+            newEnemy.worldX = (worldX + renderWidth) - (renderWidth / 2);
+            newEnemy.worldY = (worldY + renderHeight) + Constants.tileSize;
+            spawnPositionNum = 0;
+        }
+        
 
         // Add to spawned children list (for tracking)
         spawnedChildren.add(newEnemy);
