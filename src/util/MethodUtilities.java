@@ -1,33 +1,27 @@
 package util;
-import main.BaseFrame;
-
-import java.io.FileInputStream;
-import java.io.InputStream;
-
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.LayoutManager;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.FontMetrics;
-import java.awt.AlphaComposite;
-import java.awt.LayoutManager;
-import java.awt.Component;
-
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JComponent;
+import main.BaseFrame;
 
 /**
  * Collection of reusable Swing helpers and lightweight custom UI components.
@@ -256,25 +250,13 @@ public class MethodUtilities {
         // Loads the project's button/body font and applies it directly to the given component.
         Font textFont;
 
-        try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
-            textFont = Font.createFont(Font.TRUETYPE_FONT, font);
-            textFont = textFont.deriveFont(Font.BOLD, size);
+        textFont = ResourceCache.getFont("button_text");
+        textFont = textFont.deriveFont(Font.BOLD, size);
 
-            component.setFont(textFont);
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
+        component.setFont(textFont);
+        component.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            return textFont;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            // If the custom font fails, fall back to a standard bold sans-serif font.
-            Font fallbackFont = new Font("SansSerif", Font.BOLD, (int) size);
-            component.setFont(fallbackFont);
-            component.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            return fallbackFont;
-        }
+        return textFont;
     }
 
     /**
@@ -284,19 +266,9 @@ public class MethodUtilities {
         // Variant that only returns the font object without touching a component.
         Font textFont;
 
-        try (InputStream font = new FileInputStream("res/Font/texts.ttf")) {
-            textFont = Font.createFont(Font.TRUETYPE_FONT, font);
-            textFont = textFont.deriveFont(Font.BOLD, size);
+        textFont = ResourceCache.getFont("button_text");
+        textFont = textFont.deriveFont(Font.BOLD, size);
 
-            return textFont;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            // Fallback for places that still need a usable font even when assets are missing.
-            Font fallbackFont = new Font("Arial", Font.BOLD, (int) size);
-
-            return fallbackFont;
-        }
+        return textFont;
     }
 }

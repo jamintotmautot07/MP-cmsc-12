@@ -15,15 +15,13 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
 import util.Constants;
+import util.ResourceCache;
 import util.UtilityTool;
 
 /**
  * Loads tile art, loads map text files, and renders the visible slice of the world grid.
  */
 public class TileManager {
-    // Folder and expected tile count for the current asset naming scheme.
-    private static final String TILE_FOLDER = "res/TILES/";
-    private static final int GROUND_TILE_COUNT = 180;
 
     // The manager needs the panel mainly for camera values during drawing.
     private final GamePanel gamePanel;
@@ -48,36 +46,22 @@ public class TileManager {
      */
     private void loadAllTiles() {
         // Ground tiles are loaded first, then solid tiles are appended after them.
-        this.loadTilesByPrefix("ground", false, GROUND_TILE_COUNT);
-        this.loadTilesByPrefix("solid", true, Integer.MAX_VALUE);
+        this.loadTilesByPrefix("ground", false, 180);
+        this.loadTilesByPrefix("solid", true, 166);
     }
 
     /**
      * Loads one family of tiles that share a filename prefix.
      */
     private void loadTilesByPrefix(String prefix, boolean solid, int maxTiles) {
-        int tileIndex = 1;
-
-        while (tileIndex <= maxTiles) {
-            // Expected file format: prefix001.png, prefix002.png, and so on.
-            String filePath = TILE_FOLDER + prefix + String.format("%03d", tileIndex) + ".png";
-            BufferedImage image = this.loadImage(filePath);
-
-            if (image == null) {
-                // Ground tiles tolerate gaps because the count is fixed.
-                // Solid tiles stop at the first missing file because they are treated as an open-ended list.
-                if (maxTiles == Integer.MAX_VALUE) {
-                    break;
-                }
-                tileIndex++;
-                continue;
-            }
+        for (int tileIndex = 1; tileIndex <= maxTiles; tileIndex++) {
+            String cacheKey = "tile_" + prefix + "_" + tileIndex;
+            BufferedImage image = ResourceCache.getImage(cacheKey);
 
             Tiles tile = solid ? new SolidTiles() : new GroundTiles();
-            // Resize here once so draw calls stay lightweight later.
             tile.image = UtilityTool.resizeImage(image, Constants.tileSize, Constants.tileSize);
+
             this.tiles.add(tile);
-            tileIndex++;
         }
     }
 

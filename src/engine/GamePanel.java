@@ -1,12 +1,15 @@
 
 package engine;
 
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
+import Tile.TileManager;
+import entity.CoreBoss;
+import entity.Enemy;
+import entity.Player;
+import entity.Trojan;
+import entity.VirusDrone;
+import entity.Worm;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -15,23 +18,18 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.awt.BorderLayout;
-import java.awt.Color;
-
-import util.Constants;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import systems.CollisionManager;
-import util.MethodUtilities.CustomButton;
-import util.MethodUtilities;
-import ui.IntroManager;
 import systems.KeyHandler;
-import entity.CoreBoss;
-import entity.Enemy;
-import entity.Player;
-import entity.Trojan;
-import entity.VirusDrone;
-import entity.Worm;
 import systems.Timer;
-import Tile.TileManager;
+import ui.IntroManager;
+import util.Constants;
+import util.MethodUtilities;
+import util.MethodUtilities.CustomButton;
 
 /*
  OWNER: Jamin
@@ -284,7 +282,7 @@ public class GamePanel extends JPanel implements Runnable {
                 {5, 5}, {8, 4}, {12, 6}, {16, 8}, {20, 10},
                 {24, 4}, {28, 7}, {33, 5}, {37, 9}, {41, 3},
                 {6, 15}, {10, 18}, {14, 22}, {18, 17}, {22, 20},
-                {26, 14}, {30, 18}, {34, 22}, {38, 16}, {42, 20}
+                {26, 14}, {30, 18}, {34, 22}, {38, 16}, {40, 20}
             };
             setEnemySpawnPositions(positions);
             return;
@@ -324,7 +322,7 @@ public class GamePanel extends JPanel implements Runnable {
                 {12, 10}, {16, 24}, {24, 14}, {30, 10}, {36, 18},
                 {18, 12}, {22, 22}, {28, 26},
                 {20, 18}, {24, 28}, {30, 20}, {34, 28},
-                {40, 24}
+                {23, 22}
             };
             setEnemySpawnPositions(positions);
             return;

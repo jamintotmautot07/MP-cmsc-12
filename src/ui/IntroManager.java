@@ -5,13 +5,10 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.imageio.ImageIO;
-
 import util.Constants;
+import util.ResourceCache;
 import util.UtilityTool;
 
 /*
@@ -98,36 +95,24 @@ public class IntroManager {
         this.isFading = false;
         this.fadeProgress = 0.0f;
         this.lastFrameTime = System.currentTimeMillis();
-        loadSceneFrames(filePattern, frameCount);
+        loadSceneFrames(sceneId, frameCount);
         return frames != null && frames.length > 0;
     }
 
     /**
      * Loads the cutscene frames from disk and scales them to the screen size.
      */
-    private void loadSceneFrames(String filePattern, int frameCount) {
+    private void loadSceneFrames(String sceneId, int frameCount) {
         frames = new BufferedImage[frameCount];
-        int loadedFrames = 0;
 
-        try {
-            for (int i = 0; i < frameCount; i++) {
-                String path = String.format(filePattern, i);
-                BufferedImage image = ImageIO.read(new File(path));
-                // Pre-scale to screen size so rendering is just one draw call per frame.
-                image = UtilityTool.resizeImage(image, Constants.screenWidth, Constants.screenHeight);
-                if (image != null) {
-                    frames[loadedFrames++] = image;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        for (int i = 0; i < frameCount; i++) {
+            BufferedImage image = ResourceCache.getImage("intro_" + sceneId + "_" + i);
 
-        if (loadedFrames != frameCount) {
-            // Trim the array if some files were missing so playback only uses valid images.
-            BufferedImage[] trimmed = new BufferedImage[loadedFrames];
-            System.arraycopy(frames, 0, trimmed, 0, loadedFrames);
-            frames = trimmed;
+            frames[i] = UtilityTool.resizeImage(
+                image,
+                Constants.screenWidth,
+                Constants.screenHeight
+            );
         }
 
         if (frames.length == 0) {

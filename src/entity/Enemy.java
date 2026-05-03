@@ -15,6 +15,7 @@ import engine.GamePanel;
 import util.UtilityTool;
 import util.Constants;
 import systems.CollisionManager;
+import util.ResourceCache;
 
 /*
  OWNER: Allan
@@ -101,7 +102,7 @@ public class Enemy extends Entity {
 
         // Try to load a default sprite if available
         try {
-            idleFrames[0] = ImageIO.read(new File("res/EnemyAssets/default.png"));
+            idleFrames[0] = ResourceCache.getImage("enemy_default");
             upFrames[0] = idleFrames[0];
             downFrames[0] = idleFrames[0];
             leftFrames[0] = idleFrames[0];
@@ -143,6 +144,17 @@ public class Enemy extends Entity {
         System.arraycopy(frames, 0, result, 0, loaded);
         return result;
     }
+
+    protected BufferedImage[] loadCachedSpriteArray(String enemyKey, String state, int frameCount) {
+        BufferedImage[] frames = new BufferedImage[frameCount];
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = ResourceCache.getImage("enemy_" + enemyKey + "_" + state + "_" + i);
+        }
+
+        return frames;
+    }
+
 
     /**
      * Default idle AI: randomly pick a direction every few seconds.
@@ -271,13 +283,14 @@ public class Enemy extends Entity {
         if (currentFrames != null && currentFrames.length > 0) {
             image = currentFrames[Math.min(spriteNum, currentFrames.length - 1)];
         }
+        
+        int screenX = worldX - gp.getCameraWorldX();
+        int screenY = worldY - gp.getCameraWorldY();
 
         if (image == null) {
             // Fallback: draw a colored rectangle
             g2.setColor(Color.RED);
-            g2.fillRect(worldX - gp.player.worldX + gp.player.screenX,
-                       worldY - gp.player.worldY + gp.player.screenY,
-                       renderWidth, renderHeight);
+            g2.fillRect(screenX, screenY, renderWidth, renderHeight);
             return;
         }
 
@@ -289,8 +302,6 @@ public class Enemy extends Entity {
         // If the visual warping near the end of the map gets fixed later, start here and switch to the
         // same camera transform used by tiles and the player attack box:
         // `screen = world - gp.getCameraWorldX/Y()`.
-        int screenX = worldX - gp.player.worldX + gp.player.screenX;
-        int screenY = worldY - gp.player.worldY + gp.player.screenY;
 
         if (invincible) {
             g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.5f));

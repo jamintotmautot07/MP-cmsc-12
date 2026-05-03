@@ -1,18 +1,15 @@
 package entity;
 
-import java.awt.Rectangle;
+import engine.GamePanel;
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Random;
-
 import javax.imageio.ImageIO;
-
-import engine.GamePanel;
-import util.Constants;
-import util.UtilityTool;
 import systems.CollisionManager;
-import java.awt.Color;
+import util.Constants;
 
 /**
  * Enemy variant intended for chase behavior.
@@ -356,12 +353,14 @@ public class EnemyPath extends Enemy {
         if (currentFrames != null && currentFrames.length > 0) {
             image = currentFrames[Math.min(spriteNum, currentFrames.length - 1)];
         }
+        
+        int screenX = worldX - gp.getCameraWorldX();
+        int screenY = worldY - gp.getCameraWorldY();
 
         if (image == null) {
             // Fallback: draw a colored rectangle
             g2.setColor(Color.BLUE);
-            g2.fillRect(worldX - gp.player.worldX + gp.player.screenX,
-                       worldY - gp.player.worldY + gp.player.screenY,
+            g2.fillRect(screenX, screenY,
                        Constants.tileSize, Constants.tileSize);
             return;
         }
@@ -369,8 +368,6 @@ public class EnemyPath extends Enemy {
         // BUG NOTE: like Enemy.render(), this still uses a player-relative transform.
         // If chase enemies appear to warp near map edges, the later rendering fix should mirror
         // the camera-based conversion used elsewhere in GamePanel and TileManager.
-        int screenX = worldX - gp.player.worldX + gp.player.screenX;
-        int screenY = worldY - gp.player.worldY + gp.player.screenY;
 
         if (invincible) {
             g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.5f));

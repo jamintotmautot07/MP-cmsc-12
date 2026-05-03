@@ -29,15 +29,14 @@ public class Worm extends Enemy {
 
     @Override
     protected void loadSprites() {
-        String basePath = "res/EnemyAssets/worm/";
 
         // Load sprite arrays with appropriate frame counts
-        idleFrames = loadSpriteArray(basePath, "idle", 6);
-        upFrames = loadSpriteArray(basePath, "up", 6);
-        downFrames = loadSpriteArray(basePath, "down", 6);
-        leftFrames = loadSpriteArray(basePath, "left", 10);
-        rightFrames = loadSpriteArray(basePath, "right", 10);
-        damagedFrames = loadSpriteArray(basePath, "damaged", 10);
+        idleFrames = loadCachedSpriteArray("worm", "idle", 6);
+        upFrames = loadCachedSpriteArray("worm", "up", 6);
+        downFrames = loadCachedSpriteArray("worm", "down", 6);
+        leftFrames = loadCachedSpriteArray("worm", "left", 10);
+        rightFrames = loadCachedSpriteArray("worm", "right", 10);
+        damagedFrames = loadCachedSpriteArray("worm", "damaged", 10);
 
         // Fallback: if no sprites loaded, use parent's fallback
         if (idleFrames == null && upFrames == null && downFrames == null &&

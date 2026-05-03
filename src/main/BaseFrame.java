@@ -1,22 +1,18 @@
 package main;
 
-import java.awt.CardLayout;
-import java.awt.Dimension;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-// import javax.swing.SwingWorker; // COMMENTED OUT - Cache system disabled
-
 import engine.GamePanel;
 import engine.Level;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import panels.CreditScroller;
+import panels.LoadingPanel;
 import panels.OpeningPanel;
 import panels.ScenePanel;
 import ui.IntroManager;
-// import panels.LoadingPanel; // COMMENTED OUT - Cache system disabled
 import util.Constants;
 import util.MethodUtilities;
-// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
 /**
  * Top-level application window that swaps between menu, cutscene, credits, and gameplay screens.
@@ -33,7 +29,7 @@ public class BaseFrame extends JFrame{
     private CreditScroller credits;
     public IntroManager sceneManager;
     public ScenePanel scenePanel;
-    // private LoadingPanel loadingPanel; // COMMENTED OUT - Cache system disabled
+    private LoadingPanel loadingPanel;
     // Basic progress / selection values shared between the menu and game screens.
     private Level selectedLevel = Level.TUTORIAL;
     private int maxLevelReached = 3;
@@ -50,41 +46,40 @@ public class BaseFrame extends JFrame{
         // Placeholder for loading progress from disk once save support is enabled.
         // maxLevelReached = FileManager.loadMaxLevelReached();
         // tutorialPlayed = FileManager.loadTutorialPlayed();
+        
 
+        cardLayout = new CardLayout();
+        container = new JPanel(cardLayout);
+        container.setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
+        
+        loadingPanel = new LoadingPanel(); 
+        container.add(loadingPanel, "Loading");
+        
+        add(container);
+
+        cardLayout.show(container, "Loading");
+
+        loadingPanel.startLoading(() -> {
+            createMainScreensAfterLoading();
+            setupButtonListeners();
+            startStartupScene();
+        });
+        
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    private void createMainScreensAfterLoading() {
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
         credits = new CreditScroller();
         sceneManager = new IntroManager();
         scenePanel = new ScenePanel(sceneManager);
-        // loadingPanel = new LoadingPanel(); // COMMENTED OUT - Cache system disabled
 
-        cardLayout = new CardLayout();
-        container = new JPanel(cardLayout);
-        container.setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
-
-        // Every major screen gets a named card.
-        // container.add(loadingPanel, "Loading"); // COMMENTED OUT - Cache system disabled
         container.add(scenePanel, "Scene");
         container.add(openPanel, "Openning");
         container.add(gamePanel, "Game");
         container.add(credits, "Credits");
-
-        add(container);
-
-        // Show loading panel initially
-        // cardLayout.show(container, "Loading"); // COMMENTED OUT - Cache system disabled
-        cardLayout.show(container, "Openning");
-
-        // Wire events once, then show the startup scene if needed.
-        setupButtonListeners();
-        startStartupScene();
-
-        // COMMENTED OUT - Cache system disabled
-        // Preload all resources in background
-        // startResourceLoading();
-
-        this.pack();
-        setLocationRelativeTo(null);
     }
 
     /**
