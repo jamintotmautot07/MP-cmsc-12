@@ -22,6 +22,7 @@ import java.io.InputStream;
 
 import util.Constants;
 import util.MethodUtilities;
+import util.ResourceCache;
 import util.MethodUtilities.CustomButton;
 import util.MethodUtilities.GlowLabel;
 import util.MethodUtilities.RoundedPanel;
@@ -65,7 +66,7 @@ public class OpeningPanel extends JPanel {
      */
     public OpeningPanel() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
-        this.backgroundImage = new ImageIcon("res/background.png").getImage();
+        this.backgroundImage = ResourceCache.getImage("background");
 
         setLayout(new BorderLayout());
         loadBackgroundFrames();
@@ -78,10 +79,9 @@ public class OpeningPanel extends JPanel {
         headerLabel1 = new GlowLabel(String.format("Hawak ko ang Bit:"));
         headerLabel2 = new GlowLabel(String.format("THE FINAL BIT"), new Color(150, 166, 150));
 
-        try (InputStream titleLowerStream = new FileInputStream("res/Font/Those_Glitch_Regular.ttf");
-             InputStream titleUpperStream = new FileInputStream("res/Font/TopTitle_Font.ttf")) {
-            Font titleLowerFont = Font.createFont(Font.TRUETYPE_FONT, titleLowerStream);
-            Font titleUpperFont = Font.createFont(Font.TRUETYPE_FONT, titleUpperStream);
+        try {
+            Font titleLowerFont = ResourceCache.getFont("title_lower");
+            Font titleUpperFont = ResourceCache.getFont("title_upper");
 
             // Derive concrete sizes from the loaded font files.
             titleLowerFont = titleLowerFont.deriveFont(Font.BOLD, 50f);
@@ -185,7 +185,8 @@ public class OpeningPanel extends JPanel {
         int frameCount = 22;
         backgroundFrames = new Image[frameCount];
         for(int i = 0; i < frameCount; i++) {
-            backgroundFrames[i] = new ImageIcon(String.format("res/BackGroundSeq/frame%04d.png", i)).getImage();
+            // backgroundFrames[i] = new ImageIcon(String.format("res/BackGroundSeq/frame%04d.png", i)).getImage();
+            backgroundFrames[i] = ResourceCache.getImage("bg_frame_" + i);
         }
     }
 

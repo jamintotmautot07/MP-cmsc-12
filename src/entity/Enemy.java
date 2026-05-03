@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import engine.GamePanel;
 import util.Constants;
 import systems.CollisionManager;
+import util.ResourceCache;
 
 /*
  OWNER: Allan
@@ -90,6 +91,16 @@ public class Enemy extends Entity {
         dying = false;
     }
 
+    protected BufferedImage[] loadCachedSpriteArray(String enemyKey, String state, int frameCount) {
+        BufferedImage[] frames = new BufferedImage[frameCount];
+
+        for (int i = 0; i < frameCount; i++) {
+            frames[i] = ResourceCache.getImage("enemy_" + enemyKey + "_" + state + "_" + i);
+        }
+
+        return frames;
+    }
+
     public void setStartPosition(int worldX, int worldY) {
         this.worldX = worldX;
         this.worldY = worldY;
@@ -115,7 +126,7 @@ public class Enemy extends Entity {
 
         // Try to load a default sprite if available
         try {
-            idleFrames[0] = ImageIO.read(new File("res/EnemyAssets/default.png"));
+            idleFrames[0] = ResourceCache.getImage("enemy_default");
             upFrames[0] = idleFrames[0];
             downFrames[0] = idleFrames[0];
             leftFrames[0] = idleFrames[0];

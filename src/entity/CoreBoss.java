@@ -61,25 +61,20 @@ public class CoreBoss extends Enemy {
 
     @Override
     protected void loadSprites() {
-        String basePath = "res/EnemyAssets/Boss/";
 
-        idleFrames = loadSpriteArray(basePath, "idle", 6);
+        idleFrames = loadCachedSpriteArray("boss", "idle", 6);
+
+        if (idleFrames != null) {
+            idleFrames = resizeSpriteArray(idleFrames, renderWidth, renderHeight);
+        } else {
+            super.loadSprites();
+        }
+
         upFrames = idleFrames;
         downFrames = idleFrames;
         leftFrames = idleFrames;
         rightFrames = idleFrames;
         damagedFrames = idleFrames;
-
-        if (idleFrames != null) {
-            idleFrames = resizeSpriteArray(idleFrames, renderWidth, renderHeight);
-            upFrames = resizeSpriteArray(upFrames, renderWidth, renderHeight);
-            downFrames = resizeSpriteArray(downFrames, renderWidth, renderHeight);
-            leftFrames = resizeSpriteArray(leftFrames, renderWidth, renderHeight);
-            rightFrames = resizeSpriteArray(rightFrames, renderWidth, renderHeight);
-            damagedFrames = resizeSpriteArray(damagedFrames, renderWidth, renderHeight);
-        } else {
-            super.loadSprites();
-        }
     }
 
     @Override

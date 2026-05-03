@@ -5,16 +5,13 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
 
 import engine.GamePanel;
 import systems.CollisionManager;
 import systems.KeyHandler;
 import util.Constants;
 import util.UtilityTool;
+import util.ResourceCache;
 
 /*
  OWNER: Jamin
@@ -146,35 +143,30 @@ public class Player extends Entity{
         left = new BufferedImage[6];
         right = new BufferedImage[6];
 
-        try {
-            
-            // Load and resize every animation frame once at startup.
-            for(int i = 0; i < 7; i++) {
-                idle[i] = ImageIO.read(new File(String.format("res/PlayerAssets/idle%d.png", i + 1)));
-                idle[i] = UtilityTool.resizeImage(idle[i], Constants.tileSize, Constants.tileSize);
-            }
-            // down assets
-            for(int i = 0; i < 4; i++) {
-                down[i] = ImageIO.read(new File(String.format("res/PlayerAssets/down%d.png", i + 1)));
-                down[i] = UtilityTool.resizeImage(down[i], Constants.tileSize, Constants.tileSize);
-            }
-            // up assets
-            for(int i = 0; i < 6; i++) {
-                up[i] = ImageIO.read(new File(String.format("res/PlayerAssets/up%d.png", i + 1)));
-                up[i] = UtilityTool.resizeImage(up[i], Constants.tileSize, Constants.tileSize);
-            }
-            // left assets
-            for(int i = 0; i < 6; i++) {
-                left[i] = ImageIO.read(new File(String.format("res/PlayerAssets/left%d.png", i + 1)));
-                left[i] = UtilityTool.resizeImage(left[i], Constants.tileSize, Constants.tileSize);
-            }
-            // right assets
-            for(int i = 0; i < 6; i++) {
-                right[i] = ImageIO.read(new File(String.format("res/PlayerAssets/right%d.png", i + 1)));
-                right[i] = UtilityTool.resizeImage(right[i], Constants.tileSize, Constants.tileSize);
-            }
-
-        } catch (IOException e) {
+        // Load and resize every animation frame once at startup.
+        for(int i = 0; i < 7; i++) {
+            idle[i] = ResourceCache.getImage("player_idle_" + i);
+            idle[i] = UtilityTool.resizeImage(idle[i], Constants.tileSize, Constants.tileSize);
+        }
+        // down assets
+        for(int i = 0; i < 4; i++) {
+            down[i] = ResourceCache.getImage("player_down_" + i);
+            down[i] = UtilityTool.resizeImage(down[i], Constants.tileSize, Constants.tileSize);
+        }
+        // up assets
+        for(int i = 0; i < 6; i++) {
+            up[i] = ResourceCache.getImage("player_up_" + i);
+            up[i] = UtilityTool.resizeImage(up[i], Constants.tileSize, Constants.tileSize);
+        }
+        // left assets
+        for(int i = 0; i < 6; i++) {
+            left[i] = ResourceCache.getImage("player_left_" + i);
+            left[i] = UtilityTool.resizeImage(left[i], Constants.tileSize, Constants.tileSize);
+        }
+        // right assets
+        for(int i = 0; i < 6; i++) {
+            right[i] = ResourceCache.getImage("player_right_" + i);
+            right[i] = UtilityTool.resizeImage(right[i], Constants.tileSize, Constants.tileSize);
         }
     }
 

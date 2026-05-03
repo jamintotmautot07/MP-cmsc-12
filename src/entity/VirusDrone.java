@@ -40,15 +40,15 @@ public class VirusDrone extends EnemyPath {
 
     @Override
     protected void loadSprites() {
-        String basePath = "res/EnemyAssets/virus/";
 
         // Load sprite arrays with appropriate frame counts
-        idleFrames = loadSpriteArray(basePath, "idle", 13);
-        upFrames = loadSpriteArray(basePath, "up", 11);
-        downFrames = loadSpriteArray(basePath, "down", 13);
-        leftFrames = loadSpriteArray(basePath, "left", 11);
-        rightFrames = loadSpriteArray(basePath, "right", 11);
-        // No damaged frames for virus, use idle as fallback
+        idleFrames = loadCachedSpriteArray("virus", "idle", 13);
+        upFrames = loadCachedSpriteArray("virus", "up", 11);
+        downFrames = loadCachedSpriteArray("virus", "down", 13);
+        leftFrames = loadCachedSpriteArray("virus", "left", 11);
+        rightFrames = loadCachedSpriteArray("virus", "right", 11);
+
+        damagedFrames = idleFrames;
 
         // Fallback: if no sprites loaded, use parent's fallback
         if (idleFrames == null && upFrames == null && downFrames == null &&

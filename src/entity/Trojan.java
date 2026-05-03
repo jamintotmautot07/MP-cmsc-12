@@ -38,7 +38,7 @@ public class Trojan extends Enemy {
     private BufferedImage[] activatingFrames;
     private BufferedImage[] producingFrames;
     private BufferedImage[] cooldownFrames;
-    private BufferedImage[] recoveryFrames; // For emerge animations
+    // private BufferedImage[] recoveryFrames; // For emerge animations
 
     // Track spawned enemies (optional, for limiting active count)
     private List<Entity> spawnedChildren = new ArrayList<>();
@@ -75,13 +75,12 @@ public class Trojan extends Enemy {
 
     @Override
     protected void loadSprites() {
-        String basePath = "res/EnemyAssets/trojan/";
 
         // Load state-specific sprite arrays
-        idleFrames = loadSpriteArray(basePath, "idle", 12);
-        activatingFrames = loadSpriteArray(basePath, "recovery", 35); // Use recovery for activating
-        producingFrames = loadSpriteArray(basePath, "producing", 21);
-        cooldownFrames = loadSpriteArray(basePath, "cooldown", 7);
+        idleFrames = loadCachedSpriteArray("trojan", "idle", 12);
+        activatingFrames = loadCachedSpriteArray("trojan", "recovery", 35);
+        producingFrames = loadCachedSpriteArray("trojan", "producing", 21);
+        cooldownFrames = loadCachedSpriteArray("trojan", "cooldown", 7);
 
         // No directional movement sprites needed since stationary
         upFrames = idleFrames;
