@@ -6,6 +6,9 @@ import java.awt.Rectangle;
 import systems.CollisionManager;
 import engine.GamePanel;
 
+/**
+ * Moving ranged attack entity that belongs to either the player or an enemy.
+ */
 public class Projectile extends Entity {
 
     public enum OwnerType {
@@ -80,7 +83,7 @@ public class Projectile extends Entity {
         }
 
         Rectangle futureBounds = getBounds();
-        if (CollisionManager.willCollideWithSolidTile(gp.tileM, futureBounds)) {
+        if (CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureBounds)) {
             alive = false;
         }
     }

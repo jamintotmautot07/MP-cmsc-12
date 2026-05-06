@@ -7,7 +7,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-// import javax.swing.SwingWorker; // COMMENTED OUT - Cache system disabled
 
 import engine.GamePanel;
 import engine.Level;
@@ -24,7 +23,7 @@ import util.MethodUtilities;
 /**
  * Top-level application window that swaps between menu, cutscene, credits, and gameplay screens.
  */
-public class BaseFrame extends JFrame{
+public class BaseFrame extends JFrame {
 
     // CardLayout lets the app swap between menu, game, credits, and cutscene panels in one window.
     private CardLayout cardLayout;
@@ -178,7 +177,7 @@ public class BaseFrame extends JFrame{
         openPanel.scoreButton.addActionListener(e -> {
             // Scoreboard uses simple placeholder values for unfinished systems.
             panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
-            int timeScore = gamePanel.timer != null ? gamePanel.timer.getTimeScore() : 0;
+            int timeScore = gamePanel.getTimer() != null ? gamePanel.getTimer().getTimeScore() : 0;
             int enemyScore = 0; // placeholder
             int levelsCleared = gamePanel.getLevelsCleared();
             int totalScore = timeScore + enemyScore + levelsCleared * 100; // placeholder calculation
@@ -191,38 +190,6 @@ public class BaseFrame extends JFrame{
         gamePanel.onLevelComplete = this::updateProgress;
         openPanel.setContinueVisible(hasSavedProgress());
     }
-
-    // COMMENTED OUT - Cache system disabled
-    // private void startResourceLoading() {
-    //     new SwingWorker<Void, String>() {
-    //         @Override
-    //         protected Void doInBackground() throws Exception {
-    //             ResourceCache.preloadAll();
-    //             publish("Loading resources...");
-    //             Thread.sleep(500);
-    //             return null;
-    //         }
-    //
-    //         @Override
-    //         protected void process(java.util.List<String> chunks) {
-    //             String message = chunks.get(chunks.size() - 1);
-    //             loadingPanel.setProgress(75, message);
-    //         }
-    //
-    //         @Override
-    //         protected void done() {
-    //             loadingPanel.setProgress(100, "Ready!");
-    //             try {
-    //                 Thread.sleep(300);
-    //             } catch (InterruptedException e) {
-    //             }
-    //             openPanel.loadBackgroundFrames();
-    //             openPanel.startBackgroundAnimation();
-    //             cardLayout.show(container, "Openning");
-    //             openPanel.requestFocusInWindow();
-    //         }
-    //     }.execute();
-    // }
 
     /**
      * Returns the app to the opening menu card.

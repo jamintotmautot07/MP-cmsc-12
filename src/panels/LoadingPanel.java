@@ -21,6 +21,9 @@ import util.ResourceCache;
  - Appears at startup before opening panel
 */
 
+/**
+ * Startup loading screen that preloads cached resources before showing the main menu.
+ */
 public class LoadingPanel extends JPanel {
 
     /*

@@ -1,42 +1,47 @@
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/audio/AudioPlayer.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/engine/GamePanel.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/engine/Level.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/CoreBoss.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Enemy.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/EnemyPath.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Entity.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Laser.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Player.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Projectile.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Trojan.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/TrojanState.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/VirusDrone.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/entity/Worm.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/exception/GameException.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/main/BaseFrame.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/main/GameLauncher.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/object/blockObject.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/object/SuperObject.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/CreditScroller.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/LevelSelectionDialog.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/LoadingPanel.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/OpeningPanel.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/ScenePanel.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/panels/ScoreboardDialog.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/CollisionManager.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/FileManager.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/GameState.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/KeyHandler.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/TestFileManager.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/systems/Timer.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/Tile/GroundTiles.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/Tile/SolidTiles.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/Tile/TileManager.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/Tile/Tiles.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/ui/IntroManager.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/ui/PreloadProgressBar.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/Constants.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/Cooldown.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/MethodUtilities.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/ResourceCache.java"
-"C:/Jamin Coding/files related to coding/MP-cmsc-12/src/util/UtilityTool.java"
+src/audio/AudioPlayer.java
+src/engine/Camera.java
+src/engine/GameMode.java
+src/engine/GamePanel.java
+src/engine/Level.java
+src/engine/LevelEnemyFactory.java
+src/entity/CoreBoss.java
+src/entity/Enemy.java
+src/entity/Entity.java
+src/entity/Laser.java
+src/entity/Player.java
+src/entity/Projectile.java
+src/entity/Trojan.java
+src/entity/TrojanState.java
+src/entity/VirusDrone.java
+src/entity/Worm.java
+src/exception/GameException.java
+src/main/BaseFrame.java
+src/main/GameLauncher.java
+src/object/BlockObject.java
+src/object/SuperObject.java
+src/panels/CreditScroller.java
+src/panels/LevelSelectionDialog.java
+src/panels/LoadingPanel.java
+src/panels/OpeningPanel.java
+src/panels/ScenePanel.java
+src/panels/ScoreboardDialog.java
+src/systems/CollisionManager.java
+src/systems/CombatResolver.java
+src/systems/FileManager.java
+src/systems/GameState.java
+src/systems/KeyHandler.java
+src/systems/TestFileManager.java
+src/systems/Timer.java
+src/tile/GroundTile.java
+src/tile/SolidTile.java
+src/tile/Tile.java
+src/tile/TileManager.java
+src/ui/HudRenderer.java
+src/ui/IntroManager.java
+src/ui/PauseMenu.java
+src/ui/PreloadProgressBar.java
+src/util/Constants.java
+src/util/Cooldown.java
+src/util/MethodUtilities.java
+src/util/ResourceCache.java
+src/util/UtilityTool.java

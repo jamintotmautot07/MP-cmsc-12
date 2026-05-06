@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -61,8 +62,8 @@ public class ResourceCache {
     public static void loadImage(String key, String path) {
         // Load only once per key to avoid repeated disk access.
         if (!imageCache.containsKey(key)) {
-            try {
-                BufferedImage img = ImageIO.read(new java.io.File(path));
+            try (InputStream inputStream = openResourceStream(path)) {
+                BufferedImage img = ImageIO.read(inputStream);
                 imageCache.put(key, img);
             } catch (Exception e) {
             }
@@ -89,13 +90,28 @@ public class ResourceCache {
     public static void loadFont(String key, String path, int style, float size) {
         // Store the already-derived font so callers do not redo this work.
         if (!fontCache.containsKey(key)) {
-            try (InputStream fontStream = new FileInputStream(path)) {
+            try (InputStream fontStream = openResourceStream(path)) {
                 Font baseFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
                 Font derivedFont = baseFont.deriveFont(style, size);
                 fontCache.put(key, derivedFont);
             } catch (Exception e) {
             }
         }
+    }
+
+    private static InputStream openResourceStream(String path) throws Exception {
+        File file = new File(path);
+        if (file.exists()) {
+            return new FileInputStream(file);
+        }
+
+        String resourcePath = "/" + path.replace("\\", "/");
+        InputStream resourceStream = ResourceCache.class.getResourceAsStream(resourcePath);
+        if (resourceStream != null) {
+            return resourceStream;
+        }
+
+        throw new IllegalArgumentException("Resource not found: " + path);
     }
     
     /**

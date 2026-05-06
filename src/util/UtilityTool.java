@@ -5,7 +5,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
-import Tile.TileManager;
+import tile.TileManager;
 import entity.CoreBoss;
 import entity.Enemy;
 import entity.Trojan;
@@ -61,7 +61,10 @@ public class UtilityTool {
                     enemy.worldX + enemy.solidArea.x,
                     enemy.worldY + enemy.solidArea.y,
                     enemy.solidArea.width,
-                    enemy.solidArea.height))) {
+                    enemy.solidArea.height)) && (
+                        (enemy.worldX >= 0 || enemy.worldX <= Constants.maxWorldWidth) && 
+                        (enemy.worldY >= 9 * Constants.tileSize || enemy.worldY <= Constants.maxWorldHeight)
+                    )) {
                 validPosition = true;
             }
 
@@ -76,7 +79,7 @@ public class UtilityTool {
     }
 
     /**
-     * Get a human-readable name for an enemy.
+     * Get a readable name for an enemy.
      */
     public static String getEntityName(Entity entity) {
         if (entity instanceof Worm) {

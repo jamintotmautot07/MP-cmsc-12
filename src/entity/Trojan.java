@@ -3,10 +3,12 @@ package entity;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
 import engine.GamePanel;
+import systems.CollisionManager;
 import util.Constants;
 
 /**
@@ -24,6 +26,7 @@ public class Trojan extends Enemy {
     private int maxActiveChildren = 3;
     private int totalSpawnLimit = 10; // Optional limit
     private int currentSpawnCount = 0;
+    private int nextSpawnType = 0;
 
     // State durations (in frames, assuming 60 FPS)
     private final int IDLE_DURATION = 300;        // 5 seconds
@@ -31,8 +34,7 @@ public class Trojan extends Enemy {
     private final int PRODUCING_DURATION = 180;   // 3 seconds
     private final int COOLDOWN_DURATION = 240;    // 4 seconds
 
-    // Spawn timing within PRODUCING state
-    private final int SPAWN_TIME = 60; // Spawn at 1 second into producing
+    private boolean spawnAttemptedDuringProducing = false;
 
     // Sprite arrays for different states
     private BufferedImage[] activatingFrames;
@@ -158,9 +160,6 @@ public class Trojan extends Enemy {
                 break;
 
             case PRODUCING:
-                if (stateTimer == SPAWN_TIME) {
-                    spawnEnemy();
-                }
                 if (stateTimer >= PRODUCING_DURATION) {
                     changeState(TrojanState.COOLDOWN);
                 }
@@ -187,15 +186,15 @@ public class Trojan extends Enemy {
     private void changeState(TrojanState newState) {
         currentState = newState;
         stateTimer = 0;
-        spriteNum = 0; // Reset animation
+        spriteCounter = 0;
+        spriteNum = 0;
+        spawnAttemptedDuringProducing = false;
     }
 
     /**
      * Spawn an enemy during the PRODUCING state.
      */
     private void spawnEnemy() {
-        int spawnPositionNum = 0;
-
         // Check spawn limits
         if (currentSpawnCount >= totalSpawnLimit) {
             return; // Reached total limit
@@ -214,8 +213,9 @@ public class Trojan extends Enemy {
         }
 
         // Decide what to spawn (can be randomized or based on logic)
-        Entity newEnemy;
-        int spawnType = currentSpawnCount % 3; // Cycle through types
+        Enemy newEnemy;
+        int spawnType = nextSpawnType;
+        nextSpawnType = (nextSpawnType + 1) % 3;
 
         switch (spawnType) {
             case 0:
@@ -229,45 +229,45 @@ public class Trojan extends Enemy {
                 break;
         }
 
-        // Position the enemy near the Trojan.
-        // BUG NOTE: children currently spawn essentially on the same exit point with no spacing logic.
-        // Combined with missing enemy-vs-enemy collision, that makes spawned enemies clump together quickly.
-        // If this gets fixed later, check this spawn placement plus EnemyPath.searchPath/checkCollision.
-
-        if(spawnPositionNum == 0) {
-            // spawns above the trojan
-            newEnemy.worldX = (worldX + renderWidth) - (renderWidth / 2);
-            newEnemy.worldY = worldY - Constants.tileSize;
-            spawnPositionNum = 1;
-
-        } else if (spawnPositionNum == 1) {
-            // spawns to the left
-            newEnemy.worldX = worldX + Constants.tileSize;
-            newEnemy.worldY = (worldY + Constants.tileSize);
-            spawnPositionNum = 2;
-
-        } else if (spawnPositionNum == 2) {
-            // spawns to the right
-            newEnemy.worldX = (worldX + renderWidth);
-            newEnemy.worldY = (worldY + Constants.tileSize);
-            spawnPositionNum = 3;
-        } else if (spawnPositionNum == 3) {
-            // Spawn below
-            newEnemy.worldX = (worldX + renderWidth) - (renderWidth / 2);
-            newEnemy.worldY = (worldY + renderHeight) + Constants.tileSize;
-            spawnPositionNum = 0;
-        }
-        
-
-        // Add to spawned children list (for tracking)
-        spawnedChildren.add(newEnemy);
-
-        // Register the new enemy with the main game panel so it will update and render.
-        if (newEnemy instanceof Enemy) {
-            gp.addEnemy((Enemy) newEnemy);
+        if (!placeAtRandomSpawnPosition(newEnemy)) {
+            return;
         }
 
-        currentSpawnCount++;
+        if (gp.addEnemy(newEnemy)) {
+            spawnedChildren.add(newEnemy);
+            currentSpawnCount++;
+        }
+    }
+
+    private boolean placeAtRandomSpawnPosition(Enemy enemy) {
+        List<int[]> spawnPositions = new ArrayList<>();
+        spawnPositions.add(new int[] {worldX + Constants.tileSize, worldY - Constants.tileSize}); // up
+        spawnPositions.add(new int[] {worldX + Constants.tileSize, worldY + renderHeight}); // down
+        spawnPositions.add(new int[] {worldX - Constants.tileSize, worldY + Constants.tileSize}); // left
+        spawnPositions.add(new int[] {worldX + renderWidth, worldY + Constants.tileSize}); // right
+        Collections.shuffle(spawnPositions, random);
+
+        for (int[] position : spawnPositions) {
+            if (canSpawnEnemyAt(enemy, position[0], position[1])) {
+                enemy.setStartPosition(position[0], position[1]);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean canSpawnEnemyAt(Enemy enemy, int spawnX, int spawnY) {
+        if (spawnX < 0 || spawnY < 0
+            || spawnX + enemy.renderWidth > Constants.maxWorldWidth
+            || spawnY + enemy.renderHeight > Constants.maxWorldHeight) {
+            return false;
+        }
+
+        Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(enemy, spawnX, spawnY);
+        return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)
+            && !CollisionManager.willCollideWithEntity(futureSolidArea, gp.getPlayer())
+            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.getEnemies(), this);
     }
 
     /**
@@ -284,19 +284,69 @@ public class Trojan extends Enemy {
 
     @Override
     protected void updateAnimation() {
+        BufferedImage[] currentFrames = getCurrentFrameArray();
+        if (currentFrames == null || currentFrames.length == 0) {
+            spriteNum = 0;
+            return;
+        }
+
+        if (currentState == TrojanState.IDLE) {
+            updateLoopingAnimation(currentFrames);
+            return;
+        }
+
+        int duration = getCurrentStateDuration();
+        if (duration <= 0 || currentFrames.length == 1) {
+            spriteNum = 0;
+            return;
+        }
+
+        int clampedTimer = Math.max(0, Math.min(stateTimer, duration - 1));
+        spriteNum = (int) ((long) clampedTimer * currentFrames.length / duration);
+        if (spriteNum >= currentFrames.length) {
+            spriteNum = currentFrames.length - 1;
+        }
+
+        if (currentState == TrojanState.PRODUCING
+            && !spawnAttemptedDuringProducing
+            && spriteNum >= getProducingSpawnFrame()) {
+            spawnEnemy();
+            spawnAttemptedDuringProducing = true;
+        }
+    }
+
+    private void updateLoopingAnimation(BufferedImage[] currentFrames) {
         spriteCounter++;
         if (spriteCounter > 12) {
             spriteNum++;
             spriteCounter = 0;
 
-            BufferedImage[] currentFrames = getCurrentFrameArray();
-            // BUG NOTE: the Trojan uses fixed state durations and independently looping animations.
-            // If the sequence looks off, the later fix most likely belongs here and in `updateStateMachine()`:
-            // map animation progress to the state's elapsed fraction instead of looping every 12 ticks.
-            if (currentFrames != null && spriteNum >= currentFrames.length) {
+            if (spriteNum >= currentFrames.length) {
                 spriteNum = 0;
             }
         }
+    }
+
+    private int getCurrentStateDuration() {
+        switch (currentState) {
+            case ACTIVATING:
+                return ACTIVATING_DURATION;
+            case PRODUCING:
+                return PRODUCING_DURATION;
+            case COOLDOWN:
+                return COOLDOWN_DURATION;
+            case IDLE:
+                return IDLE_DURATION;
+            default:
+                return 0;
+        }
+    }
+
+    private int getProducingSpawnFrame() {
+        if (producingFrames == null || producingFrames.length == 0) {
+            return 0;
+        }
+        return producingFrames.length / 2;
     }
 
     @Override
@@ -326,16 +376,11 @@ public class Trojan extends Enemy {
      * Minimal hit reaction for now because the Trojan does not move.
      */
     public void damageReaction() {
-        // Trojans don't move, but could change state or behavior
-        // For now, just reset state timer
-        stateTimer = 0;
+        // Trojans do not move; damage should not desync their current state animation.
     }
 
     @Override
     public void takeDamage(int amount) {
-        // BUG NOTE: this method is ready for damage, but the current gameplay loop never reliably reaches it
-        // because player attack-vs-enemy collision registration is not wired up in world space yet.
-        // The later fix likely starts in Player.update()/getAttackHitbox(), GamePanel.updateEnemies(), and CollisionManager.
         if (!invincible) {
             hp -= amount;
             invincible = true;

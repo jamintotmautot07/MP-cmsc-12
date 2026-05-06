@@ -91,9 +91,9 @@ public class KeyHandler implements KeyListener {
 
         // Space is handled as a global pause/resume shortcut, not a normal action binding.
         if (code == KeyEvent.VK_SPACE) {
-            if (gp.gameState == gp.playState) {
+            if (gp.isPlaying()) {
                 gp.pauseGame();
-            } else if (gp.gameState == gp.pausedState) {
+            } else if (gp.isPaused()) {
                 gp.resumeGame();
             }
             return;
@@ -101,7 +101,7 @@ public class KeyHandler implements KeyListener {
 
         // Escape is reserved for skipping cutscenes.
         if (code == KeyEvent.VK_ESCAPE) {
-            if (gp.gameState == gp.cutsceneState) {
+            if (gp.isInCutscene()) {
                 gp.skipScene();
             }
             return;

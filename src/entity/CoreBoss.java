@@ -265,7 +265,7 @@ public class CoreBoss extends Enemy {
             while (endX < maxX) {
                 int segmentWidth = Math.min(Constants.tileSize, maxX - endX);
                 Rectangle segment = new Rectangle(endX, y, segmentWidth, LASER_THICKNESS);
-                if (CollisionManager.willCollideWithSolidTile(gp.tileM, segment)) {
+                if (CollisionManager.willCollideWithSolidTile(gp.getTileManager(), segment)) {
                     break;
                 }
                 endX += segmentWidth;
@@ -282,7 +282,7 @@ public class CoreBoss extends Enemy {
             int segmentWidth = Math.min(Constants.tileSize, currentX - minX);
             int segmentX = currentX - segmentWidth;
             Rectangle segment = new Rectangle(segmentX, y, segmentWidth, LASER_THICKNESS);
-            if (CollisionManager.willCollideWithSolidTile(gp.tileM, segment)) {
+            if (CollisionManager.willCollideWithSolidTile(gp.getTileManager(), segment)) {
                 break;
             }
             currentX = segmentX;
@@ -302,7 +302,7 @@ public class CoreBoss extends Enemy {
             while (endY < maxY) {
                 int segmentHeight = Math.min(Constants.tileSize, maxY - endY);
                 Rectangle segment = new Rectangle(x, endY, LASER_THICKNESS, segmentHeight);
-                if (CollisionManager.willCollideWithSolidTile(gp.tileM, segment)) {
+                if (CollisionManager.willCollideWithSolidTile(gp.getTileManager(), segment)) {
                     break;
                 }
                 endY += segmentHeight;
@@ -319,7 +319,7 @@ public class CoreBoss extends Enemy {
             int segmentHeight = Math.min(Constants.tileSize, currentY - minY);
             int segmentY = currentY - segmentHeight;
             Rectangle segment = new Rectangle(x, segmentY, LASER_THICKNESS, segmentHeight);
-            if (CollisionManager.willCollideWithSolidTile(gp.tileM, segment)) {
+            if (CollisionManager.willCollideWithSolidTile(gp.getTileManager(), segment)) {
                 break;
             }
             currentY = segmentY;
@@ -342,11 +342,11 @@ public class CoreBoss extends Enemy {
         }
 
         boolean playerTouchedBoss = CollisionManager.rectanglesIntersect(getPlayerWorldSolidArea(), getWorldSolidArea());
-        boolean playerMeleeHitBoss = gp.player.isAttackActive()
-            && CollisionManager.rectanglesIntersect(gp.player.getAttackHitbox(), getWorldSolidArea());
+        boolean playerMeleeHitBoss = gp.getPlayer().isAttackActive()
+            && CollisionManager.rectanglesIntersect(gp.getPlayer().getAttackHitbox(), getWorldSolidArea());
 
         if (playerTouchedBoss || playerMeleeHitBoss) {
-            gp.player.takeDamage(damage);
+            gp.getPlayer().takeDamage(damage);
         }
     }
 

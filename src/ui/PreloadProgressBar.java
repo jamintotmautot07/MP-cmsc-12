@@ -6,7 +6,10 @@ import java.awt.Font;
 
 import javax.swing.JProgressBar;
 
-public class PreloadProgressBar extends JProgressBar{
+/**
+ * Styled progress bar used by the startup loading screen.
+ */
+public class PreloadProgressBar extends JProgressBar {
     public PreloadProgressBar(int min, int max) {
         super(min, max);
         this.setStringPainted(true);
