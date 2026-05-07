@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
 
@@ -31,17 +32,28 @@ public class ResourceCache {
     // Two separate caches keep image and font lookups straightforward.
     private static final Map<String, BufferedImage> imageCache = new HashMap<>();
     private static final Map<String, Font> fontCache = new HashMap<>();
+    private static final int SCENE_FRAME_CACHE_LIMIT = 8;
+    private static final Map<String, BufferedImage> sceneFrameCache = new LinkedHashMap<String, BufferedImage>(
+        SCENE_FRAME_CACHE_LIMIT,
+        0.75f,
+        true
+    ) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, BufferedImage> eldest) {
+            return size() > SCENE_FRAME_CACHE_LIMIT;
+        }
+    };
     private static BufferedImage errorImage = createErrorImage(); // Default image sprite (in case a sprite call returns null) 
     private static final Font errorFont = new Font("Arial", Font.BOLD, 20); // Fallback font
 
     private static final int totalResources = 24 //background assets
-                                            + 221 // intro sequence frames
                                             + 29 // player sprites
                                             + 1 // default enemy sprite
                                             + 48 // worm sprites
                                             + 59 // virus sprites
                                             + 75 // trojan main sprites
                                             + 6 // Boss sprites
+                                            + 32 // tutorial dummy sprites
                                             + 180 // ground tile assets
                                             + 166 // solid tile assets
                                             + 3 // file-based font assets
@@ -82,6 +94,32 @@ public class ResourceCache {
         }
 
         return image;
+    }
+
+    /**
+     * Loads large cutscene frames on demand and keeps only a small rolling window in memory.
+     */
+    public static synchronized BufferedImage getSceneFrame(String key, String path) {
+        BufferedImage image = sceneFrameCache.get(key);
+        if (image != null) {
+            return image;
+        }
+
+        try (InputStream inputStream = openResourceStream(path)) {
+            image = ImageIO.read(inputStream);
+            if (image != null) {
+                sceneFrameCache.put(key, image);
+                return image;
+            }
+        } catch (Exception e) {
+        }
+
+        System.err.println("Missing scene frame: " + key + " (" + path + ")");
+        return errorImage;
+    }
+
+    public static synchronized void clearSceneFrames() {
+        sceneFrameCache.clear();
     }
     
     /**
@@ -153,9 +191,6 @@ public class ResourceCache {
         // Background assets
         loadBackgroundResource();
 
-        // Load intro sequence frames
-        loadIntroResources();
-        
         // Player sprite assets
         loadPlayerResources();
 
@@ -197,16 +232,6 @@ public class ResourceCache {
         for (int i = 0; i < 22; i++) {
             loadImage("bg_frame_" + i, String.format("res/BackGroundSeq/frame%04d.png", i));
             doneLoading = report("Loaded background frame " + (i + 1));
-        }
-    }
-
-    private static void loadIntroResources() {
-        for (int i = 0; i < 221; i++) {
-            String key = "intro_gameIntro_" + i;
-            String path = String.format("res/IntroSeq/Intro%04d.png", i);
-
-            loadImage(key, path);
-            doneLoading = report("Loaded intro frame " + (i + 1));
         }
     }
 
@@ -262,6 +287,12 @@ public class ResourceCache {
         loadEnemyAnimation("trojan", "trojan", "cooldown", 7);
 
         loadEnemyAnimation("boss", "Boss", "idle", 6);
+
+        loadFlatEnemyAnimation("dummy", "res/DummyAssets", "idle", 10);
+        loadFlatEnemyAnimation("dummy", "res/DummyAssets", "up", 5);
+        loadFlatEnemyAnimation("dummy", "res/DummyAssets", "down", 5);
+        loadFlatEnemyAnimation("dummy", "res/DummyAssets", "left", 6);
+        loadFlatEnemyAnimation("dummy", "res/DummyAssets", "right", 6);
     }
 
     private static void loadEnemyAnimation(
@@ -278,6 +309,15 @@ public class ResourceCache {
                 i + 1
             );
 
+            loadImage(key, path);
+            doneLoading = report("Loaded " + enemyKey + " " + state + " frame " + (i + 1));
+        }
+    }
+
+    private static void loadFlatEnemyAnimation(String enemyKey, String folder, String state, int frameCount) {
+        for (int i = 0; i < frameCount; i++) {
+            String key = "enemy_" + enemyKey + "_" + state + "_" + i;
+            String path = String.format("%s/%s%d.png", folder, state, i + 1);
             loadImage(key, path);
             doneLoading = report("Loaded " + enemyKey + " " + state + " frame " + (i + 1));
         }
@@ -333,6 +373,7 @@ public class ResourceCache {
         // Frees references so the JVM can reclaim memory later.
         imageCache.clear();
         fontCache.clear();
+        sceneFrameCache.clear();
     }
     
     /**

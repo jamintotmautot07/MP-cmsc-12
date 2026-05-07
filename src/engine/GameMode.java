@@ -7,5 +7,8 @@ public enum GameMode {
     PLAYING,
     PAUSED,
     CUTSCENE,
-    DEFEAT
+    LEVEL_CLEAR,
+    DEFEAT,
+    OUT_OF_TIME,
+    VICTORY
 }

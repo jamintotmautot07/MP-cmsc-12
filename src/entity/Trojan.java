@@ -17,6 +17,10 @@ import util.Constants;
  * Subclass of Enemy (doesn't need pathfinding).
  */
 public class Trojan extends Enemy {
+    public enum TrojanMode {
+        NORMAL,
+        PROTECT_BOSS
+    }
 
     // State machine
     private TrojanState currentState = TrojanState.IDLE;
@@ -44,6 +48,11 @@ public class Trojan extends Enemy {
 
     // Track spawned enemies (optional, for limiting active count)
     private List<Entity> spawnedChildren = new ArrayList<>();
+
+    private TrojanMode mode = TrojanMode.NORMAL;
+    private CoreBoss bossTarget;
+    private int guardOffsetX;
+    private int guardOffsetY;
 
     /**
      * Creates a stationary spawner enemy with its own state machine and animation sets.
@@ -119,6 +128,8 @@ public class Trojan extends Enemy {
     public void update() {
         if (!alive) return;
 
+        updateGuardPosition();
+
         // Update state machine
         updateStateMachine();
 
@@ -189,6 +200,33 @@ public class Trojan extends Enemy {
         spriteCounter = 0;
         spriteNum = 0;
         spawnAttemptedDuringProducing = false;
+    }
+
+    public void setProtectBossMode(CoreBoss bossTarget, int guardOffsetX, int guardOffsetY) {
+        this.mode = TrojanMode.PROTECT_BOSS;
+        this.bossTarget = bossTarget;
+        this.guardOffsetX = guardOffsetX;
+        this.guardOffsetY = guardOffsetY;
+        this.maxActiveChildren = 2;
+        this.totalSpawnLimit = 8;
+        updateGuardPosition();
+    }
+
+    public TrojanMode getMode() {
+        return mode;
+    }
+
+    private void updateGuardPosition() {
+        if (mode != TrojanMode.PROTECT_BOSS || bossTarget == null || !bossTarget.isAlive()) {
+            return;
+        }
+
+        worldX = clamp(bossTarget.worldX + guardOffsetX, 0, Constants.maxWorldWidth - renderWidth);
+        worldY = clamp(bossTarget.worldY + guardOffsetY, 0, Constants.maxWorldHeight - renderHeight);
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     /**

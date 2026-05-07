@@ -1,4 +1,4 @@
 highscore=0
 tutorialPlayed=true
-maxLevelReached=3
+maxLevelReached=4
 selectedLevel=3

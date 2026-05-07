@@ -7,6 +7,7 @@ import java.util.Random;
 
 import tile.TileManager;
 import entity.CoreBoss;
+import entity.Dummy;
 import entity.Enemy;
 import entity.Trojan;
 import entity.VirusDrone;
@@ -90,6 +91,8 @@ public class UtilityTool {
             return "Virus";
         } else if (entity instanceof CoreBoss) {
             return "CoreBoss";
+        } else if (entity instanceof Dummy) {
+            return "Dummy";
         } else if (entity instanceof Player) {
             return "Player";
         }

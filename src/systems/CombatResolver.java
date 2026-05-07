@@ -146,6 +146,9 @@ public class CombatResolver {
             if (enemy == null || !enemy.isAlive()) {
                 continue;
             }
+            if (enemy.getDamage() <= 0) {
+                continue;
+            }
             if (CollisionManager.rectanglesIntersect(playerBounds, CollisionManager.getWorldSolidArea(enemy))) {
                 gamePanel.getPlayer().takeDamage(enemy.getDamage());
             }

@@ -893,6 +893,12 @@ public class Enemy extends Entity {
         }
     }
 
+    public void defeat() {
+        hp = 0;
+        dying = true;
+        alive = false;
+    }
+
     /**
      * Small helper used by update/render loops to skip dead enemies.
      */

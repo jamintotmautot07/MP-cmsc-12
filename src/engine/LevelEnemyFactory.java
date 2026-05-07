@@ -1,6 +1,7 @@
 package engine;
 
 import entity.CoreBoss;
+import entity.Dummy;
 import entity.Enemy;
 import entity.Trojan;
 import entity.VirusDrone;
@@ -37,8 +38,9 @@ public class LevelEnemyFactory {
         {18, 24}, {27, 14}, {34, 21},
         {27, 34}, {31, 38}
     };
-    private final int[][] trojanLvl_3 = new int[][] {
-        {12, 11}, {35, 13}, {30, 32}
+    private final int[][] dummyTutorialPositions = new int[][] {
+        {7, 41}, {10, 41}, {13, 42}, {16, 42}, {8, 45},
+        {11, 45}, {14, 46}, {17, 46}, {20, 44}, {22, 46}
     };
 
     public LevelEnemyFactory(GamePanel gamePanel, TileManager tileManager) {
@@ -47,7 +49,9 @@ public class LevelEnemyFactory {
     }
 
     public void populate(Level level) {
-        if (level == Level.LEVEL_1) {
+        if (level == Level.TUTORIAL) {
+            addDummies(10, dummyTutorialPositions);
+        } else if (level == Level.LEVEL_1) {
             addWorms(15, wormPosLvl_1);
         } else if (level == Level.LEVEL_2) {
             addWorms(10, wormPosLvl_2);
@@ -56,10 +60,10 @@ public class LevelEnemyFactory {
         } else if (level == Level.LEVEL_3) {
             addWorms(10, wormPosLvl_3);
             addViruses(5, virusPosLvl_3);
-            addTrojans(3, trojanLvl_3);
             CoreBoss boss = new CoreBoss(gamePanel);
             boss.setStartTilePosition(24, 21);
             gamePanel.addEnemy(boss);
+            addBossGuardTrojans(boss);
         }
     }
 
@@ -83,6 +87,30 @@ public class LevelEnemyFactory {
         for (int i = 0; i < count && i < pos.length; i++) {
             Trojan enemy = new Trojan(gamePanel);
             enemy.setStartTilePosition(pos[i][0], pos[i][1]);
+            gamePanel.addEnemy(enemy);
+        }
+    }
+
+    private void addDummies(int count, int[][] pos) {
+        for (int i = 0; i < count && i < pos.length; i++) {
+            Dummy enemy = new Dummy(gamePanel);
+            enemy.setStartTilePosition(pos[i][0], pos[i][1]);
+            gamePanel.addEnemy(enemy);
+        }
+    }
+
+    private void addBossGuardTrojans(CoreBoss boss) {
+        int tile = util.Constants.tileSize;
+        int[][] offsets = {
+            {-4 * tile, -4 * tile},
+            {7 * tile, -4 * tile},
+            {-4 * tile, 7 * tile},
+            {7 * tile, 7 * tile}
+        };
+
+        for (int[] offset : offsets) {
+            Trojan enemy = new Trojan(gamePanel);
+            enemy.setProtectBossMode(boss, offset[0], offset[1]);
             gamePanel.addEnemy(enemy);
         }
     }

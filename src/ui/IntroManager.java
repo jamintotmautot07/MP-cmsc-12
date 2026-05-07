@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 import util.Constants;
 import util.ResourceCache;
-import util.UtilityTool;
 
 /*
  OWNER: Jamin
@@ -34,7 +33,8 @@ public class IntroManager {
 
     // Scene playback state.
     private String activeSceneId;
-    private BufferedImage[] frames;
+    private String filePattern;
+    private int frameCount;
     private int currentFrame;
     private long lastFrameTime;
     private int frameDelay;
@@ -55,6 +55,7 @@ public class IntroManager {
      */
     public IntroManager() {
         this.currentFrame = 0;
+        this.frameCount = 0;
         this.lastFrameTime = System.currentTimeMillis();
         this.frameDelay = 80;
         this.finished = true;
@@ -80,51 +81,25 @@ public class IntroManager {
             return false;
         }
 
-        // If the same scene was already marked complete, refuse to replay it.
-        if (completedScenes.contains(sceneId)) {
-            this.activeSceneId = sceneId;
-            this.finished = true;
-            return false;
-        }
-
         // Reset playback state for a fresh run.
         this.activeSceneId = sceneId;
+        this.filePattern = filePattern;
+        this.frameCount = frameCount;
         this.frameDelay = Math.max(frameDelayMs, 16);
         this.currentFrame = 0;
         this.finished = false;
         this.isFading = false;
         this.fadeProgress = 0.0f;
         this.lastFrameTime = System.currentTimeMillis();
-        loadSceneFrames(sceneId, frameCount);
-        return frames != null && frames.length > 0;
-    }
-
-    /**
-     * Loads the cutscene frames from disk and scales them to the screen size.
-     */
-    private void loadSceneFrames(String sceneId, int frameCount) {
-        frames = new BufferedImage[frameCount];
-
-        for (int i = 0; i < frameCount; i++) {
-            BufferedImage image = ResourceCache.getImage("intro_" + sceneId + "_" + i);
-
-            frames[i] = UtilityTool.resizeImage(
-                image,
-                Constants.screenWidth,
-                Constants.screenHeight
-            );
-        }
-
-        if (frames.length == 0) {
-            finished = true;
-        }
+        ResourceCache.clearSceneFrames();
+        return true;
     }
 
     /**
      * Advances playback or fade state by one frame.
      */
     public void update() {
-        if (finished || frames == null || frames.length == 0) {
+        if (finished || frameCount <= 0) {
             return;
         }
 
@@ -135,22 +110,19 @@ public class IntroManager {
             long elapsed = now - fadeStartTime;
             fadeProgress = Math.min(1.0f, (float) elapsed / fadeDurationMs);
             if (fadeProgress >= 1.0f) {
-                finished = true;
-                if (activeSceneId != null) {
-                    completedScenes.add(activeSceneId);
-                }
+                finishScene();
             }
         } else {
             if (now - lastFrameTime >= frameDelay) {
                 currentFrame++;
                 lastFrameTime = now;
 
-                if (currentFrame >= frames.length) {
+                if (currentFrame >= frameCount) {
                     // When the last frame ends, switch into fade mode.
                     isFading = true;
                     fadeStartTime = now;
                     fadeProgress = 0.0f;
-                    currentFrame = Math.max(0, frames.length - 1); // Stay on last frame
+                    currentFrame = Math.max(0, frameCount - 1); // Stay on last frame
                 }
             }
         }
@@ -162,9 +134,9 @@ public class IntroManager {
     public void render(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        // Draw the current frame if available, otherwise fall back to a plain black screen.
-        if (frames != null && frames.length > 0 && currentFrame < frames.length && frames[currentFrame] != null) {
-            g2d.drawImage(frames[currentFrame], 0, 0, null);
+        BufferedImage frame = getCurrentSceneFrame();
+        if (frame != null) {
+            g2d.drawImage(frame, 0, 0, Constants.screenWidth, Constants.screenHeight, null);
         } else {
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, Constants.screenWidth, Constants.screenHeight);
@@ -192,14 +164,11 @@ public class IntroManager {
             isFading = true;
             fadeStartTime = System.currentTimeMillis();
             fadeProgress = 0.0f;
-            currentFrame = Math.max(0, frames.length - 1); // Jump to last frame
+            currentFrame = Math.max(0, frameCount - 1); // Jump to last frame
         } else {
             // A second skip means "don't even wait for the fade".
             fadeProgress = 1.0f;
-            finished = true;
-            if (activeSceneId != null) {
-                completedScenes.add(activeSceneId);
-            }
+            finishScene();
         }
     }
 
@@ -214,7 +183,7 @@ public class IntroManager {
      * Indicates whether a scene is actively playing or fading out.
      */
     public boolean isRunning() {
-        return !finished && (frames != null && frames.length > 0 || isFading);
+        return !finished && (frameCount > 0 || isFading);
     }
 
     /**
@@ -227,5 +196,24 @@ public class IntroManager {
         this.finished = false;
         this.isFading = false;
         this.fadeProgress = 0.0f;
+    }
+
+    private BufferedImage getCurrentSceneFrame() {
+        if (activeSceneId == null || filePattern == null || frameCount <= 0) {
+            return null;
+        }
+
+        int safeFrame = Math.max(0, Math.min(currentFrame, frameCount - 1));
+        String key = "intro_" + activeSceneId + "_" + safeFrame;
+        String path = String.format(filePattern, safeFrame);
+        return ResourceCache.getSceneFrame(key, path);
+    }
+
+    private void finishScene() {
+        finished = true;
+        if (activeSceneId != null) {
+            completedScenes.add(activeSceneId);
+        }
+        ResourceCache.clearSceneFrames();
     }
 }
