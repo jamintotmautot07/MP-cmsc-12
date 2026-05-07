@@ -4,7 +4,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import engine.GamePanel;
 
@@ -29,6 +31,8 @@ public class KeyHandler implements KeyListener {
     private final Map<Action, Integer> keyBindings = new EnumMap<>(Action.class);
     private final Map<Action, Boolean> keyStates = new EnumMap<>(Action.class);
     private final Map<Integer, Action> reverseBindings = new HashMap<>();
+    private final Set<Integer> pressedKeyCodes = new HashSet<>();
+    private boolean forceClearTriggered = false;
 
     GamePanel gp;
 
@@ -88,12 +92,13 @@ public class KeyHandler implements KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
+        pressedKeyCodes.add(code);
 
         // Space is handled as a global pause/resume shortcut, not a normal action binding.
         if (code == KeyEvent.VK_SPACE) {
-            if (gp.gameState == gp.playState) {
+            if (gp.isPlaying()) {
                 gp.pauseGame();
-            } else if (gp.gameState == gp.pausedState) {
+            } else if (gp.isPaused()) {
                 gp.resumeGame();
             }
             return;
@@ -101,7 +106,7 @@ public class KeyHandler implements KeyListener {
 
         // Escape is reserved for skipping cutscenes.
         if (code == KeyEvent.VK_ESCAPE) {
-            if (gp.gameState == gp.cutsceneState) {
+            if (gp.isInCutscene()) {
                 gp.skipScene();
             }
             return;
@@ -111,15 +116,25 @@ public class KeyHandler implements KeyListener {
         Action action = reverseBindings.get(code);
         if (action != null) {
             keyStates.put(action, true);
+            gp.handleActionPressed(action);
+        }
+
+        if (!forceClearTriggered && isForceClearComboDown()) {
+            forceClearTriggered = true;
+            gp.forceFinishCurrentLevel();
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
         int code = e.getKeyCode();
+        pressedKeyCodes.remove(code);
         Action action = reverseBindings.get(code);
         if (action != null) {
             keyStates.put(action, false);
+        }
+        if (!isForceClearComboDown()) {
+            forceClearTriggered = false;
         }
     }
 
@@ -131,5 +146,13 @@ public class KeyHandler implements KeyListener {
         for (Action action : Action.values()) {
             keyStates.put(action, false);
         }
+        pressedKeyCodes.clear();
+        forceClearTriggered = false;
+    }
+
+    private boolean isForceClearComboDown() {
+        return pressedKeyCodes.contains(KeyEvent.VK_UP)
+            && pressedKeyCodes.contains(KeyEvent.VK_DOWN)
+            && pressedKeyCodes.contains(KeyEvent.VK_ENTER);
     }
 }

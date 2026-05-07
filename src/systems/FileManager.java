@@ -35,6 +35,7 @@ public final class FileManager {
     private static final String FILE_NAME = "save_data.txt";
     private static final int TUTORIAL_INDEX = 0;
     private static final int FINAL_LEVEL_INDEX = 3;
+    private static final int FINAL_STORY_PROGRESS_INDEX = FINAL_LEVEL_INDEX + 1;
 
     private FileManager() {
     }
@@ -60,7 +61,7 @@ public final class FileManager {
         try(PrintWriter writer = new PrintWriter(FILE_NAME)) {
             writer.println("highscore=" + highScore);
             writer.println("tutorialPlayed=" + tutorialPlayed);
-            writer.println("maxLevelReached=" + clampLevel(maxLevelReached));
+            writer.println("maxLevelReached=" + clampProgress(maxLevelReached));
             writer.println("selectedLevel=" + clampLevel(selectedLevel));
 
         } catch(IOException e) {
@@ -105,7 +106,7 @@ public final class FileManager {
     }
 
     public static int loadMaxLevelReached() throws GameException {
-        return clampLevel(loadInt("maxLevelReached", TUTORIAL_INDEX));
+        return clampProgress(loadInt("maxLevelReached", TUTORIAL_INDEX));
     }
 
     private static int loadInt(String key, int defaultValue) throws GameException {
@@ -147,6 +148,16 @@ public final class FileManager {
         } 
         if(level > FINAL_LEVEL_INDEX) {
             return FINAL_LEVEL_INDEX;
+        }
+        return level;
+    }
+
+    private static int clampProgress(int level) {
+        if(level < TUTORIAL_INDEX) {
+            return TUTORIAL_INDEX;
+        }
+        if(level > FINAL_STORY_PROGRESS_INDEX) {
+            return FINAL_STORY_PROGRESS_INDEX;
         }
         return level;
     }

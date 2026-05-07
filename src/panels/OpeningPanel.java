@@ -26,7 +26,6 @@ import util.ResourceCache;
 import util.MethodUtilities.CustomButton;
 import util.MethodUtilities.GlowLabel;
 import util.MethodUtilities.RoundedPanel;
-// import util.ResourceCache; // COMMENTED OUT - Cache system disabled
 
 /**
  * Main menu screen with animated background and navigation buttons.

@@ -7,7 +7,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-// import javax.swing.SwingWorker; // COMMENTED OUT - Cache system disabled
 
 import engine.GamePanel;
 import engine.Level;
@@ -16,6 +15,7 @@ import panels.CreditScroller;
 import panels.LoadingPanel;
 import panels.OpeningPanel;
 import panels.ScenePanel;
+import panels.StoryPanel;
 import systems.FileManager;
 import ui.IntroManager;
 import util.Constants;
@@ -24,7 +24,7 @@ import util.MethodUtilities;
 /**
  * Top-level application window that swaps between menu, cutscene, credits, and gameplay screens.
  */
-public class BaseFrame extends JFrame{
+public class BaseFrame extends JFrame {
 
     // CardLayout lets the app swap between menu, game, credits, and cutscene panels in one window.
     private CardLayout cardLayout;
@@ -37,6 +37,7 @@ public class BaseFrame extends JFrame{
     public IntroManager sceneManager;
     public ScenePanel scenePanel;
     private LoadingPanel loadingPanel;
+    private StoryPanel storyPanel;
     // Basic progress / selection values shared between the menu and game screens.
     private Level selectedLevel = Level.TUTORIAL;
     private int maxLevelReached = 0;
@@ -77,6 +78,7 @@ public class BaseFrame extends JFrame{
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
         credits = new CreditScroller();
+        storyPanel = new StoryPanel(maxLevelReached);
         sceneManager = new IntroManager();
         scenePanel = new ScenePanel(sceneManager);
 
@@ -84,6 +86,7 @@ public class BaseFrame extends JFrame{
         container.add(openPanel, "Openning");
         container.add(gamePanel, "Game");
         container.add(credits, "Credits");
+        container.add(storyPanel, "Story");
     }
 
     /**
@@ -126,7 +129,7 @@ public class BaseFrame extends JFrame{
                 selectedLevel = dialog.selected;
                 openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
                 saveProgress(Level.getIndex(selectedLevel));
-                gamePanel.setLevel(selectedLevel);
+                gamePanel.startLevelFromMenu(selectedLevel);
                 cardLayout.show(container, "Game");
                 SwingUtilities.invokeLater(() -> {
                     gamePanel.requestFocusInWindow();
@@ -145,7 +148,7 @@ public class BaseFrame extends JFrame{
             }
 
             openPanel.stopBackgroundAnimation();
-            gamePanel.setLevel(selectedLevel);
+            gamePanel.startLevelFromMenu(selectedLevel);
             cardLayout.show(container, "Game");
 
             SwingUtilities.invokeLater(() -> {
@@ -156,10 +159,27 @@ public class BaseFrame extends JFrame{
         });
 
         openPanel.playButton.addActionListener(e -> {
-            // "Play" always starts from the tutorial in the current version.
+            if (maxLevelReached >= 1) {
+                Object[] options = {"Continue", "Cancel"};
+                int choice = JOptionPane.showOptionDialog(
+                    this,
+                    "Start system recovery?",
+                    "Start Game",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[0]
+                );
+                if (choice != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
             selectedLevel = Level.TUTORIAL;
             openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
-            gamePanel.setLevel(selectedLevel);
+            saveProgress(Level.getIndex(selectedLevel));
+            gamePanel.startRunFromTutorial();
             openPanel.stopBackgroundAnimation();
             cardLayout.show(container, "Game");
             SwingUtilities.invokeLater(() -> {
@@ -175,14 +195,61 @@ public class BaseFrame extends JFrame{
             credits.startTimer();
         });
 
+        openPanel.cutScenesButton.addActionListener(e -> {
+            storyPanel.setMaxLevelReached(maxLevelReached);
+            openPanel.stopBackgroundAnimation();
+            cardLayout.show(container, "Story");
+            storyPanel.requestFocusInWindow();
+        });
+
+        storyPanel.getBackButton().addActionListener(e -> {
+            openPanel.startBackgroundAnimation();
+            cardLayout.show(container, "Openning");
+            openPanel.requestFocusInWindow();
+        });
+
+        storyPanel.setSceneSelectionListener(scene -> {
+            scenePanel.setOnSceneComplete(() -> {
+                storyPanel.setMaxLevelReached(maxLevelReached);
+                cardLayout.show(container, "Story");
+                storyPanel.requestFocusInWindow();
+            });
+            cardLayout.show(container, "Scene");
+            scenePanel.startScene(
+                scene.getSceneId(),
+                scene.getFilePattern(),
+                scene.getFrameCount(),
+                scene.getFrameDelayMs()
+            );
+        });
+
         openPanel.scoreButton.addActionListener(e -> {
-            // Scoreboard uses simple placeholder values for unfinished systems.
             panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
-            int timeScore = gamePanel.timer != null ? gamePanel.timer.getTimeScore() : 0;
-            int enemyScore = 0; // placeholder
-            int levelsCleared = gamePanel.getLevelsCleared();
-            int totalScore = timeScore + enemyScore + levelsCleared * 100; // placeholder calculation
-            dialog.updateScores(timeScore, enemyScore, levelsCleared, totalScore);
+
+            // Main-menu scoreboard is intentionally placeholder-only for now.
+            // Future implementation point:
+            // 1. Create a score save file or reuse a score section in the existing save file.
+            // 2. When the victory screen finishes calculating the final score, write:
+            //    timeScore, enemyScore, enemiesEliminated, levelsCleared, and totalScore.
+            // 3. Load those saved values here before opening the dialog.
+            //
+            // Example future shape, not implemented yet:
+            // systems.ScoreManager savedScores = ScoreFileManager.loadScores();
+            // dialog.updateScores(
+            //     savedScores.getTimeScore(),
+            //     savedScores.getEnemyScore(),
+            //     savedScores.getEnemiesEliminated(),
+            //     savedScores.getLevelsCleared(),
+            //     savedScores.calculateTotalScore()
+            // );
+
+            dialog.updateScores(
+                0,
+                0,
+                0,
+                0,
+                0
+            );
             dialog.setVisible(true);
         });
 
@@ -191,38 +258,6 @@ public class BaseFrame extends JFrame{
         gamePanel.onLevelComplete = this::updateProgress;
         openPanel.setContinueVisible(hasSavedProgress());
     }
-
-    // COMMENTED OUT - Cache system disabled
-    // private void startResourceLoading() {
-    //     new SwingWorker<Void, String>() {
-    //         @Override
-    //         protected Void doInBackground() throws Exception {
-    //             ResourceCache.preloadAll();
-    //             publish("Loading resources...");
-    //             Thread.sleep(500);
-    //             return null;
-    //         }
-    //
-    //         @Override
-    //         protected void process(java.util.List<String> chunks) {
-    //             String message = chunks.get(chunks.size() - 1);
-    //             loadingPanel.setProgress(75, message);
-    //         }
-    //
-    //         @Override
-    //         protected void done() {
-    //             loadingPanel.setProgress(100, "Ready!");
-    //             try {
-    //                 Thread.sleep(300);
-    //             } catch (InterruptedException e) {
-    //             }
-    //             openPanel.loadBackgroundFrames();
-    //             openPanel.startBackgroundAnimation();
-    //             cardLayout.show(container, "Openning");
-    //             openPanel.requestFocusInWindow();
-    //         }
-    //     }.execute();
-    // }
 
     /**
      * Returns the app to the opening menu card.
@@ -252,16 +287,21 @@ public class BaseFrame extends JFrame{
         Level clearedLevel = gamePanel.getCurrentLevel();
         int clearedIndex = Level.getIndex(clearedLevel);
         int nextIndex = clearedLevel.nextLevel != null ? Level.getIndex(clearedLevel.nextLevel) : clearedIndex;
+        int progressIndex = clearedLevel.nextLevel != null ? nextIndex : StoryPanel.ENDING_UNLOCK_PROGRESS;
+        int selectedLevelIndex = Math.min(nextIndex, Level.LEVELS.length - 1);
 
         if(clearedLevel == Level.TUTORIAL) {
             tutorialPlayed = true;
         }
 
-        maxLevelReached = Math.max(maxLevelReached, nextIndex);
-        selectedLevel = Level.LEVELS[nextIndex];
-        openPanel.setSelectedLevelIndex(nextIndex, selectedLevel.name);
+        maxLevelReached = Math.max(maxLevelReached, progressIndex);
+        selectedLevel = Level.LEVELS[selectedLevelIndex];
+        openPanel.setSelectedLevelIndex(selectedLevelIndex, selectedLevel.name);
         openPanel.setContinueVisible(hasSavedProgress());
-        saveProgress(nextIndex);
+        if (storyPanel != null) {
+            storyPanel.setMaxLevelReached(maxLevelReached);
+        }
+        saveProgress(selectedLevelIndex);
     }
 
     private void saveProgress(int selectedLevelIndex) {

@@ -2,6 +2,9 @@ package systems;
 
 import exception.GameException;
 
+/**
+ * Manual smoke-test entry point for save-file behavior during development.
+ */
 public class TestFileManager {
 
     public static void main(String[] args) {

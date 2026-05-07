@@ -19,6 +19,9 @@ package audio;
  - Volume control
 */
 
+/**
+ * Future audio service for background music and sound-effect playback.
+ */
 public class AudioPlayer {
     /*
      * This class is currently a placeholder.

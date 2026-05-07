@@ -4,6 +4,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+/**
+ * Temporary rectangular beam attack that persists for a fixed number of frames.
+ */
 public class Laser {
 
     public enum OwnerType {

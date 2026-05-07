@@ -3,6 +3,7 @@ package entity;
 import java.awt.image.BufferedImage;
 
 import engine.GamePanel;
+import util.Constants;
 
 /**
  * Worm enemy - organic, slime-like enemy with simple movement.
@@ -61,7 +62,10 @@ public class Worm extends Enemy {
         }
 
         if (getTileDistanceToPlayer() <= AGGRO_RANGE_TILES) {
-            direction = attackDirection;
+            searchPath(
+                gp.getPlayer().worldX / Constants.tileSize,
+                gp.getPlayer().worldY / Constants.tileSize
+            );
             actionLockCounter = 0;
             return;
         }
