@@ -6,6 +6,12 @@ import java.awt.Rectangle;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -41,6 +47,7 @@ public class Enemy extends Entity {
     protected Random random = new Random();
 
     protected int actionLockCounter = 0;
+    protected boolean onPath = false;
     protected boolean alive = true;
     protected boolean dying = false;
     protected int hp = 3;
@@ -51,6 +58,23 @@ public class Enemy extends Entity {
     protected int attackCounter = 0;
     protected int attackDuration = 18;
     protected String attackDirection = "down";
+
+    private static final int PATH_REFRESH_FRAMES = 15;
+    private static final int PATH_SEARCH_PADDING_TILES = 12;
+    private static final int[][] PATH_DIRECTIONS = {
+        {0, -1},
+        {0, 1},
+        {-1, 0},
+        {1, 0}
+    };
+    private List<PathNode> currentPath = new ArrayList<>();
+    private int pathRefreshCounter = 0;
+    private int pathGoalCol = -1;
+    private int pathGoalRow = -1;
+    private final int[][] pathBestCost = new int[Constants.worldMaxRow][Constants.worldMaxCol];
+    private final int[][] pathSeenSearch = new int[Constants.worldMaxRow][Constants.worldMaxCol];
+    private final int[][] pathClosedSearch = new int[Constants.worldMaxRow][Constants.worldMaxCol];
+    private int pathSearchId = 0;
 
     // Sprite arrays for different states
     protected BufferedImage[] idleFrames;
@@ -89,6 +113,11 @@ public class Enemy extends Entity {
         damage = 1;
         alive = true;
         dying = false;
+        onPath = false;
+        currentPath.clear();
+        pathRefreshCounter = 0;
+        pathGoalCol = -1;
+        pathGoalRow = -1;
     }
 
     protected BufferedImage[] loadCachedSpriteArray(String enemyKey, String state, int frameCount) {
@@ -209,11 +238,12 @@ public class Enemy extends Entity {
      * Returns the player's collision body in world coordinates.
      */
     protected Rectangle getPlayerWorldSolidArea() {
+        Player player = gp.getPlayer();
         return new Rectangle(
-            gp.player.worldX + gp.player.solidArea.x,
-            gp.player.worldY + gp.player.solidArea.y,
-            gp.player.solidArea.width,
-            gp.player.solidArea.height
+            player.worldX + player.solidArea.x,
+            player.worldY + player.solidArea.y,
+            player.solidArea.width,
+            player.solidArea.height
         );
     }
 
@@ -226,11 +256,11 @@ public class Enemy extends Entity {
     }
 
     protected int getPlayerCenterX() {
-        return gp.player.worldX + Constants.tileSize / 2;
+        return gp.getPlayer().worldX + Constants.tileSize / 2;
     }
 
     protected int getPlayerCenterY() {
-        return gp.player.worldY + Constants.tileSize / 2;
+        return gp.getPlayer().worldY + Constants.tileSize / 2;
     }
 
     protected int getTileDistanceToPlayer() {
@@ -282,9 +312,9 @@ public class Enemy extends Entity {
 
     protected boolean canMoveTo(int nextX, int nextY) {
         Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(this, nextX, nextY);
-        return !CollisionManager.willCollideWithSolidTile(gp.tileM, futureSolidArea)
-            && !CollisionManager.willCollideWithEntity(futureSolidArea, gp.player)
-            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.enemies, this);
+        return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)
+            && !CollisionManager.willCollideWithEntity(futureSolidArea, gp.getPlayer())
+            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.getEnemies(), this);
     }
 
     protected void fireProjectileAtPlayer(int damage, int projectileSpeed, int rangeTiles, int size) {
@@ -304,6 +334,332 @@ public class Enemy extends Entity {
             size,
             size
         ));
+    }
+
+    /**
+     * Turns player-following behavior on and off with hysteresis so enemies do not flicker between states.
+     */
+    protected void updatePathState(int startChaseTiles, int stopChaseTiles) {
+        int tileDistance = getTileDistanceToPlayer();
+        if (tileDistance < startChaseTiles) {
+            onPath = true;
+        } else if (tileDistance > stopChaseTiles) {
+            onPath = false;
+        }
+    }
+
+    /**
+     * Chooses the next chase step using A* over the current tile map.
+     */
+    protected void searchPath(int goalCol, int goalRow) {
+        int startCol = getPathCol();
+        int startRow = getPathRow();
+
+        if (!isInWorld(startCol, startRow) || !isInWorld(goalCol, goalRow)) {
+            fallbackChase(goalCol, goalRow);
+            return;
+        }
+
+        if (startCol == goalCol && startRow == goalRow) {
+            direction = getCardinalDirectionTowardPlayer();
+            return;
+        }
+
+        pruneReachedPathNodes(startCol, startRow);
+
+        boolean targetMoved = goalCol != pathGoalCol || goalRow != pathGoalRow;
+        boolean pathNeedsRefresh = targetMoved
+            || currentPath.isEmpty()
+            || pathRefreshCounter <= 0
+            || !isNextPathStepAdjacent(startCol, startRow);
+
+        if (pathNeedsRefresh) {
+            currentPath = findAStarPath(startCol, startRow, goalCol, goalRow);
+            pathRefreshCounter = PATH_REFRESH_FRAMES;
+            pathGoalCol = goalCol;
+            pathGoalRow = goalRow;
+        } else {
+            pathRefreshCounter--;
+        }
+
+        pruneReachedPathNodes(startCol, startRow);
+
+        if (currentPath.isEmpty()) {
+            fallbackChase(goalCol, goalRow);
+            return;
+        }
+
+        PathNode nextStep = currentPath.get(0);
+        String nextDirection = getDirectionToTile(startCol, startRow, nextStep.col, nextStep.row);
+        if (nextDirection == null) {
+            fallbackChase(goalCol, goalRow);
+            return;
+        }
+
+        direction = nextDirection;
+    }
+
+    private int getPathCol() {
+        return (worldX + solidArea.x + solidArea.width / 2) / Constants.tileSize;
+    }
+
+    private int getPathRow() {
+        return (worldY + solidArea.y + solidArea.height / 2) / Constants.tileSize;
+    }
+
+    private boolean isInWorld(int col, int row) {
+        return col >= 0 && col < Constants.worldMaxCol
+            && row >= 0 && row < Constants.worldMaxRow;
+    }
+
+    private boolean canPathThrough(int col, int row) {
+        if (!isInWorld(col, row)) {
+            return false;
+        }
+
+        if (renderWidth <= Constants.tileSize && renderHeight <= Constants.tileSize) {
+            return !gp.getTileManager().isTileSolid(row, col);
+        }
+
+        Rectangle candidateArea = CollisionManager.getWorldSolidArea(
+            this,
+            col * Constants.tileSize,
+            row * Constants.tileSize
+        );
+        return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), candidateArea);
+    }
+
+    private List<PathNode> findAStarPath(int startCol, int startRow, int goalCol, int goalRow) {
+        if (!canPathThrough(startCol, startRow) || !canPathThrough(goalCol, goalRow)) {
+            return Collections.emptyList();
+        }
+
+        int searchId = nextPathSearchId();
+        int minCol = Math.max(0, Math.min(startCol, goalCol) - PATH_SEARCH_PADDING_TILES);
+        int maxCol = Math.min(Constants.worldMaxCol - 1, Math.max(startCol, goalCol) + PATH_SEARCH_PADDING_TILES);
+        int minRow = Math.max(0, Math.min(startRow, goalRow) - PATH_SEARCH_PADDING_TILES);
+        int maxRow = Math.min(Constants.worldMaxRow - 1, Math.max(startRow, goalRow) + PATH_SEARCH_PADDING_TILES);
+
+        PriorityQueue<PathNode> open = new PriorityQueue<>(
+            Comparator.comparingInt(PathNode::getFCost)
+                .thenComparingInt(node -> node.hCost)
+        );
+
+        PathNode start = new PathNode(
+            startCol,
+            startRow,
+            0,
+            getManhattanDistance(startCol, startRow, goalCol, goalRow),
+            null
+        );
+        setBestPathCost(startCol, startRow, 0, searchId);
+        open.add(start);
+
+        while (!open.isEmpty()) {
+            PathNode current = open.poll();
+            if (isClosedPathNode(current.col, current.row, searchId)) {
+                continue;
+            }
+
+            closePathNode(current.col, current.row, searchId);
+            if (current.col == goalCol && current.row == goalRow) {
+                return buildPath(current);
+            }
+
+            for (int[] offset : PATH_DIRECTIONS) {
+                addNeighbor(
+                    open,
+                    current,
+                    current.col + offset[0],
+                    current.row + offset[1],
+                    goalCol,
+                    goalRow,
+                    minCol,
+                    maxCol,
+                    minRow,
+                    maxRow,
+                    searchId
+                );
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    private void addNeighbor(
+        PriorityQueue<PathNode> open,
+        PathNode current,
+        int col,
+        int row,
+        int goalCol,
+        int goalRow,
+        int minCol,
+        int maxCol,
+        int minRow,
+        int maxRow,
+        int searchId
+    ) {
+        if (col < minCol || col > maxCol || row < minRow || row > maxRow) {
+            return;
+        }
+
+        if (!canPathThrough(col, row) || isClosedPathNode(col, row, searchId)) {
+            return;
+        }
+
+        int candidateCost = current.gCost + 1;
+        if (candidateCost >= getBestPathCost(col, row, searchId)) {
+            return;
+        }
+
+        setBestPathCost(col, row, candidateCost, searchId);
+        open.add(new PathNode(
+            col,
+            row,
+            candidateCost,
+            getManhattanDistance(col, row, goalCol, goalRow),
+            current
+        ));
+    }
+
+    private int nextPathSearchId() {
+        pathSearchId++;
+        if (pathSearchId == Integer.MAX_VALUE) {
+            for (int row = 0; row < Constants.worldMaxRow; row++) {
+                Arrays.fill(pathSeenSearch[row], 0);
+                Arrays.fill(pathClosedSearch[row], 0);
+            }
+            pathSearchId = 1;
+        }
+        return pathSearchId;
+    }
+
+    private int getBestPathCost(int col, int row, int searchId) {
+        if (pathSeenSearch[row][col] != searchId) {
+            return Integer.MAX_VALUE;
+        }
+        return pathBestCost[row][col];
+    }
+
+    private void setBestPathCost(int col, int row, int cost, int searchId) {
+        pathSeenSearch[row][col] = searchId;
+        pathBestCost[row][col] = cost;
+    }
+
+    private boolean isClosedPathNode(int col, int row, int searchId) {
+        return pathClosedSearch[row][col] == searchId;
+    }
+
+    private void closePathNode(int col, int row, int searchId) {
+        pathClosedSearch[row][col] = searchId;
+    }
+
+    private int getManhattanDistance(int startCol, int startRow, int goalCol, int goalRow) {
+        return Math.abs(startCol - goalCol) + Math.abs(startRow - goalRow);
+    }
+
+    private List<PathNode> buildPath(PathNode goal) {
+        List<PathNode> path = new ArrayList<>();
+        PathNode current = goal;
+
+        while (current != null) {
+            path.add(current);
+            current = current.parent;
+        }
+
+        Collections.reverse(path);
+        if (!path.isEmpty()) {
+            path.remove(0);
+        }
+        return path;
+    }
+
+    private void pruneReachedPathNodes(int currentCol, int currentRow) {
+        while (!currentPath.isEmpty()) {
+            PathNode nextStep = currentPath.get(0);
+            if (nextStep.col != currentCol || nextStep.row != currentRow) {
+                return;
+            }
+            currentPath.remove(0);
+        }
+    }
+
+    private boolean isNextPathStepAdjacent(int currentCol, int currentRow) {
+        if (currentPath.isEmpty()) {
+            return false;
+        }
+
+        PathNode nextStep = currentPath.get(0);
+        return getManhattanDistance(currentCol, currentRow, nextStep.col, nextStep.row) == 1;
+    }
+
+    private String getDirectionToTile(int currentCol, int currentRow, int nextCol, int nextRow) {
+        if (nextCol < currentCol) return "left";
+        if (nextCol > currentCol) return "right";
+        if (nextRow < currentRow) return "up";
+        if (nextRow > currentRow) return "down";
+        return null;
+    }
+
+    private static class PathNode {
+        private final int col;
+        private final int row;
+        private final int gCost;
+        private final int hCost;
+        private final PathNode parent;
+
+        private PathNode(int col, int row, int gCost, int hCost, PathNode parent) {
+            this.col = col;
+            this.row = row;
+            this.gCost = gCost;
+            this.hCost = hCost;
+            this.parent = parent;
+        }
+
+        private int getFCost() {
+            return gCost + hCost;
+        }
+    }
+
+    /**
+     * Simple chase routine that first tries the dominant axis, then falls back to the other axis if blocked.
+     */
+    protected void fallbackChase(int goalCol, int goalRow) {
+        int startCol = (worldX + solidArea.x) / Constants.tileSize;
+        int startRow = (worldY + solidArea.y) / Constants.tileSize;
+
+        String primaryDirection;
+        String fallbackDirection;
+        if (Math.abs(startCol - goalCol) > Math.abs(startRow - goalRow)) {
+            primaryDirection = startCol < goalCol ? "right" : "left";
+            fallbackDirection = startRow < goalRow ? "down" : "up";
+        } else {
+            primaryDirection = startRow < goalRow ? "down" : "up";
+            fallbackDirection = startCol < goalCol ? "right" : "left";
+        }
+
+        direction = primaryDirection;
+        if (isBlockedInDirection(direction)) {
+            direction = fallbackDirection;
+            if (isBlockedInDirection(direction)) {
+                onPath = false;
+            }
+        }
+    }
+
+    private boolean isBlockedInDirection(String candidateDirection) {
+        int nextX = worldX;
+        int nextY = worldY;
+
+        switch (candidateDirection) {
+            case "up": nextY -= speed; break;
+            case "down": nextY += speed; break;
+            case "left": nextX -= speed; break;
+            case "right": nextX += speed; break;
+            default: break;
+        }
+
+        return !canMoveTo(nextX, nextY);
     }
 
     /**
@@ -507,15 +863,16 @@ public class Enemy extends Entity {
         actionLockCounter = 0;
 
         // simple reaction: move away or change direction
-        if (gp.player.worldX < worldX) {
+        Player player = gp.getPlayer();
+        if (player.worldX < worldX) {
             direction = "right";
-        } else if (gp.player.worldX > worldX) {
+        } else if (player.worldX > worldX) {
             direction = "left";
         }
 
-        if (gp.player.worldY < worldY) {
+        if (player.worldY < worldY) {
             direction = "down";
-        } else if (gp.player.worldY > worldY) {
+        } else if (player.worldY > worldY) {
             direction = "up";
         }
     }
@@ -534,6 +891,12 @@ public class Enemy extends Entity {
                 alive = false;
             }
         }
+    }
+
+    public void defeat() {
+        hp = 0;
+        dying = true;
+        alive = false;
     }
 
     /**

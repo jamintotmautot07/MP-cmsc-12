@@ -1,4 +1,4 @@
-package Tile;
+package tile;
 
 import engine.GamePanel;
 import java.awt.Color;
@@ -28,7 +28,7 @@ public class TileManager {
 
     // `tiles` is the palette of loaded tile definitions.
     // `mapTileNum` is the world grid that says which tile appears at each row/column.
-    public final List<Tiles> tiles;
+    public final List<Tile> tiles;
     public final int[][] mapTileNum;
 
     /**
@@ -58,7 +58,7 @@ public class TileManager {
             String cacheKey = "tile_" + prefix + "_" + tileIndex;
             BufferedImage image = ResourceCache.getImage(cacheKey);
 
-            Tiles tile = solid ? new SolidTiles() : new GroundTiles();
+            Tile tile = solid ? new SolidTile() : new GroundTile();
             // Resize here once so draw calls stay lightweight later.
             tile.image = UtilityTool.resizeImage(image, Constants.tileSize, Constants.tileSize);
 
@@ -140,7 +140,7 @@ public class TileManager {
                     worldY + Constants.tileSize > cameraWorldY - Constants.screenHeight &&
                     worldY - Constants.tileSize < cameraWorldY + Constants.screenHeight) {
 
-                    Tiles tile = this.getTileByMapNumber(tileNum);
+                    Tile tile = this.getTileByMapNumber(tileNum);
                     if (tile != null && tile.image != null) {
                         g2.drawImage(tile.image, screenX, screenY, (ImageObserver) null);
                     } else {
@@ -156,7 +156,7 @@ public class TileManager {
     /**
      * Resolves one map number into a loaded tile definition.
      */
-    private Tiles getTileByMapNumber(int tileNum) {
+    private Tile getTileByMapNumber(int tileNum) {
         if (tileNum <= 0) {
             // Fall back to the first loaded tile if the map contains an invalid or empty value.
             return this.tiles.isEmpty() ? null : this.tiles.get(0);
@@ -180,14 +180,14 @@ public class TileManager {
             return false;
         }
 
-        Tiles tile = this.getTileByMapNumber(this.mapTileNum[row][col]);
-        return tile != null && tile.Collision;
+        Tile tile = this.getTileByMapNumber(this.mapTileNum[row][col]);
+        return tile != null && tile.collision;
     }
 
     /**
      * Returns the full tile object at the requested map cell.
      */
-    public Tiles getTileAt(int row, int col) {
+    public Tile getTileAt(int row, int col) {
         // Convenience helper for any future logic that needs the full tile object at a grid position.
         if (row < 0 || row >= Constants.worldMaxRow || col < 0 || col >= Constants.worldMaxCol) {
             return null;

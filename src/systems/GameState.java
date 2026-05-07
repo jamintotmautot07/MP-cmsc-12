@@ -12,6 +12,9 @@ package systems;
     3. Manage pause state
 */
 
+/**
+ * Future shared state model for score, health, run, and pause flags outside the Swing panel.
+ */
 public class GameState {
     private int score;
     private int level;

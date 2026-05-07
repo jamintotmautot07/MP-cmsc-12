@@ -33,7 +33,7 @@ import util.ResourceCache;
  * Player-controlled entity.
  * Handles input-driven movement, attack timing, animation state, and player rendering.
  */
-public class Player extends Entity{
+public class Player extends Entity {
 
     // Back-references the player needs to read input and query the world/camera.
     GamePanel gp;
@@ -129,7 +129,7 @@ public class Player extends Entity{
     private boolean canOccupyPosition(int nextX, int nextY) {
         Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(this, nextX, nextY);
         return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)
-            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.enemies, null);
+            && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.getEnemies(), null);
     }
 
     /**
@@ -208,62 +208,8 @@ public class Player extends Entity{
         previousDirection = direction;
         String oldDirection = direction;
 
-        /*
-         * Attack handling comes before movement resolution.
-         * That way the attack state is decided for this frame first,
-         * and movement can still happen in the same update if needed.
-         */
-        AttackType requestedAttack = AttackType.NONE;
-        String requestedAttackDirection = facingDirection;
-        if (keyH.isActionPressed(KeyHandler.Action.ATTACK) && !attackedPressed && !isOnCooldown("Player_attack")) {
-            if (keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
-                requestedAttack = AttackType.FORWARD;
-                requestedAttackDirection = "up";
-            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
-                requestedAttack = AttackType.DOWN;
-                requestedAttackDirection = "down";
-            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT)) {
-                requestedAttack = AttackType.SIDE;
-                requestedAttackDirection = "left";
-            } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
-                requestedAttack = AttackType.SIDE;
-                requestedAttackDirection = "right";
-            } else {
-                requestedAttack = AttackType.NORMAL;
-                requestedAttackDirection = facingDirection;
-            }
-
-            attackedPressed = true;
-            startCooldown("Player_attack", 50); // Attack cannot be retriggered immediately.
-        }
-
-        if (requestedAttack != AttackType.NONE) {
-            // Reset the timer only if the attack pattern itself changed.
-            if (attackType != requestedAttack) {
-                attackType = requestedAttack;
-                attackDirection = requestedAttackDirection;
-                attackCounter = 0;
-            }
-            attackActive = true;
-            attackCounter++;
-            if (attackCounter > attackDuration) {
-                // Attack window has ended, so clear combat state.
-                attackCounter = 0;
-                attackType = AttackType.NONE;
-                attackActive = false;
-            }
-            attackHitbox = calculateAttackHitbox(attackDirection);
-            // BUG NOTE: the player attack hitbox is computed in world coordinates, which is good,
-            // but enemy damage never fires yet because there is no world-space attack-vs-enemy resolution pass.
-            // If combat gets finished later, keep the hitbox generation here and add the actual enemy checks in GamePanel.
-            direction = "idle"; // Current art set keeps the player visually idle while attacking.
-        } else {
-            // No attack requested this frame, so make sure hitbox/combat state is fully cleared.
-            attackType = AttackType.NONE;
-            attackActive = false;
-            attackCounter = 0;
-            attackHitbox.setBounds(0, 0, 0, 0);
-        }
+        tryStartAttack();
+        updateAttackWindow();
 
         // Ability input: projectile fire and dash.
         if (keyH.isActionPressed(KeyHandler.Action.FIRE) && !firePressed && !isOnCooldown("Player_fire")) {
@@ -340,19 +286,7 @@ public class Player extends Entity{
                 dashing = false;
             }
 
-            spriteCounter++;
-            if (spriteCounter > movementAnimationSpeed) {
-                spriteCounter = 0;
-                if (direction.equals("up")) {
-                    upCounter = (upCounter + 1) % 6;
-                } else if (direction.equals("down")) {
-                    downCounter = (downCounter + 1) % 4;
-                } else if (direction.equals("left")) {
-                    leftCounter = (leftCounter + 1) % 6;
-                } else if (direction.equals("right")) {
-                    rightCounter = (rightCounter + 1) % 6;
-                }
-            }
+            advanceDirectionalAnimation();
         } else if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
             keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
         ) {
@@ -388,65 +322,7 @@ public class Player extends Entity{
                 worldY = nextY;
             }
 
-            // Advance the correct directional animation at a fixed rate.
-            spriteCounter++;
-            if(spriteCounter > movementAnimationSpeed) {
-                if(direction.equals("up")) {
-                    if(upCounter == 0) {
-                        upCounter = 1;
-                    } else if (upCounter == 1) {
-                        upCounter = 2;
-                    } else if (upCounter == 2) {
-                        upCounter = 3;
-                    } else if (upCounter == 3) {
-                        upCounter = 4;
-                    } else if (upCounter == 4) {
-                        upCounter = 5;
-                    } else if (upCounter == 5) {
-                        upCounter = 0;
-                    }
-                } else if (direction.equals("down")) {
-                    if(downCounter == 0) {
-                        downCounter = 1;
-                    } else if (downCounter == 1) {
-                        downCounter = 2;
-                    } else if (downCounter == 2) {
-                        downCounter = 3;
-                    } else if (downCounter == 3) {
-                        downCounter = 0;
-                    }
-                } else if (direction.equals("left")) {
-                    if(leftCounter == 0) {
-                        leftCounter = 1;
-                    } else if (leftCounter == 1) {
-                        leftCounter = 2;
-                    } else if (leftCounter == 2) {
-                        leftCounter = 3;
-                    } else if (leftCounter == 3) {
-                        leftCounter = 4;
-                    } else if (leftCounter == 4) {
-                        leftCounter = 5;
-                    } else if (leftCounter == 5) {
-                        leftCounter = 0;
-                    }
-                } else if (direction.equals("right")) {
-                    if(rightCounter == 0) {
-                        rightCounter = 1;
-                    } else if (rightCounter == 1) {
-                        rightCounter = 2;
-                    } else if (rightCounter == 2) {
-                        rightCounter = 3;
-                    } else if (rightCounter == 3) {
-                        rightCounter = 4;
-                    } else if (rightCounter == 4) {
-                        rightCounter = 5;
-                    } else if (rightCounter == 5) {
-                        rightCounter = 0;
-                    }
-                }
-
-                spriteCounter = 0;
-            }
+            advanceDirectionalAnimation();
         } else {
             // No movement keys pressed, so fall back to the idle animation loop.
             direction = "idle";
@@ -455,28 +331,89 @@ public class Player extends Entity{
                 spriteCounter = idleAnimationSpeed; // Trigger idle animation immediately
             }
 
-            spriteCounter++;
-            if(spriteCounter > idleAnimationSpeed) {
-                if(idleCounter == 0) {
-                    idleCounter = 1;
-                } else if (idleCounter == 1) {
-                    idleCounter = 2;
-                } else if (idleCounter == 2) {
-                    idleCounter = 3;
-                } else if (idleCounter == 3) {
-                    idleCounter = 4;
-                } else if (idleCounter == 4) {
-                    idleCounter = 5;
-                } else if (idleCounter == 5) {
-                    idleCounter = 6;
-                } else if (idleCounter == 6) {
-                    idleCounter = 0;
-                }
-
-                spriteCounter = 0;
-            }
+            advanceIdleAnimation();
         }
 
+    }
+
+    private void advanceDirectionalAnimation() {
+        spriteCounter++;
+        if (spriteCounter <= movementAnimationSpeed) {
+            return;
+        }
+
+        if (direction.equals("up")) {
+            upCounter = nextFrame(upCounter, up);
+        } else if (direction.equals("down")) {
+            downCounter = nextFrame(downCounter, down);
+        } else if (direction.equals("left")) {
+            leftCounter = nextFrame(leftCounter, left);
+        } else if (direction.equals("right")) {
+            rightCounter = nextFrame(rightCounter, right);
+        }
+
+        spriteCounter = 0;
+    }
+
+    private void advanceIdleAnimation() {
+        spriteCounter++;
+        if (spriteCounter <= idleAnimationSpeed) {
+            return;
+        }
+
+        idleCounter = nextFrame(idleCounter, idle);
+        spriteCounter = 0;
+    }
+
+    private int nextFrame(int currentFrame, BufferedImage[] frames) {
+        if (frames == null || frames.length == 0) {
+            return 0;
+        }
+        return (currentFrame + 1) % frames.length;
+    }
+
+    private void tryStartAttack() {
+        if (!keyH.isActionPressed(KeyHandler.Action.ATTACK) || attackedPressed || isOnCooldown("Player_attack")) {
+            return;
+        }
+
+        if (keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
+            beginAttack(AttackType.FORWARD, "up");
+        } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)) {
+            beginAttack(AttackType.DOWN, "down");
+        } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT)) {
+            beginAttack(AttackType.SIDE, "left");
+        } else if (keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT)) {
+            beginAttack(AttackType.SIDE, "right");
+        } else {
+            beginAttack(AttackType.NORMAL, facingDirection);
+        }
+    }
+
+    private void beginAttack(AttackType requestedAttack, String requestedAttackDirection) {
+        attackType = requestedAttack;
+        attackDirection = requestedAttackDirection;
+        attackCounter = 0;
+        attackActive = true;
+        attackedPressed = true;
+        startCooldown("Player_attack", 50);
+    }
+
+    private void updateAttackWindow() {
+        if (!attackActive) {
+            attackHitbox.setBounds(0, 0, 0, 0);
+            return;
+        }
+
+        attackCounter++;
+        attackHitbox = calculateAttackHitbox(attackDirection);
+
+        if (attackCounter > attackDuration) {
+            attackCounter = 0;
+            attackType = AttackType.NONE;
+            attackActive = false;
+            attackHitbox.setBounds(0, 0, 0, 0);
+        }
     }
 
     @Override

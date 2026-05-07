@@ -21,15 +21,10 @@ import util.ResourceCache;
  - Appears at startup before opening panel
 */
 
+/**
+ * Startup loading screen that preloads cached resources before showing the main menu.
+ */
 public class LoadingPanel extends JPanel {
-
-    /*
-     * This panel is intentionally left as a commented template.
-     * It documents one possible loading-screen approach without enabling it in the current build.
-     */
-
-    // possible implementation... incomplete and unimplemented
-    // although possible implementations are already added but still commmented
 
     private PreloadProgressBar progressBar;
     private JLabel statusLabel;

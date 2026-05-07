@@ -6,21 +6,17 @@ import engine.GamePanel;
 import util.Constants;
 
 /**
- * VirusDrone enemy - floating surveillance drone with pathfinding chase behavior.
- * Subclass of EnemyPath, actively pursues the player when in range.
+ * Flying enemy that uses the base enemy's shared chase/path behavior and ranged attacks.
  */
-/**
- * Flying chase enemy that extends the path-oriented enemy base.
- */
-public class VirusDrone extends EnemyPath {
+public class VirusDrone extends Enemy {
 
     private static final int AGGRO_START_TILES = 7;
     private static final int AGGRO_STOP_TILES = 12;
-    private static final int NO_FIRE_RANGE_TILES = 5;
+    private static final int NO_FIRE_RANGE_TILES = 4;
     private static final int MELEE_COOLDOWN_FRAMES = 60 * 2;
     private static final int FIRE_COOLDOWN_FRAMES = 60 * 2;
     private static final int PROJECTILE_RANGE_TILES = 7;
-    private static final int PROJECTILE_SPEED = 2;
+    private static final int PROJECTILE_SPEED = 3;
     private static final int PROJECTILE_SIZE = Constants.tileSize / 3;
 
     public VirusDrone(GamePanel gp) {
@@ -71,12 +67,7 @@ public class VirusDrone extends EnemyPath {
             return;
         }
 
-        // Start chasing at longer range than default
-        if (tileDistance < AGGRO_START_TILES) {
-            onPath = true;
-        } else if (tileDistance > AGGRO_STOP_TILES) {
-            onPath = false;
-        }
+        updatePathState(AGGRO_START_TILES, AGGRO_STOP_TILES);
 
         if (onPath) {
             if (tileDistance > NO_FIRE_RANGE_TILES && !isOnCooldown("Virus_fire")) {
@@ -85,8 +76,8 @@ public class VirusDrone extends EnemyPath {
             }
 
             searchPath(
-                gp.player.worldX / Constants.tileSize,
-                gp.player.worldY / Constants.tileSize
+                gp.getPlayer().worldX / Constants.tileSize,
+                gp.getPlayer().worldY / Constants.tileSize
             );
         } else {
             // When not chasing, hover in place or move slowly
