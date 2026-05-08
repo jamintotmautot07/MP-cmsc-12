@@ -50,6 +50,10 @@ public final class FileManager {
                     writer.println("tutorialPlayed=false");
                     writer.println("maxLevelReached=0");
                     writer.println("selectedLevel=0");
+                    writer.println("level0Time=0");
+                    writer.println("level1Time=0");
+                    writer.println("level2Time=0");
+                    writer.println("level3Time=0");
                 }
             }
         } catch(IOException e) {
@@ -63,6 +67,7 @@ public final class FileManager {
             writer.println("tutorialPlayed=" + tutorialPlayed);
             writer.println("maxLevelReached=" + clampProgress(maxLevelReached));
             writer.println("selectedLevel=" + clampLevel(selectedLevel));
+            writeLevelTimes(writer, loadLevelTimes());
 
         } catch(IOException e) {
             throw new GameException("Unable to save game data.");
@@ -80,6 +85,22 @@ public final class FileManager {
 
     public static void saveProgress(int maxLevelReached, boolean tutorialPlayed, int selectedLevel) throws GameException {
         saveData(loadHighScore(), tutorialPlayed, maxLevelReached, selectedLevel);
+    }
+
+    public static void saveLevelTime(int levelIndex, int elapsedSeconds) throws GameException {
+        int[] levelTimes = loadLevelTimes();
+        levelTimes[clampLevel(levelIndex)] = Math.max(0, elapsedSeconds);
+
+        try(PrintWriter writer = new PrintWriter(FILE_NAME)) {
+            writer.println("highscore=" + loadHighScore());
+            writer.println("tutorialPlayed=" + loadTutorialPlayed());
+            writer.println("maxLevelReached=" + loadMaxLevelReached());
+            writer.println("selectedLevel=" + loadSelectedLevel());
+            writeLevelTimes(writer, levelTimes);
+
+        } catch(IOException e) {
+            throw new GameException("Unable to save level time.");
+        }
     }
 
     public static int loadHighScore() throws GameException {
@@ -107,6 +128,38 @@ public final class FileManager {
 
     public static int loadMaxLevelReached() throws GameException {
         return clampProgress(loadInt("maxLevelReached", TUTORIAL_INDEX));
+    }
+
+    public static int loadLevelTime(int levelIndex) throws GameException {
+        return loadInt("level" + clampLevel(levelIndex) + "Time", 0);
+    }
+
+    public static int[] loadLevelTimes() throws GameException {
+        int[] levelTimes = new int[FINAL_LEVEL_INDEX + 1];
+
+        for(int i = TUTORIAL_INDEX; i <= FINAL_LEVEL_INDEX; i++) {
+            levelTimes[i] = loadLevelTime(i);
+        }
+
+        return levelTimes;
+    }
+
+    public static int loadTotalLevelTime() throws GameException {
+        int total = 0;
+        int[] levelTimes = loadLevelTimes();
+
+        for(int time : levelTimes) {
+            total += time;
+        }
+
+        return total;
+    }
+
+    public static String formatTime(int totalSeconds) {
+        int safeSeconds = Math.max(0, totalSeconds);
+        int minutes = safeSeconds / 60;
+        int seconds = safeSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     private static int loadInt(String key, int defaultValue) throws GameException {
@@ -140,6 +193,12 @@ public final class FileManager {
         }
 
         return values;
+    }
+
+    private static void writeLevelTimes(PrintWriter writer, int[] levelTimes) {
+        for(int i = TUTORIAL_INDEX; i <= FINAL_LEVEL_INDEX; i++) {
+            writer.println("level" + i + "Time=" + Math.max(0, levelTimes[i]));
+        }
     }
 
     private static int clampLevel(int level) {

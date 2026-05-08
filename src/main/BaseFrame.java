@@ -225,31 +225,21 @@ public class BaseFrame extends JFrame {
 
         openPanel.scoreButton.addActionListener(e -> {
             panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
+            int timeScore = gamePanel.getTimer() != null ? gamePanel.getTimer().getTimeScore() : 0;
+            int enemyScore = 0; // placeholder
+            int enemiesEliminated = 0; // placeholder
+            int levelsCleared = gamePanel.getLevelsCleared();
+            int totalScore = timeScore + enemyScore + levelsCleared * 100; // placeholder calculation
 
-            // Main-menu scoreboard is intentionally placeholder-only for now.
-            // Future implementation point:
-            // 1. Create a score save file or reuse a score section in the existing save file.
-            // 2. When the victory screen finishes calculating the final score, write:
-            //    timeScore, enemyScore, enemiesEliminated, levelsCleared, and totalScore.
-            // 3. Load those saved values here before opening the dialog.
-            //
-            // Example future shape, not implemented yet:
-            // systems.ScoreManager savedScores = ScoreFileManager.loadScores();
-            // dialog.updateScores(
-            //     savedScores.getTimeScore(),
-            //     savedScores.getEnemyScore(),
-            //     savedScores.getEnemiesEliminated(),
-            //     savedScores.getLevelsCleared(),
-            //     savedScores.calculateTotalScore()
-            // );
+            try {
+                int[] levelTimes = FileManager.loadLevelTimes();
+                int totalLevelTime = FileManager.loadTotalLevelTime();
+                dialog.updateScores(timeScore, enemyScore, enemiesEliminated, levelsCleared, totalScore, levelTimes, totalLevelTime);
+            } catch(GameException ex) {
+                dialog.updateScores(timeScore, enemyScore, enemiesEliminated, levelsCleared, totalScore);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+            }
 
-            dialog.updateScores(
-                0,
-                0,
-                0,
-                0,
-                0
-            );
             dialog.setVisible(true);
         });
 
@@ -289,6 +279,7 @@ public class BaseFrame extends JFrame {
         int nextIndex = clearedLevel.nextLevel != null ? Level.getIndex(clearedLevel.nextLevel) : clearedIndex;
         int progressIndex = clearedLevel.nextLevel != null ? nextIndex : StoryPanel.ENDING_UNLOCK_PROGRESS;
         int selectedLevelIndex = Math.min(nextIndex, Level.LEVELS.length - 1);
+        int elapsedSeconds = gamePanel.getTimer() != null ? (int)(gamePanel.getTimer().getElapsedTime() / 1000) : 0;
 
         if(clearedLevel == Level.TUTORIAL) {
             tutorialPlayed = true;
@@ -301,12 +292,21 @@ public class BaseFrame extends JFrame {
         if (storyPanel != null) {
             storyPanel.setMaxLevelReached(maxLevelReached);
         }
+        saveLevelTime(clearedIndex, elapsedSeconds);
         saveProgress(selectedLevelIndex);
     }
 
     private void saveProgress(int selectedLevelIndex) {
         try {
             FileManager.saveProgress(maxLevelReached, tutorialPlayed, selectedLevelIndex);
+        } catch(GameException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void saveLevelTime(int levelIndex, int elapsedSeconds) {
+        try {
+            FileManager.saveLevelTime(levelIndex, elapsedSeconds);
         } catch(GameException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
         }
