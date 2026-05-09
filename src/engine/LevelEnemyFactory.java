@@ -115,8 +115,9 @@ public class LevelEnemyFactory {
         }
     }
 
-    private void addRandomly(Enemy enemy) {
-        UtilityTool.setRandomEnemyPosition(enemy, tileManager);
-        gamePanel.addEnemy(enemy);
-    }
+    // method for randomly adding enemy
+    // private void addRandomly(Enemy enemy) {
+    //     UtilityTool.setRandomEnemyPosition(enemy, tileManager);
+    //     gamePanel.addEnemy(enemy);
+    // }
 }

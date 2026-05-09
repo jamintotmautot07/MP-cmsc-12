@@ -2,12 +2,16 @@
 package systems;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.PrintWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import exception.GameException;
 
@@ -32,6 +36,8 @@ import exception.GameException;
 */
 
 public final class FileManager {
+    private static final String APP_DIRECTORY_NAME = "HawakKoAngBit";
+    private static final String UNIX_APP_DIRECTORY_NAME = "hawak-ko-ang-bit";
     private static final String FILE_NAME = "save_data.txt";
     private static final int TUTORIAL_INDEX = 0;
     private static final int FINAL_LEVEL_INDEX = 3;
@@ -42,15 +48,20 @@ public final class FileManager {
 
     public static void createSaveFile() throws GameException {
         try {
-            File file = new File(FILE_NAME);
+            Path saveFile = getSaveFilePath();
+            Files.createDirectories(saveFile.getParent());
 
-            if(!file.exists()) {
-                try(PrintWriter writer = new PrintWriter(file)) {
-                    writer.println("highscore=0");
-                    writer.println("tutorialPlayed=false");
-                    writer.println("maxLevelReached=0");
-                    writer.println("selectedLevel=0");
+            if(Files.exists(saveFile)) {
+                if(Files.isDirectory(saveFile)) {
+                    throw new GameException("Save path is a folder instead of a file: " + saveFile);
                 }
+                return;
+            }
+
+            migrateLegacySaveFile(saveFile);
+
+            if(!Files.exists(saveFile)) {
+                writeSaveFile(0, false, TUTORIAL_INDEX, TUTORIAL_INDEX);
             }
         } catch(IOException e) {
             throw new GameException("Unable to create save file.");
@@ -58,21 +69,16 @@ public final class FileManager {
     }
 
     public static void saveData(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
-        try(PrintWriter writer = new PrintWriter(FILE_NAME)) {
-            writer.println("highscore=" + highScore);
-            writer.println("tutorialPlayed=" + tutorialPlayed);
-            writer.println("maxLevelReached=" + clampProgress(maxLevelReached));
-            writer.println("selectedLevel=" + clampLevel(selectedLevel));
-
-        } catch(IOException e) {
-            throw new GameException("Unable to save game data.");
-        }
+        createSaveFile();
+        writeSaveFile(highScore, tutorialPlayed, maxLevelReached, selectedLevel);
     }
 
+    // for type of saving method that is the last level reached
     public static void saveData(int highScore, boolean tutorialPlayed, int selectedLevel) throws GameException {
         saveData(highScore, tutorialPlayed, selectedLevel, selectedLevel);
     }
 
+    // for type of saving method that assumes that the player is in either level 1 or tutorial
     public static void saveData(int highScore, boolean tutorialPlayed) throws GameException {
         int level = tutorialPlayed ? 1 : TUTORIAL_INDEX;
         saveData(highScore, tutorialPlayed, level, level);
@@ -126,20 +132,72 @@ public final class FileManager {
     private static Map<String, String> loadValues() throws GameException {
         Map<String, String> values = new HashMap<>();
 
-        try(BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
-            String line;
+        try(BufferedReader reader = Files.newBufferedReader(getSaveFilePath(), StandardCharsets.UTF_8)) {
+            Properties properties = new Properties();
+            properties.load(reader);
 
-            while((line = reader.readLine()) != null) {
-                int separator = line.indexOf('=');
-                if(separator > 0 && separator < line.length() - 1) {
-                    values.put(line.substring(0, separator).trim(), line.substring(separator + 1).trim());
-                }
+            for(String key : properties.stringPropertyNames()) {
+                values.put(key, properties.getProperty(key));
             }
-        } catch(IOException e) {
+        } catch(IOException | IllegalArgumentException e) {
             throw new GameException("Unable to load save file.");
         }
 
         return values;
+    }
+
+    private static void writeSaveFile(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
+        try {
+            Path saveFile = getSaveFilePath();
+            Files.createDirectories(saveFile.getParent());
+
+            Properties values = new Properties();
+            values.setProperty("highscore", Integer.toString(highScore));
+            values.setProperty("tutorialPlayed", Boolean.toString(tutorialPlayed));
+            values.setProperty("maxLevelReached", Integer.toString(clampProgress(maxLevelReached)));
+            values.setProperty("selectedLevel", Integer.toString(clampLevel(selectedLevel)));
+
+            try(BufferedWriter writer = Files.newBufferedWriter(saveFile, StandardCharsets.UTF_8)) {
+                values.store(writer, "Hawak Ko Ang Bit save data");
+            }
+        } catch(IOException e) {
+            throw new GameException("Unable to save game data.");
+        }
+    }
+
+    private static void migrateLegacySaveFile(Path saveFile) throws IOException {
+        Path legacySaveFile = Paths.get(FILE_NAME);
+
+        if(Files.isRegularFile(legacySaveFile)) {
+            Files.copy(legacySaveFile, saveFile);
+        }
+    }
+
+    private static Path getSaveFilePath() {
+        return getSaveDirectory().resolve(FILE_NAME);
+    }
+
+    private static Path getSaveDirectory() {
+        String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        String userHome = System.getProperty("user.home", ".");
+
+        if(osName.contains("win")) {
+            String appData = System.getenv("APPDATA");
+            if(appData != null && !appData.trim().isEmpty()) {
+                return Paths.get(appData, APP_DIRECTORY_NAME);
+            }
+            return Paths.get(userHome, "AppData", "Roaming", APP_DIRECTORY_NAME);
+        }
+
+        if(osName.contains("mac")) {
+            return Paths.get(userHome, "Library", "Application Support", APP_DIRECTORY_NAME);
+        }
+
+        String xdgDataHome = System.getenv("XDG_DATA_HOME");
+        if(xdgDataHome != null && !xdgDataHome.trim().isEmpty()) {
+            return Paths.get(xdgDataHome, UNIX_APP_DIRECTORY_NAME);
+        }
+        return Paths.get(userHome, ".local", "share", UNIX_APP_DIRECTORY_NAME);
     }
 
     private static int clampLevel(int level) {

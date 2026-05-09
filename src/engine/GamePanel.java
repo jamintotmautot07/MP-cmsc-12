@@ -53,6 +53,8 @@ public class GamePanel extends JPanel implements Runnable {
     private static final int ENDING_OUTRO_FRAMES = 149;
     private static final int SCENE_FRAME_DELAY_MS = 55;
 
+
+    // objects that are responsible for different features og the game
     private final KeyHandler keyHandler = new KeyHandler(this);
     private final Player player = new Player(this, keyHandler);
     private final Camera camera = new Camera(player);
@@ -142,7 +144,9 @@ public class GamePanel extends JPanel implements Runnable {
         camera.update(player);
         levelStartScore = scoreManager.snapshot();
 
-        if (!isInCutscene() && gameMode != GameMode.VICTORY) {
+        if (startTimer) {
+            gameMode = GameMode.PLAYING;
+        } else if (!isInCutscene() && gameMode != GameMode.VICTORY) {
             gameMode = GameMode.PLAYING;
         }
         if (startTimer) {
@@ -308,28 +312,29 @@ public class GamePanel extends JPanel implements Runnable {
         double drawInterval = 1000000000.0 / FPS;
         double delta = 0;
         long lastTime = System.nanoTime();
-        long fpsTimer = 0;
-        int drawCount = 0;
+        // long fpsTimer = 0;
+        // int drawCount = 0;
 
         while (running && !Thread.currentThread().isInterrupted()) {
             long currentTime = System.nanoTime();
             long elapsed = currentTime - lastTime;
             delta += elapsed / drawInterval;
-            fpsTimer += elapsed;
+            // fpsTimer += elapsed;
             lastTime = currentTime;
 
             if (delta >= 1) {
                 update();
                 repaint();
                 delta--;
-                drawCount++;
+                // drawCount++;
             }
 
-            if (SHOW_FPS_IN_CONSOLE && fpsTimer >= 1000000000L) {
-                System.out.println("FPS: " + drawCount);
-                drawCount = 0;
-                fpsTimer = 0;
-            }
+            // showing fps in the terminal
+            // if (SHOW_FPS_IN_CONSOLE && fpsTimer >= 1000000000L) {
+            //     System.out.println("FPS: " + drawCount);
+            //     drawCount = 0;
+            //     fpsTimer = 0;
+            // }
         }
     }
 

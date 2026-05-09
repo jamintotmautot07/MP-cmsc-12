@@ -47,7 +47,7 @@ Keep the `res` folder beside the project root when running from compiled classes
 `manifest.txt` points the JAR to `main.GameLauncher`.
 
 ```powershell
-jar cfm HawakKoAngBit.jar manifest.txt -C bin . -C . res
+jar cfm HawakKoAngBit.jar manifest.txt -C bin . -C res .
 java -jar HawakKoAngBit.jar
 ```
 
