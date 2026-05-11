@@ -88,7 +88,9 @@ public class Entity {
         getCooldown(actionName).start(frames);
     }
 
-    // Check if a cooldown is active for a specific action.
+    /**
+     * Checks if a named action is still waiting for its cooldown to finish.
+     */
     protected boolean isOnCooldown(String actionName) {
         return getCooldown(actionName).isActive();
     }

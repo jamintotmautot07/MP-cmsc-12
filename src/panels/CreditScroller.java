@@ -68,12 +68,18 @@ public class CreditScroller extends JPanel implements ActionListener {
     }
     
     @Override
+    /**
+     * Stops the timer when Swing removes this panel from the display tree.
+     */
     public void removeNotify() {
         stopTimer();
         super.removeNotify();
     }
 
     @Override
+    /**
+     * Draws the scrolling credits text over a black background.
+     */
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 

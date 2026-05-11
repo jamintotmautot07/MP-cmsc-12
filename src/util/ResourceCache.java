@@ -137,6 +137,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Opens a resource either from the development file system or from the packaged classpath.
+     */
     private static InputStream openResourceStream(String path) throws Exception {
         File file = new File(path);
         if (file.exists()) {
@@ -206,6 +209,9 @@ public class ResourceCache {
         listener.onProgress(100, "Loading complete!");
     }
 
+    /**
+     * Creates a bright fallback tile so missing images are obvious during testing.
+     */
     private static BufferedImage createErrorImage() {
         BufferedImage image = new BufferedImage(
             Constants.tileSize,
@@ -221,6 +227,9 @@ public class ResourceCache {
         return image;
     }
 
+    /**
+     * Loads static and animated menu background assets.
+     */
     private static void loadBackgroundResource() {
         // Background images
         loadImage("background", "res/background.png");
@@ -235,6 +244,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads all player animation frames.
+     */
     private static void loadPlayerResources() {
         // Idle animations (7 frames)
         for (int i = 0; i < 7; i++) {
@@ -263,6 +275,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads the sprite sets for every enemy type used by the levels.
+     */
     private static void loadEnemyResources() {
         // default enemy sprite
         imageCache.put("enemy_default", errorImage);
@@ -295,6 +310,9 @@ public class ResourceCache {
         loadFlatEnemyAnimation("dummy", "res/DummyAssets", "right", 6);
     }
 
+    /**
+     * Loads one enemy animation sequence from the nested EnemyAssets folder structure.
+     */
     private static void loadEnemyAnimation(
         String enemyKey,
         String folder,
@@ -314,6 +332,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads one enemy animation sequence from a flat asset folder.
+     */
     private static void loadFlatEnemyAnimation(String enemyKey, String folder, String state, int frameCount) {
         for (int i = 0; i < frameCount; i++) {
             String key = "enemy_" + enemyKey + "_" + state + "_" + i;
@@ -323,6 +344,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads ground and solid tile textures until the expected numbering sequence ends.
+     */
     private static void loadTileAssets() {
         for (int i = 1; i <= 180; i++) {
             String path = String.format("res/TILES/ground%03d.png", i);
@@ -347,6 +371,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads custom project fonts and one system fallback font.
+     */
     private static void loadFontAssets() {
         loadFont("title_upper", "res/Font/TopTitle_Font.ttf", Font.BOLD, 35f);
         doneLoading = report( "Loaded title font");
@@ -359,6 +386,9 @@ public class ResourceCache {
         doneLoading = report("Loaded Papyrus font");
     }
 
+    /**
+     * Updates the loading progress listener after a resource is handled.
+     */
     private static int report(String message) {
         doneLoading++;
         int percent = (int) ((doneLoading / (double) totalResources) * 100);

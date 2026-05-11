@@ -10,6 +10,9 @@ import util.Constants;
  * Tutorial-only practice enemy. It drifts toward the player, deals no damage, and never attacks.
  */
 public class Dummy extends Enemy {
+    /**
+     * Builds a harmless training target for the tutorial map.
+     */
     public Dummy(GamePanel gp) {
         super(gp);
         setDefaultValues();
@@ -17,6 +20,9 @@ public class Dummy extends Enemy {
     }
 
     @Override
+    /**
+     * Gives the dummy low health and zero damage so it teaches combat without punishing the player.
+     */
     public void setDefaultValues() {
         super.setDefaultValues();
         speed = 1;
@@ -32,6 +38,9 @@ public class Dummy extends Enemy {
     }
 
     @Override
+    /**
+     * Loads the dummy animation set and scales it to one tile.
+     */
     protected void loadSprites() {
         idleFrames = loadCachedSpriteArray("dummy", "idle", 10);
         upFrames = loadCachedSpriteArray("dummy", "up", 5);
@@ -49,6 +58,9 @@ public class Dummy extends Enemy {
     }
 
     @Override
+    /**
+     * Makes the dummy approach the player only while the player is far enough away.
+     */
     public void setAction() {
         updatePathState(18, 22);
 

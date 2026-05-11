@@ -26,12 +26,18 @@ public class PauseMenu {
     private final Runnable onHome;
     private JDialog dialog;
 
+    /**
+     * Stores the gameplay callbacks that the pause menu buttons should trigger.
+     */
     public PauseMenu(GamePanel gamePanel, Runnable onResume, Runnable onHome) {
         this.gamePanel = gamePanel;
         this.onResume = onResume;
         this.onHome = onHome;
     }
 
+    /**
+     * Opens the pause dialog, creating it lazily the first time it is needed.
+     */
     public void show() {
         if (dialog == null) {
             createDialog();
@@ -42,12 +48,18 @@ public class PauseMenu {
         dialog.setVisible(true);
     }
 
+    /**
+     * Hides the pause dialog if it is currently visible.
+     */
     public void hide() {
         if (dialog != null && dialog.isVisible()) {
             dialog.setVisible(false);
         }
     }
 
+    /**
+     * Builds the modal Swing dialog and wires its four buttons.
+     */
     private void createDialog() {
         Window owner = SwingUtilities.getWindowAncestor(gamePanel);
         dialog = new JDialog(owner, Dialog.ModalityType.APPLICATION_MODAL);
@@ -100,6 +112,9 @@ public class PauseMenu {
         dialog.pack();
     }
 
+    /**
+     * Confirms before leaving the current level and returning to the opening screen.
+     */
     private void confirmHomeExit() {
         int choice = JOptionPane.showConfirmDialog(
             dialog,

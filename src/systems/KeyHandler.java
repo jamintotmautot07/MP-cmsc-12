@@ -90,6 +90,9 @@ public class KeyHandler implements KeyListener {
     public void keyTyped(KeyEvent e) {}
 
     @Override
+    /**
+     * Marks gameplay actions as pressed and handles global shortcuts like pause and cutscene skip.
+     */
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         pressedKeyCodes.add(code);
@@ -126,6 +129,9 @@ public class KeyHandler implements KeyListener {
     }
 
     @Override
+    /**
+     * Clears an action when its physical key is released.
+     */
     public void keyReleased(KeyEvent e) {
         int code = e.getKeyCode();
         pressedKeyCodes.remove(code);
@@ -150,6 +156,9 @@ public class KeyHandler implements KeyListener {
         forceClearTriggered = false;
     }
 
+    /**
+     * Hidden development shortcut for immediately clearing the active level.
+     */
     private boolean isForceClearComboDown() {
         return pressedKeyCodes.contains(KeyEvent.VK_UP)
             && pressedKeyCodes.contains(KeyEvent.VK_DOWN)

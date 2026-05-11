@@ -120,6 +120,9 @@ public class Enemy extends Entity {
         pathGoalRow = -1;
     }
 
+    /**
+     * Pulls a sequence of enemy animation frames from ResourceCache using the shared naming pattern.
+     */
     protected BufferedImage[] loadCachedSpriteArray(String enemyKey, String state, int frameCount) {
         BufferedImage[] frames = new BufferedImage[frameCount];
 
@@ -130,11 +133,17 @@ public class Enemy extends Entity {
         return frames;
     }
 
+    /**
+     * Places an enemy at an exact pixel position in the world.
+     */
     public void setStartPosition(int worldX, int worldY) {
         this.worldX = worldX;
         this.worldY = worldY;
     }
 
+    /**
+     * Places an enemy at a tile position by converting tile coordinates into pixels.
+     */
     public void setStartTilePosition(int col, int row) {
         setStartPosition(col * Constants.tileSize, row * Constants.tileSize);
     }
@@ -247,28 +256,46 @@ public class Enemy extends Entity {
         );
     }
 
+    /**
+     * Returns the enemy's horizontal center in world pixels.
+     */
     protected int getCenterX() {
         return worldX + renderWidth / 2;
     }
 
+    /**
+     * Returns the enemy's vertical center in world pixels.
+     */
     protected int getCenterY() {
         return worldY + renderHeight / 2;
     }
 
+    /**
+     * Returns the player's horizontal center in world pixels.
+     */
     protected int getPlayerCenterX() {
         return gp.getPlayer().worldX + Constants.tileSize / 2;
     }
 
+    /**
+     * Returns the player's vertical center in world pixels.
+     */
     protected int getPlayerCenterY() {
         return gp.getPlayer().worldY + Constants.tileSize / 2;
     }
 
+    /**
+     * Estimates distance to the player in tile units using Manhattan distance.
+     */
     protected int getTileDistanceToPlayer() {
         int distanceX = Math.abs(getCenterX() - getPlayerCenterX());
         int distanceY = Math.abs(getCenterY() - getPlayerCenterY());
         return (distanceX + distanceY) / Constants.tileSize;
     }
 
+    /**
+     * Picks the main up/down/left/right direction that points toward the player.
+     */
     protected String getCardinalDirectionTowardPlayer() {
         int distanceX = getPlayerCenterX() - getCenterX();
         int distanceY = getPlayerCenterY() - getCenterY();
@@ -280,6 +307,9 @@ public class Enemy extends Entity {
         return distanceY < 0 ? "up" : "down";
     }
 
+    /**
+     * Picks an eight-direction aim string, used mainly for projectile firing.
+     */
     protected String getEightWayDirectionTowardPlayer() {
         int distanceX = getPlayerCenterX() - getCenterX();
         int distanceY = getPlayerCenterY() - getCenterY();
@@ -310,6 +340,9 @@ public class Enemy extends Entity {
         return CollisionManager.rectanglesIntersect(candidateHitbox, getPlayerWorldSolidArea());
     }
 
+    /**
+     * Checks whether this enemy can step to a future position without hitting tiles, the player, or other enemies.
+     */
     protected boolean canMoveTo(int nextX, int nextY) {
         Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(this, nextX, nextY);
         return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)
@@ -317,6 +350,9 @@ public class Enemy extends Entity {
             && !CollisionManager.willCollideWithAnyEnemy(futureSolidArea, gp.getEnemies(), this);
     }
 
+    /**
+     * Creates a projectile aimed toward the player's current position.
+     */
     protected void fireProjectileAtPlayer(int damage, int projectileSpeed, int rangeTiles, int size) {
         String projectileDirection = getEightWayDirectionTowardPlayer();
         int startX = getCenterX() - size / 2;
@@ -399,19 +435,31 @@ public class Enemy extends Entity {
         direction = nextDirection;
     }
 
+    /**
+     * Converts the enemy's collision center into a tile column for pathfinding.
+     */
     private int getPathCol() {
         return (worldX + solidArea.x + solidArea.width / 2) / Constants.tileSize;
     }
 
+    /**
+     * Converts the enemy's collision center into a tile row for pathfinding.
+     */
     private int getPathRow() {
         return (worldY + solidArea.y + solidArea.height / 2) / Constants.tileSize;
     }
 
+    /**
+     * Checks whether a tile coordinate is inside the configured world grid.
+     */
     private boolean isInWorld(int col, int row) {
         return col >= 0 && col < Constants.worldMaxCol
             && row >= 0 && row < Constants.worldMaxRow;
     }
 
+    /**
+     * Checks if pathfinding is allowed to route through the requested tile.
+     */
     private boolean canPathThrough(int col, int row) {
         if (!isInWorld(col, row)) {
             return false;
@@ -429,6 +477,10 @@ public class Enemy extends Entity {
         return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), candidateArea);
     }
 
+    /**
+     * Runs a bounded A* search between two tile positions.
+     * The search is padded around the enemy/player area so it stays cheap enough for repeated gameplay use.
+     */
     private List<PathNode> findAStarPath(int startCol, int startRow, int goalCol, int goalRow) {
         if (!canPathThrough(startCol, startRow) || !canPathThrough(goalCol, goalRow)) {
             return Collections.emptyList();
@@ -486,6 +538,9 @@ public class Enemy extends Entity {
         return Collections.emptyList();
     }
 
+    /**
+     * Evaluates one neighboring tile during A* and queues it if it improves the known path cost.
+     */
     private void addNeighbor(
         PriorityQueue<PathNode> open,
         PathNode current,
@@ -522,6 +577,9 @@ public class Enemy extends Entity {
         ));
     }
 
+    /**
+     * Produces a fresh search id so path arrays can be reused without clearing the whole grid every time.
+     */
     private int nextPathSearchId() {
         pathSearchId++;
         if (pathSearchId == Integer.MAX_VALUE) {
@@ -534,6 +592,9 @@ public class Enemy extends Entity {
         return pathSearchId;
     }
 
+    /**
+     * Reads the best known cost for a tile during the current A* search.
+     */
     private int getBestPathCost(int col, int row, int searchId) {
         if (pathSeenSearch[row][col] != searchId) {
             return Integer.MAX_VALUE;
@@ -541,23 +602,38 @@ public class Enemy extends Entity {
         return pathBestCost[row][col];
     }
 
+    /**
+     * Stores the best known cost for a tile during the current A* search.
+     */
     private void setBestPathCost(int col, int row, int cost, int searchId) {
         pathSeenSearch[row][col] = searchId;
         pathBestCost[row][col] = cost;
     }
 
+    /**
+     * Checks whether A* already finished processing this tile in the current search.
+     */
     private boolean isClosedPathNode(int col, int row, int searchId) {
         return pathClosedSearch[row][col] == searchId;
     }
 
+    /**
+     * Marks a tile as fully processed for the current A* search.
+     */
     private void closePathNode(int col, int row, int searchId) {
         pathClosedSearch[row][col] = searchId;
     }
 
+    /**
+     * A* heuristic: grid distance without diagonal movement.
+     */
     private int getManhattanDistance(int startCol, int startRow, int goalCol, int goalRow) {
         return Math.abs(startCol - goalCol) + Math.abs(startRow - goalRow);
     }
 
+    /**
+     * Rebuilds the final path by following parent links from the goal back to the start.
+     */
     private List<PathNode> buildPath(PathNode goal) {
         List<PathNode> path = new ArrayList<>();
         PathNode current = goal;
@@ -574,6 +650,9 @@ public class Enemy extends Entity {
         return path;
     }
 
+    /**
+     * Removes path nodes that the enemy has already reached.
+     */
     private void pruneReachedPathNodes(int currentCol, int currentRow) {
         while (!currentPath.isEmpty()) {
             PathNode nextStep = currentPath.get(0);
@@ -584,6 +663,9 @@ public class Enemy extends Entity {
         }
     }
 
+    /**
+     * Verifies that the next cached path step is still next to the enemy.
+     */
     private boolean isNextPathStepAdjacent(int currentCol, int currentRow) {
         if (currentPath.isEmpty()) {
             return false;
@@ -593,6 +675,9 @@ public class Enemy extends Entity {
         return getManhattanDistance(currentCol, currentRow, nextStep.col, nextStep.row) == 1;
     }
 
+    /**
+     * Converts a one-tile path step into a movement direction string.
+     */
     private String getDirectionToTile(int currentCol, int currentRow, int nextCol, int nextRow) {
         if (nextCol < currentCol) return "left";
         if (nextCol > currentCol) return "right";
@@ -608,6 +693,9 @@ public class Enemy extends Entity {
         private final int hCost;
         private final PathNode parent;
 
+        /**
+         * Stores one tile considered by A* plus the link used to rebuild the final route.
+         */
         private PathNode(int col, int row, int gCost, int hCost, PathNode parent) {
             this.col = col;
             this.row = row;
@@ -616,6 +704,9 @@ public class Enemy extends Entity {
             this.parent = parent;
         }
 
+        /**
+         * Total A* priority cost: cost so far plus estimated remaining distance.
+         */
         private int getFCost() {
             return gCost + hCost;
         }
@@ -647,6 +738,9 @@ public class Enemy extends Entity {
         }
     }
 
+    /**
+     * Tests whether moving one step in a candidate direction would be blocked.
+     */
     private boolean isBlockedInDirection(String candidateDirection) {
         int nextX = worldX;
         int nextY = worldY;
@@ -736,6 +830,9 @@ public class Enemy extends Entity {
         }
     }
 
+    /**
+     * Advances an enemy attack window and clears the hitbox when the attack expires.
+     */
     protected void updateAttackState() {
         if (!attackActive) {
             return;
@@ -752,14 +849,23 @@ public class Enemy extends Entity {
         }
     }
 
+    /**
+     * Tells CombatResolver whether this enemy currently has a live melee hitbox.
+     */
     public boolean isAttackActive() {
         return attackActive;
     }
 
+    /**
+     * Returns this enemy's current attack hitbox in world coordinates.
+     */
     public Rectangle getAttackHitbox() {
         return attackHitbox;
     }
 
+    /**
+     * Returns how much damage this enemy deals on contact or melee hit.
+     */
     public int getDamage() {
         return damage;
     }
@@ -829,6 +935,9 @@ public class Enemy extends Entity {
         }
     }
 
+    /**
+     * Draws a compact health bar above the enemy sprite.
+     */
     protected void renderHealthBar(Graphics2D g2, int screenX, int screenY) {
         if (maxHp <= 0 || hp <= 0) {
             return;
@@ -852,6 +961,9 @@ public class Enemy extends Entity {
         g2.drawRoundRect(barX - 1, barY - 1, barWidth + 1, barHeight + 1, 7, 7);
     }
 
+    /**
+     * Compatibility wrapper for code that calls draw() instead of render().
+     */
     public void draw(Graphics2D g2) {
         render(g2);
     }
@@ -893,6 +1005,9 @@ public class Enemy extends Entity {
         }
     }
 
+    /**
+     * Instantly defeats the enemy, used by debug level-clear logic.
+     */
     public void defeat() {
         hp = 0;
         dying = true;
@@ -906,10 +1021,16 @@ public class Enemy extends Entity {
         return alive;
     }
 
+    /**
+     * Returns current enemy health.
+     */
     public int getHp() {
         return hp;
     }
 
+    /**
+     * Returns maximum enemy health.
+     */
     public int getMaxHp() {
         return maxHp;
     }

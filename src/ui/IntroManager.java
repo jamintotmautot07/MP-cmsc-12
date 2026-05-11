@@ -198,6 +198,9 @@ public class IntroManager {
         this.fadeProgress = 0.0f;
     }
 
+    /**
+     * Resolves the current frame number into a cached image.
+     */
     private BufferedImage getCurrentSceneFrame() {
         if (activeSceneId == null || filePattern == null || frameCount <= 0) {
             return null;
@@ -209,6 +212,9 @@ public class IntroManager {
         return ResourceCache.getSceneFrame(key, path);
     }
 
+    /**
+     * Marks the scene completed and clears the rolling frame cache.
+     */
     private void finishScene() {
         finished = true;
         if (activeSceneId != null) {

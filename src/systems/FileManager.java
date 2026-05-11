@@ -43,9 +43,15 @@ public final class FileManager {
     private static final int FINAL_LEVEL_INDEX = 3;
     private static final int FINAL_STORY_PROGRESS_INDEX = FINAL_LEVEL_INDEX + 1;
 
+    /**
+     * Prevents creating FileManager objects because all save helpers are static utility methods.
+     */
     private FileManager() {
     }
 
+    /**
+     * Ensures the platform-specific save file exists and has a valid parent directory.
+     */
     public static void createSaveFile() throws GameException {
         try {
             Path saveFile = getSaveFilePath();
@@ -68,34 +74,55 @@ public final class FileManager {
         }
     }
 
+    /**
+     * Saves the complete progress record.
+     */
     public static void saveData(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
         createSaveFile();
         writeSaveFile(highScore, tutorialPlayed, maxLevelReached, selectedLevel);
     }
 
     // for type of saving method that is the last level reached
+    /**
+     * Saves progress when the selected level is also the maximum unlocked level.
+     */
     public static void saveData(int highScore, boolean tutorialPlayed, int selectedLevel) throws GameException {
         saveData(highScore, tutorialPlayed, selectedLevel, selectedLevel);
     }
 
     // for type of saving method that assumes that the player is in either level 1 or tutorial
+    /**
+     * Legacy overload used by older code that only knew high score and tutorial status.
+     */
     public static void saveData(int highScore, boolean tutorialPlayed) throws GameException {
         int level = tutorialPlayed ? 1 : TUTORIAL_INDEX;
         saveData(highScore, tutorialPlayed, level, level);
     }
 
+    /**
+     * Saves level progress while preserving the current high score value.
+     */
     public static void saveProgress(int maxLevelReached, boolean tutorialPlayed, int selectedLevel) throws GameException {
         saveData(loadHighScore(), tutorialPlayed, maxLevelReached, selectedLevel);
     }
 
+    /**
+     * Loads the saved high score, defaulting to zero if the value is absent or invalid.
+     */
     public static int loadHighScore() throws GameException {
         return loadInt("highscore", 0);
     }
 
+    /**
+     * Legacy name kept for compatibility; intro progress now maps to tutorial progress.
+     */
     public static boolean loadIntroPlayed() throws GameException {
         return loadTutorialPlayed();
     }
 
+    /**
+     * Loads whether the tutorial has been completed before.
+     */
     public static boolean loadTutorialPlayed() throws GameException {
         createSaveFile();
 
@@ -107,14 +134,23 @@ public final class FileManager {
         }
     }
 
+    /**
+     * Loads the menu-selected level and clamps it to a valid playable level index.
+     */
     public static int loadSelectedLevel() throws GameException {
         return clampLevel(loadInt("selectedLevel", TUTORIAL_INDEX));
     }
 
+    /**
+     * Loads the highest unlocked progress point.
+     */
     public static int loadMaxLevelReached() throws GameException {
         return clampProgress(loadInt("maxLevelReached", TUTORIAL_INDEX));
     }
 
+    /**
+     * Loads one integer value from the save file with a fallback when parsing fails.
+     */
     private static int loadInt(String key, int defaultValue) throws GameException {
         createSaveFile();
 
@@ -129,6 +165,9 @@ public final class FileManager {
         }
     }
 
+    /**
+     * Reads the save file as Java Properties and exposes the values as a simple map.
+     */
     private static Map<String, String> loadValues() throws GameException {
         Map<String, String> values = new HashMap<>();
 
@@ -146,6 +185,9 @@ public final class FileManager {
         return values;
     }
 
+    /**
+     * Writes the complete save file atomically from the values passed by the caller.
+     */
     private static void writeSaveFile(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
         try {
             Path saveFile = getSaveFilePath();
@@ -165,6 +207,9 @@ public final class FileManager {
         }
     }
 
+    /**
+     * Copies an old root-level save file into the new platform-specific save directory if one exists.
+     */
     private static void migrateLegacySaveFile(Path saveFile) throws IOException {
         Path legacySaveFile = Paths.get(FILE_NAME);
 
@@ -173,10 +218,16 @@ public final class FileManager {
         }
     }
 
+    /**
+     * Returns the full path to the save data file.
+     */
     private static Path getSaveFilePath() {
         return getSaveDirectory().resolve(FILE_NAME);
     }
 
+    /**
+     * Chooses a normal app-data directory for Windows, macOS, or Linux.
+     */
     private static Path getSaveDirectory() {
         String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         String userHome = System.getProperty("user.home", ".");
@@ -200,6 +251,9 @@ public final class FileManager {
         return Paths.get(userHome, ".local", "share", UNIX_APP_DIRECTORY_NAME);
     }
 
+    /**
+     * Keeps a selected playable level within the valid LEVELS array range.
+     */
     private static int clampLevel(int level) {
         if(level < TUTORIAL_INDEX) {
             return TUTORIAL_INDEX;
@@ -210,6 +264,9 @@ public final class FileManager {
         return level;
     }
 
+    /**
+     * Keeps story/progression unlock values within the valid range, including the ending unlock slot.
+     */
     private static int clampProgress(int level) {
         if(level < TUTORIAL_INDEX) {
             return TUTORIAL_INDEX;

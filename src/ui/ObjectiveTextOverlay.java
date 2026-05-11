@@ -22,18 +22,27 @@ public class ObjectiveTextOverlay {
     private long startTime;
     private boolean active;
 
+    /**
+     * Starts a new objective message and resets its fade timer.
+     */
     public void show(String text) {
         this.text = text;
         this.startTime = System.currentTimeMillis();
         this.active = text != null && !text.isEmpty();
     }
 
+    /**
+     * Deactivates the overlay once its full fade/hold duration has passed.
+     */
     public void update() {
         if (active && System.currentTimeMillis() - startTime >= TOTAL_MS) {
             active = false;
         }
     }
 
+    /**
+     * Draws the objective text with a time-based alpha fade.
+     */
     public void draw(Graphics2D g2) {
         if (!active || text == null) {
             return;

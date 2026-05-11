@@ -31,6 +31,9 @@ public class LoadingPanel extends JPanel {
     private JLabel titleLabel;
     private JLabel subtitleLabel;
 
+    /**
+     * Builds the loading screen labels and progress bar.
+     */
     public LoadingPanel() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
         setLayout(new BorderLayout());
@@ -81,9 +84,15 @@ public class LoadingPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 
+    /**
+     * Starts resource preloading on a SwingWorker so the UI can keep updating progress.
+     */
     public void startLoading(Runnable onDone) {
         SwingWorker<Void, ProgressUpdate> worker = new SwingWorker<>() {
             @Override
+            /**
+             * Performs the actual cache loading away from the Swing event thread.
+             */
             protected Void doInBackground() throws Exception {
                 ResourceCache.preloadAll((value, message) -> {
                     publish(new ProgressUpdate(value, message));
@@ -92,6 +101,9 @@ public class LoadingPanel extends JPanel {
             }
 
             @Override
+            /**
+             * Applies the latest published progress update to Swing components.
+             */
             protected void process(java.util.List<ProgressUpdate> chunks) {
                 ProgressUpdate latest = chunks.get(chunks.size() - 1);
 
@@ -100,6 +112,9 @@ public class LoadingPanel extends JPanel {
             }
 
             @Override
+            /**
+             * Shows completion briefly, then allows BaseFrame to build the main screens.
+             */
             protected void done() {
                  progressBar.setValue(100);
                 statusLabel.setText("Loading complete!");
@@ -124,6 +139,9 @@ public class LoadingPanel extends JPanel {
         int value;
         String message;
 
+        /**
+         * Stores one loading progress value and its display message.
+         */
         ProgressUpdate(int value, String message) {
             this.value = value;
             this.message = message;

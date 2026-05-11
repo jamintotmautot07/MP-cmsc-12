@@ -8,6 +8,9 @@ public class Cooldown {
     // Counts down once per update until the action becomes available again.
     private int remainingFrames;
 
+    /**
+     * Creates an inactive cooldown.
+     */
     public Cooldown() {
         this.remainingFrames = 0;
     }

@@ -43,6 +43,9 @@ public class VictoryPanel extends JPanel {
     private long totalScoreStartTime;
     private boolean buttonsShown;
 
+    /**
+     * Builds the victory screen and wires its three post-game actions.
+     */
     public VictoryPanel(Runnable onReturnToMenu, Runnable onPlayAgain, Runnable onExit) {
         setOpaque(true);
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
@@ -58,6 +61,9 @@ public class VictoryPanel extends JPanel {
         });
     }
 
+    /**
+     * Refreshes all score labels and starts the animated total score count-up.
+     */
     public void showScores(ScoreManager scoreManager) {
         this.scoreManager = scoreManager;
         this.totalScoreStartTime = System.currentTimeMillis();
@@ -75,12 +81,18 @@ public class VictoryPanel extends JPanel {
         }
     }
 
+    /**
+     * Stops the victory animation timer when the panel is hidden.
+     */
     public void stopAnimation() {
         if (animationTimer.isRunning()) {
             animationTimer.stop();
         }
     }
 
+    /**
+     * Builds title text, score labels, and action buttons for the victory screen.
+     */
     private void createContent(Runnable onReturnToMenu, Runnable onPlayAgain, Runnable onExit) {
         JPanel content = new JPanel();
         content.setOpaque(false);
@@ -138,6 +150,9 @@ public class VictoryPanel extends JPanel {
         add(content, BorderLayout.CENTER);
     }
 
+    /**
+     * Initializes the small falling pixel particles.
+     */
     private void createPixels() {
         for (int i = 0; i < pixels.length; i++) {
             pixels[i] = new Pixel();
@@ -145,6 +160,9 @@ public class VictoryPanel extends JPanel {
         }
     }
 
+    /**
+     * Moves each pixel downward and recycles it after it leaves the screen.
+     */
     private void updatePixels() {
         for (Pixel pixel : pixels) {
             pixel.y += pixel.speed;
@@ -155,6 +173,9 @@ public class VictoryPanel extends JPanel {
         }
     }
 
+    /**
+     * Animates the total score label until it reaches the final calculated total.
+     */
     private void updateTotalScore() {
         if (scoreManager == null) {
             return;
@@ -174,6 +195,9 @@ public class VictoryPanel extends JPanel {
         }
     }
 
+    /**
+     * Randomizes one pixel's position, speed, color, and drift.
+     */
     private void resetPixel(Pixel pixel, boolean anywhere) {
         Color[] colors = {
             new Color(90, 255, 150),
@@ -203,6 +227,9 @@ public class VictoryPanel extends JPanel {
         g2.dispose();
     }
 
+    /**
+     * Draws the restored-system grid background behind the victory content.
+     */
     private void drawRestoredBackground(Graphics2D g2) {
         g2.setColor(new Color(5, 18, 28));
         g2.fillRect(0, 0, getWidth(), getHeight());
@@ -225,6 +252,9 @@ public class VictoryPanel extends JPanel {
         g2.drawString(footer, (getWidth() - metrics.stringWidth(footer)) / 2, getHeight() - 24);
     }
 
+    /**
+     * Draws all falling pixel particles.
+     */
     private void drawConfetti(Graphics2D g2) {
         for (Pixel pixel : pixels) {
             int drawX = Math.round(pixel.x + (float) Math.sin(pixel.drift) * 10);

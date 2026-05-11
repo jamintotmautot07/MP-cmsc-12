@@ -59,6 +59,9 @@ public class CollisionManager {
         return false;
     }
 
+    /**
+     * Null-safe rectangle intersection helper used by combat and movement.
+     */
     public static boolean rectanglesIntersect(Rectangle a, Rectangle b) {
         if (a == null || b == null) {
             return false;
@@ -67,6 +70,9 @@ public class CollisionManager {
         return a.intersects(b);
     }
 
+    /**
+     * Builds an entity's collision box at its current world position.
+     */
     public static Rectangle getWorldSolidArea(Entity entity) {
         if (entity == null) {
             return new Rectangle();
@@ -75,6 +81,9 @@ public class CollisionManager {
         return getWorldSolidArea(entity, entity.worldX, entity.worldY);
     }
 
+    /**
+     * Builds an entity's collision box as if it were at a supplied future world position.
+     */
     public static Rectangle getWorldSolidArea(Entity entity, int worldX, int worldY) {
         if (entity == null) {
             return new Rectangle();
@@ -92,6 +101,9 @@ public class CollisionManager {
         );
     }
 
+    /**
+     * Checks if a predicted collision box overlaps a specific entity.
+     */
     public static boolean willCollideWithEntity(Rectangle futureSolidArea, Entity entity) {
         if (futureSolidArea == null || entity == null || entity.solidArea == null) {
             return false;
@@ -100,6 +112,9 @@ public class CollisionManager {
         return rectanglesIntersect(futureSolidArea, getWorldSolidArea(entity));
     }
 
+    /**
+     * Checks if a predicted collision box overlaps any living enemy except an optional ignored one.
+     */
     public static boolean willCollideWithAnyEnemy(Rectangle futureSolidArea, List<Enemy> enemies, Enemy ignoredEnemy) {
         if (futureSolidArea == null || enemies == null) {
             return false;

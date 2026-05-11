@@ -99,6 +99,9 @@ public class ScenePanel extends JPanel implements KeyListener {
     public void keyTyped(KeyEvent e) {}
 
     @Override
+    /**
+     * Handles skip keys while a story/cutscene panel has focus.
+     */
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         // A few common "continue/skip" keys all map to the same behavior.

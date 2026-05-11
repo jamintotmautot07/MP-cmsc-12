@@ -17,6 +17,10 @@ import util.Constants;
  * Subclass of Enemy (doesn't need pathfinding).
  */
 public class Trojan extends Enemy {
+    /*
+     * NORMAL means the Trojan stays where the level placed it.
+     * PROTECT_BOSS means it follows a fixed offset around the CoreBoss during the final level.
+     */
     public enum TrojanMode {
         NORMAL,
         PROTECT_BOSS
@@ -64,6 +68,9 @@ public class Trojan extends Enemy {
     }
 
     @Override
+    /**
+     * Sets the Trojan up as a large stationary spawner instead of a moving attacker.
+     */
     public void setDefaultValues() {
         super.setDefaultValues();
         speed = 0; // Stationary
@@ -85,6 +92,9 @@ public class Trojan extends Enemy {
     }
 
     @Override
+    /**
+     * Loads the animation frames for every state-machine phase.
+     */
     protected void loadSprites() {
 
         // Load state-specific sprite arrays
@@ -116,6 +126,9 @@ public class Trojan extends Enemy {
     }
 
     @Override
+    /**
+     * Intentionally does nothing because the Trojan's behavior is handled by updateStateMachine().
+     */
     public void setAction() {
         // Stationary - no movement
         // State machine handles behavior
@@ -153,6 +166,9 @@ public class Trojan extends Enemy {
 
     /**
      * Update the state machine logic.
+     */
+    /**
+     * Advances the Trojan through idle, activating, producing, and cooldown phases.
      */
     private void updateStateMachine() {
         stateTimer++;
@@ -202,6 +218,9 @@ public class Trojan extends Enemy {
         spawnAttemptedDuringProducing = false;
     }
 
+    /**
+     * Converts this Trojan into a boss guard that follows the boss using a fixed offset.
+     */
     public void setProtectBossMode(CoreBoss bossTarget, int guardOffsetX, int guardOffsetY) {
         this.mode = TrojanMode.PROTECT_BOSS;
         this.bossTarget = bossTarget;
@@ -212,10 +231,16 @@ public class Trojan extends Enemy {
         updateGuardPosition();
     }
 
+    /**
+     * Returns whether this Trojan is normal or attached to the boss.
+     */
     public TrojanMode getMode() {
         return mode;
     }
 
+    /**
+     * Repositions boss-guard Trojans around the current boss position.
+     */
     private void updateGuardPosition() {
         if (mode != TrojanMode.PROTECT_BOSS || bossTarget == null || !bossTarget.isAlive()) {
             return;
@@ -225,6 +250,9 @@ public class Trojan extends Enemy {
         worldY = clamp(bossTarget.worldY + guardOffsetY, 0, Constants.maxWorldHeight - renderHeight);
     }
 
+    /**
+     * Keeps a guard Trojan inside the playable map bounds.
+     */
     private int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
@@ -277,6 +305,9 @@ public class Trojan extends Enemy {
         }
     }
 
+    /**
+     * Tries nearby positions around the Trojan until a valid spawn spot is found.
+     */
     private boolean placeAtRandomSpawnPosition(Enemy enemy) {
         List<int[]> spawnPositions = new ArrayList<>();
         spawnPositions.add(new int[] {worldX + Constants.tileSize, worldY - Constants.tileSize}); // up
@@ -295,6 +326,9 @@ public class Trojan extends Enemy {
         return false;
     }
 
+    /**
+     * Verifies that a spawned enemy would not appear outside the map or inside another blocking object.
+     */
     private boolean canSpawnEnemyAt(Enemy enemy, int spawnX, int spawnY) {
         if (spawnX < 0 || spawnY < 0
             || spawnX + enemy.renderWidth > Constants.maxWorldWidth
@@ -353,6 +387,9 @@ public class Trojan extends Enemy {
         }
     }
 
+    /**
+     * Loops the idle animation at a fixed frame speed.
+     */
     private void updateLoopingAnimation(BufferedImage[] currentFrames) {
         spriteCounter++;
         if (spriteCounter > 12) {
@@ -365,6 +402,9 @@ public class Trojan extends Enemy {
         }
     }
 
+    /**
+     * Returns the configured duration for the current state-machine phase.
+     */
     private int getCurrentStateDuration() {
         switch (currentState) {
             case ACTIVATING:
@@ -380,6 +420,9 @@ public class Trojan extends Enemy {
         }
     }
 
+    /**
+     * Chooses the animation frame where the actual enemy spawn should happen.
+     */
     private int getProducingSpawnFrame() {
         if (producingFrames == null || producingFrames.length == 0) {
             return 0;
@@ -388,6 +431,9 @@ public class Trojan extends Enemy {
     }
 
     @Override
+    /**
+     * Picks the animation frames that match the Trojan's current state-machine phase.
+     */
     protected BufferedImage[] getCurrentFrameArray() {
         if (invincible && damagedFrames != null && damagedFrames.length > 0) {
             return damagedFrames;
@@ -418,6 +464,9 @@ public class Trojan extends Enemy {
     }
 
     @Override
+    /**
+     * Damages the Trojan and switches it into DESTROYED state when health reaches zero.
+     */
     public void takeDamage(int amount) {
         if (!invincible) {
             hp -= amount;
@@ -434,12 +483,33 @@ public class Trojan extends Enemy {
 
     // Getters/setters are currently placeholders for balancing tools or editor/debug UI.
     // They are not heavily used in the current project, but they were added to keep later expansion easier.
+    /**
+     * Returns how many spawned children this Trojan may keep alive at once.
+     */
     public int getMaxActiveChildren() { return maxActiveChildren; }
+
+    /**
+     * Changes the active-child cap for balancing or future editor tools.
+     */
     public void setMaxActiveChildren(int max) { this.maxActiveChildren = max; }
 
+    /**
+     * Returns the lifetime spawn limit for this Trojan.
+     */
     public int getTotalSpawnLimit() { return totalSpawnLimit; }
+
+    /**
+     * Changes the lifetime spawn limit for balancing or future editor tools.
+     */
     public void setTotalSpawnLimit(int limit) { this.totalSpawnLimit = limit; }
 
+    /**
+     * Returns the current state-machine phase.
+     */
     public TrojanState getCurrentState() { return currentState; }
+
+    /**
+     * Returns how many enemies this Trojan has successfully spawned so far.
+     */
     public int getCurrentSpawnCount() { return currentSpawnCount; }
 }

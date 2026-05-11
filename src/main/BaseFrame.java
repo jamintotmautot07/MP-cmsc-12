@@ -74,6 +74,10 @@ public class BaseFrame extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Builds every screen that depends on preloaded resources.
+     * This runs after LoadingPanel finishes so panels can safely ask ResourceCache for images and fonts.
+     */
     private void createMainScreensAfterLoading() {
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
@@ -268,6 +272,10 @@ public class BaseFrame extends JFrame {
         cardLayout.show(container, "Openning");
     }
 
+    /**
+     * Reads saved progression before the menu is shown.
+     * If the save file is missing or invalid, the game falls back to a fresh tutorial-only state.
+     */
     private void loadProgress() {
         try {
             FileManager.createSaveFile();
@@ -283,6 +291,10 @@ public class BaseFrame extends JFrame {
         }
     }
 
+    /**
+     * Records level unlocks after GamePanel reports a clear.
+     * The method advances both the playable level selection and the story archive unlock progress.
+     */
     private void updateProgress() {
         Level clearedLevel = gamePanel.getCurrentLevel();
         int clearedIndex = Level.getIndex(clearedLevel);
@@ -304,6 +316,10 @@ public class BaseFrame extends JFrame {
         saveProgress(selectedLevelIndex);
     }
 
+    /**
+     * Persists the latest unlock state and selected level.
+     * Save failures are shown as warnings instead of crashing the whole game.
+     */
     private void saveProgress(int selectedLevelIndex) {
         try {
             FileManager.saveProgress(maxLevelReached, tutorialPlayed, selectedLevelIndex);
@@ -312,6 +328,9 @@ public class BaseFrame extends JFrame {
         }
     }
 
+    /**
+     * Checks whether the Continue button should be useful to the player.
+     */
     private boolean hasSavedProgress() {
         return tutorialPlayed || maxLevelReached >0;
     }

@@ -24,6 +24,9 @@ public class TransitionManager {
     private float alpha;
     private Runnable onFadeOutComplete;
 
+    /**
+     * Starts a fade-out, runs the callback at full black, then fades back in.
+     */
     public void start(Runnable onFadeOutComplete) {
         this.onFadeOutComplete = onFadeOutComplete;
         this.state = FadeState.FADE_OUT;
@@ -31,6 +34,9 @@ public class TransitionManager {
         this.alpha = 0.0f;
     }
 
+    /**
+     * Advances the current fade state using wall-clock time.
+     */
     public void update() {
         if (state == FadeState.NONE) {
             return;
@@ -57,10 +63,16 @@ public class TransitionManager {
         }
     }
 
+    /**
+     * Returns true while either fade-out or fade-in is still visible.
+     */
     public boolean isActive() {
         return state != FadeState.NONE;
     }
 
+    /**
+     * Draws the current black overlay based on the transition alpha.
+     */
     public void draw(Graphics2D g2) {
         if (alpha <= 0.0f) {
             return;

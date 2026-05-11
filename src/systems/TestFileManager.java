@@ -7,6 +7,9 @@ import exception.GameException;
  */
 public class TestFileManager {
 
+    /**
+     * Runs a tiny manual save-file smoke test from the command line.
+     */
     public static void main(String[] args) {
 
         try {
