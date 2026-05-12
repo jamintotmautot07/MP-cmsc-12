@@ -1,16 +1,15 @@
 package main;
 
+import audio.AudioPlayer;
+import engine.GamePanel;
+import engine.Level;
+import exception.GameException;
 import java.awt.CardLayout;
 import java.awt.Dimension;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import engine.GamePanel;
-import engine.Level;
-import exception.GameException;
 import panels.CreditScroller;
 import panels.LoadingPanel;
 import panels.OpeningPanel;
@@ -42,6 +41,8 @@ public class BaseFrame extends JFrame {
     private Level selectedLevel = Level.TUTORIAL;
     private int maxLevelReached = 0;
     private boolean tutorialPlayed = false;
+    // Singleton Sound manager
+    private AudioPlayer audioPlayer;
 
     /**
      * Builds all major screens once and wires the application flow between them.
@@ -65,6 +66,7 @@ public class BaseFrame extends JFrame {
         cardLayout.show(container, "Loading");
 
         loadingPanel.startLoading(() -> {
+            audioPlayer = AudioPlayer.getInstance();
             createMainScreensAfterLoading();
             setupButtonListeners();
             startStartupScene();
@@ -101,6 +103,7 @@ public class BaseFrame extends JFrame {
         if (!sceneManager.hasPlayed("gameIntro")) {
             openPanel.stopBackgroundAnimation();
             scenePanel.setOnSceneComplete(() -> {
+                audioPlayer.stopMusic();
                 // Return to the menu once the cutscene ends.
                 openPanel.startBackgroundAnimation();
                 cardLayout.show(container, "Openning");

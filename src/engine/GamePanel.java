@@ -1,5 +1,12 @@
 package engine;
 
+import audio.AudioPlayer;
+import entity.CoreBoss;
+import entity.Dummy;
+import entity.Enemy;
+import entity.Laser;
+import entity.Player;
+import entity.Projectile;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,17 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import entity.CoreBoss;
-import entity.Dummy;
-import entity.Enemy;
-import entity.Laser;
-import entity.Player;
-import entity.Projectile;
 import panels.VictoryPanel;
 import systems.CombatResolver;
 import systems.KeyHandler;
@@ -56,6 +55,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     // objects that are responsible for different features og the game
     private final KeyHandler keyHandler = new KeyHandler(this);
+    private final AudioPlayer audioPlayer = AudioPlayer.getInstance();
     private final Player player = new Player(this, keyHandler);
     private final Camera camera = new Camera(player);
     private final TileManager tileManager = new TileManager(this);
@@ -508,11 +508,20 @@ public class GamePanel extends JPanel implements Runnable {
      * Switches from cutscene mode into normal play and restarts the timer.
      */
     private void beginGameplayAfterCutscene() {
+        playGameplayMusic();
         keyHandler.resetKeys();
         gameMode = GameMode.PLAYING;
         timer.startTimer();
         showObjectiveForLevel(currentLevel);
         requestFocusInWindow();
+    }
+
+    private void playGameplayMusic() {
+        String currentLevelName = currentLevel.name;
+        String musicName = (currentLevelName.equals("Level 1") || 
+                             currentLevelName.equals("Level 2")) 
+                             ? "Level 1 and 2 music" : currentLevelName + " music";
+        audioPlayer.playMusic(musicName);
     }
 
     /**

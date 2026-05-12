@@ -1,4 +1,5 @@
 package util;
+import audio.AudioPlayer;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
@@ -238,6 +239,7 @@ public class MethodUtilities {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     temp = new Color(77, 104, 62);
+                    AudioPlayer.getInstance().playSound("button fx");
                     repaint();
                 }
 
