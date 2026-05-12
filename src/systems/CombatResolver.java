@@ -3,9 +3,13 @@ package systems;
 import java.awt.Rectangle;
 
 import engine.GamePanel;
+import entity.CoreBoss;
+import entity.Dummy;
 import entity.Enemy;
 import entity.Laser;
 import entity.Player;
+import entity.Worm;
+import util.Constants;
 import entity.Projectile;
 
 /**
@@ -70,7 +74,16 @@ public class CombatResolver {
                 continue;
             }
             if (CollisionManager.rectanglesIntersect(projectile.getBounds(), CollisionManager.getWorldSolidArea(enemy))) {
-                enemy.takeDamage(projectile.getDamage());
+                if(enemy instanceof CoreBoss) {
+                    if(((CoreBoss)enemy).getCanBeDamaged()) {
+                        enemy.takeDamage(projectile.getDamage());
+                    } else {
+                        gamePanel.showObjectForBoss();
+                        continue;
+                    }
+                } else {
+                    enemy.takeDamage(projectile.getDamage());
+                }
                 return true;
             }
         }
@@ -126,7 +139,22 @@ public class CombatResolver {
                 continue;
             }
             if (CollisionManager.rectanglesIntersect(player.getAttackHitbox(), CollisionManager.getWorldSolidArea(enemy))) {
-                enemy.takeDamage(1);
+                int damage = enemy.getHp() - 1;
+                if(enemy instanceof CoreBoss) {
+                    if(((CoreBoss)enemy).getCanBeDamaged()) {
+                        enemy.takeDamage(damage - 3);
+                    } else {
+                        gamePanel.showObjectForBoss();
+                        continue;
+                    }
+                } else {
+                    if(enemy instanceof Worm || enemy instanceof Dummy) {
+                        damage = enemy.getHp();
+                    }
+                    enemy.takeDamage(damage); //almost one shots the enemy unless it is a worm or dummy
+                    player.stealLifeFromMelee(damage);
+                }
+                
             }
         }
     }
@@ -157,6 +185,7 @@ public class CombatResolver {
         }
 
         Rectangle dashBounds = CollisionManager.getWorldSolidArea(player);
+        dashBounds.setSize(Constants.tileSize, Constants.tileSize);
         for (Enemy enemy : gamePanel.getEnemies()) {
             if (enemy == null || !enemy.isAlive()) {
                 continue;

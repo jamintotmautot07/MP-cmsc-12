@@ -428,6 +428,10 @@ public class GamePanel extends JPanel implements Runnable {
            }
         }
 
+        if(allEnemiesKilled()) {
+            ((CoreBoss)enemies.get(0)).canBeDamaged();
+        }
+
         combatResolver.resolve();
         processDefeatedEnemies();
         camera.update(player);
@@ -491,7 +495,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     /**
-     * Runs the cutscene completion callback, or resumes normal gameplay if no special callback exists.
+     * Runs the cutscene completion callback, or resumes normal gameplay.
      */
     private void finishCutscene() {
         Runnable callback = onCutsceneComplete;
@@ -578,11 +582,19 @@ public class GamePanel extends JPanel implements Runnable {
      */
     private boolean isBossDefeated() {
         for (Enemy enemy : enemies) {
-            if (enemy instanceof CoreBoss && enemy.isAlive()) {
+            if ((enemy instanceof CoreBoss && enemy.isAlive()) || enemy.isAlive()) {
                 return false;
             }
         }
         return true;
+    }
+
+    public boolean allEnemiesKilled() {
+        if(enemies.get(0) instanceof CoreBoss && enemies.size() == 1) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -865,6 +877,12 @@ public class GamePanel extends JPanel implements Runnable {
             objectiveOverlay.show("ELIMINATE ALL ENEMIES!!!");
         } else if (level == Level.LEVEL_3) {
             objectiveOverlay.show("DEFEAT THE CORE VIRUS!!!");
+        }
+    }
+
+    public void showObjectForBoss() {
+        if(this.getCurrentLevel() == Level.LEVEL_3) {
+            objectiveOverlay.show("DEFEAT ALL ENEMIES FIRST!!!", 500, 1500, 300);
         }
     }
 
