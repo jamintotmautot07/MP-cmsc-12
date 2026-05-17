@@ -67,7 +67,7 @@ public class OpeningPanel extends JPanel {
 
         setLayout(new BorderLayout());
         loadBackgroundFrames();
-        startBackgroundAnimation();
+        // startBackgroundAnimation();
 
         // Title fonts are loaded manually so the menu keeps its custom visual style.
         // Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);

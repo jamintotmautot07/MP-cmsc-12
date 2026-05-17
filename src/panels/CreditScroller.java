@@ -33,7 +33,7 @@ public class CreditScroller extends JPanel implements ActionListener {
         "Constantino Tajantajan Cesista Jr.", 
         "", 
         "File Saving:",
-        "ALTHEA",
+        "Althea Kate Silvano",
         "", 
         "MOVEMENT:", 
         "Allan II Eamiguel Lerios"

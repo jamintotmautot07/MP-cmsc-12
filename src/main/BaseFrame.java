@@ -102,7 +102,7 @@ public class BaseFrame extends JFrame {
     private void startStartupScene() {
         // The opening cinematic only plays once per app session.
         if (!sceneManager.hasPlayed("gameIntro")) {
-            openPanel.stopBackgroundAnimation();
+            // openPanel.stopBackgroundAnimation();
             scenePanel.setOnSceneComplete(() -> {
                 audioPlayer.stopMusic();
                 // Return to the menu once the cutscene ends.

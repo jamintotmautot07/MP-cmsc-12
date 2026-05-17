@@ -85,6 +85,7 @@ public class ResourceCache {
                 BufferedImage img = ImageIO.read(inputStream);
                 imageCache.put(key, img);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -119,6 +120,7 @@ public class ResourceCache {
                 return image;
             }
         } catch (Exception e) {
+                e.printStackTrace();
         }
 
         System.err.println("Missing scene frame: " + key + " (" + path + ")");
@@ -140,6 +142,7 @@ public class ResourceCache {
                 Font derivedFont = baseFont.deriveFont(style, size);
                 fontCache.put(key, derivedFont);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -172,6 +175,7 @@ public class ResourceCache {
                 Font font = new Font(fontName, style, (int)size);
                 fontCache.put(key, font);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -200,6 +204,7 @@ public class ResourceCache {
                 clip.open(inputStream);
                 soundCache.put(key, clip);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
