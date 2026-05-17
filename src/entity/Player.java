@@ -1,17 +1,17 @@
 
 package entity;
 
+import audio.AudioPlayer;
+import engine.GamePanel;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-
-import engine.GamePanel;
 import systems.CollisionManager;
 import systems.KeyHandler;
 import util.Constants;
-import util.UtilityTool;
 import util.ResourceCache;
+import util.UtilityTool;
 
 /*
  OWNER: Jamin
@@ -82,6 +82,9 @@ public class Player extends Entity {
     private int maxHp = 10;
     private int invincibilityFrames = 0;
     private final int invincibilityDuration = 120; // 2 seconds at 60 FPS
+
+    // Audio playing manager
+    private AudioPlayer audioPlayer = AudioPlayer.getInstance();
 
     /**
      * Creates the player and loads all animation frames up front.
@@ -248,6 +251,7 @@ public class Player extends Entity {
                 projectileSize
             );
             gp.spawnProjectile(projectile);
+            audioPlayer.playSound("player bullet fx");
         }
 
         if (!dashing && keyH.isActionPressed(KeyHandler.Action.DASH) && !dashPressed && !isOnCooldown("Player_dash")) {
@@ -257,6 +261,7 @@ public class Player extends Entity {
             dashCounter = 0;
             dashPrevProgress = 0f;
             dashDirection = facingDirection;
+            audioPlayer.playSound("player dash fx");
         }
 
         // Handle dash motion first if dashing.
@@ -294,7 +299,7 @@ public class Player extends Entity {
 
             advanceDirectionalAnimation();
         } else if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
-            keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
+                keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
         ) {
 
             if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
@@ -426,6 +431,7 @@ public class Player extends Entity {
         attackActive = true;
         attackedPressed = true;
         startCooldown("Player_attack", 50);
+        audioPlayer.playSound("player melee fx");
     }
 
     /**

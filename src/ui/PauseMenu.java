@@ -1,21 +1,20 @@
 package ui;
 
+import engine.GamePanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.GridLayout;
 import java.awt.Window;
-
 import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import engine.GamePanel;
 import util.MethodUtilities;
 import util.MethodUtilities.CustomButton;
+import util.ResourceCache;
 
 /**
  * Owns the modal pause menu UI and delegates gameplay actions back to GamePanel.
@@ -87,7 +86,7 @@ public class PauseMenu {
         homeButton.addActionListener(e -> confirmHomeExit());
         settingsButton.addActionListener(e -> JOptionPane.showMessageDialog(
             dialog,
-            "Settings are coming soon.",
+            "Settings are coming soon. Resources: " + ResourceCache.getDoneLoading(),
             "Settings",
             JOptionPane.INFORMATION_MESSAGE
         ));

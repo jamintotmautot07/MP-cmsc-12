@@ -1,8 +1,7 @@
 package entity;
 
-import java.awt.Rectangle;
-
 import engine.GamePanel;
+import java.awt.Rectangle;
 import systems.CollisionManager;
 import util.Constants;
 
@@ -402,6 +401,11 @@ public class CoreBoss extends Enemy {
      */
     private int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    @Override
+    protected String getHitSoundKey() {
+        return "boss hit fx";
     }
 
     @Override

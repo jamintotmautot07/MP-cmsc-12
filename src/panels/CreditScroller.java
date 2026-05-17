@@ -1,15 +1,15 @@
 package panels;
-import javax.swing.Timer;
-import javax.swing.JPanel;
-import javax.swing.JButton;
-
-import java.awt.Graphics;
-import java.awt.Font;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.Timer;
 import util.Constants;
 import util.MethodUtilities.CustomButton;
 
@@ -24,7 +24,19 @@ public class CreditScroller extends JPanel implements ActionListener {
 
     // Credits are stored as plain strings and drawn one line at a time.
     private final String[] credits = {
-        "MEMBERS:", "", "   UI:", "     JAMIN", "",  "   MUSIC:", "     INOY", "", "   FILE:", "     ALTHEA", "", "   MOVEMENT:", "     ALLAN"
+        "MEMBERS:", 
+        "", 
+        "UI and Game Mechanics:", 
+        "Benjamid Abad Deypalan", 
+        "", 
+        "Audio and Resource Caching:", 
+        "Constantino Tajantajan Cesista Jr.", 
+        "", 
+        "File Saving:",
+        "Althea Kate Silvano",
+        "", 
+        "MOVEMENT:", 
+        "Allan II Eamiguel Lerios"
     };
 
     /**
@@ -32,11 +44,13 @@ public class CreditScroller extends JPanel implements ActionListener {
      */
     public CreditScroller() {
         setPreferredSize(new Dimension(Constants.screenWidth, Constants.screenHeight));
-        setLayout(null);
+        setLayout(new BorderLayout());
         
         backButton = new CustomButton("Back");
-        backButton.setBounds(10, 10, 80, 30);
-        add(backButton);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(backButton);
+        add(buttonPanel, BorderLayout.NORTH);
         
         // Swing timer is enough for a simple scrolling text effect.
         timer = new Timer(8, this); // ~30 FPS
@@ -47,7 +61,7 @@ public class CreditScroller extends JPanel implements ActionListener {
      */
     public void startTimer() {
         // Reset scroll position whenever the credits screen opens.
-        this.y = 600;
+        this.y = getHeight() > 0 ? getHeight() : Constants.screenHeight;
         timer.start();
     }
     
@@ -92,7 +106,8 @@ public class CreditScroller extends JPanel implements ActionListener {
         // Each repaint places the lines slightly higher than last time, creating the scroll illusion.
         int tempY = y;
         for (String line : credits) {
-            g.drawString(line, getWidth() / 2 - 50, tempY);
+            int textWidth = g.getFontMetrics().stringWidth(line);
+            g.drawString(line, (getWidth() - textWidth) / 2, tempY);
             tempY += 30; // Space between lines
         }
     }

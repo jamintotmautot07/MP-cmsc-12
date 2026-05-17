@@ -1,5 +1,12 @@
 package engine;
 
+import audio.AudioPlayer;
+import entity.CoreBoss;
+import entity.Dummy;
+import entity.Enemy;
+import entity.Laser;
+import entity.Player;
+import entity.Projectile;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,17 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import entity.CoreBoss;
-import entity.Dummy;
-import entity.Enemy;
-import entity.Laser;
-import entity.Player;
-import entity.Projectile;
 import panels.VictoryPanel;
 import systems.CombatResolver;
 import systems.KeyHandler;
@@ -37,6 +36,7 @@ import ui.TransitionManager;
 import util.Constants;
 import util.MethodUtilities;
 import util.UtilityTool;
+import util.VirtualScreen;
 
 /**
  * Main gameplay surface that owns the live world objects, game loop, and gameplay state transitions.
@@ -56,6 +56,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     // objects that are responsible for different features og the game
     private final KeyHandler keyHandler = new KeyHandler(this);
+    private final AudioPlayer audioPlayer = AudioPlayer.getInstance();
     private final Player player = new Player(this, keyHandler);
     private final Camera camera = new Camera(player);
     private final TileManager tileManager = new TileManager(this);
@@ -512,11 +513,20 @@ public class GamePanel extends JPanel implements Runnable {
      * Switches from cutscene mode into normal play and restarts the timer.
      */
     private void beginGameplayAfterCutscene() {
+        playGameplayMusic();
         keyHandler.resetKeys();
         gameMode = GameMode.PLAYING;
         timer.startTimer();
         showObjectiveForLevel(currentLevel);
         requestFocusInWindow();
+    }
+
+    private void playGameplayMusic() {
+        String currentLevelName = currentLevel.name;
+        String musicName = (currentLevelName.equals("Level 1") || 
+                             currentLevelName.equals("Level 2")) 
+                             ? "Level 1 and 2 music" : currentLevelName + " music";
+        audioPlayer.playMusic(musicName);
     }
 
     /**
@@ -968,8 +978,19 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
+        Graphics2D g2 = VirtualScreen.create(g, this);
 
+        try {
+            paintVirtualFrame(g2);
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    /**
+     * Draws one game frame in fixed virtual-resolution coordinates.
+     */
+    private void paintVirtualFrame(Graphics2D g2) {
         if (gameMode == GameMode.VICTORY) {
             transitionManager.draw(g2);
             return;

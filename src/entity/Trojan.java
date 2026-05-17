@@ -1,13 +1,11 @@
 package entity;
 
+import engine.GamePanel;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-
-import engine.GamePanel;
 import systems.CollisionManager;
 import util.Constants;
 
@@ -472,6 +470,8 @@ public class Trojan extends Enemy {
             hp -= amount;
             invincible = true;
             damageReaction();
+
+            audioPlayer.playSound(getHitSoundKey());
 
             if (hp <= 0) {
                 dying = true;
