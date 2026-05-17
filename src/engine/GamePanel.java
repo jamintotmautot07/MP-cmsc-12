@@ -36,6 +36,7 @@ import ui.TransitionManager;
 import util.Constants;
 import util.MethodUtilities;
 import util.UtilityTool;
+import util.VirtualScreen;
 
 /**
  * Main gameplay surface that owns the live world objects, game loop, and gameplay state transitions.
@@ -959,8 +960,19 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
+        Graphics2D g2 = VirtualScreen.create(g, this);
 
+        try {
+            paintVirtualFrame(g2);
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    /**
+     * Draws one game frame in fixed virtual-resolution coordinates.
+     */
+    private void paintVirtualFrame(Graphics2D g2) {
         if (gameMode == GameMode.VICTORY) {
             transitionManager.draw(g2);
             return;

@@ -49,7 +49,8 @@ public class BaseFrame extends JFrame {
      */
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
-        setResizable(false);
+        setResizable(true);
+        setMinimumSize(new Dimension(Constants.screenWidth / 2, Constants.screenHeight / 2));
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         loadProgress();
