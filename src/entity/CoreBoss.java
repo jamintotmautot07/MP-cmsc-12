@@ -28,6 +28,8 @@ public class CoreBoss extends Enemy {
     private int circularAttacksSinceLaser = 0;
     private int nextLaserThreshold = 4;
     private int aggroMoveCounter = 0;
+    private boolean canBeDamaged = false;
+    private int lifeRestoreCounter = 0;
 
     /**
      * Creates the final boss and loads its large idle sprite set.
@@ -44,8 +46,8 @@ public class CoreBoss extends Enemy {
      */
     public void setDefaultValues() {
         speed = 0;
-        hp = 15;
-        maxHp = 15;
+        hp = 20;
+        maxHp = 20;
         damage = 2;
         renderWidth = Constants.tileSize * 6;
         renderHeight = Constants.tileSize * 6;
@@ -53,12 +55,12 @@ public class CoreBoss extends Enemy {
         alive = true;
         dying = false;
 
-        int padding = Constants.tileSize / 2;
+        int padding = Constants.tileSize * 2;
         solidArea = new Rectangle(
             padding,
             padding,
-            renderWidth - (padding * 4),
-            renderHeight - (padding * 4)
+            padding,
+            padding
         );
         solidAreaDefaultX = solidArea.x;
         solidAreaDefaultY = solidArea.y;
@@ -115,7 +117,7 @@ public class CoreBoss extends Enemy {
 
         initializeHomePosition();
 
-        if (hp <= 7) {
+        if (hp <= 10) {
             aggro = true;
         }
 
@@ -123,6 +125,7 @@ public class CoreBoss extends Enemy {
         updateAggroMovement();
         updateBossAttack();
         updateAnimation();
+        updateLife();
 
         if (invincible) {
             invincibleCounter++;
@@ -133,6 +136,33 @@ public class CoreBoss extends Enemy {
         }
 
         updateCooldowns();
+    }
+
+    public void addLife(int life) {
+        this.hp += life;
+    }
+
+    public void updateLife() {
+        lifeRestoreCounter++; 
+
+        if(lifeRestoreCounter < 600) {
+            return;
+        }
+
+        lifeRestoreCounter = 0;
+        if(this.hp == maxHp) {
+            return;
+        } else {
+            addLife(1);
+        }
+    }
+
+    public void canBeDamaged() {
+        this.canBeDamaged = true;
+    }
+
+    public boolean getCanBeDamaged() {
+        return this.canBeDamaged;
     }
 
     /**

@@ -43,6 +43,9 @@ public class Player extends Entity {
     public final int screenX;
     public final int screenY;
 
+    // damages for attacks
+    public static final int meleeDamage = 2;
+
     // Separate counters per animation set keep the frame order simple and independent.
     private int idleCounter = 0;
     private int downCounter = 0;
@@ -377,6 +380,14 @@ public class Player extends Entity {
 
         idleCounter = nextFrame(idleCounter, idle);
         spriteCounter = 0;
+    }
+
+    public void stealLifeFromMelee(int life) {
+        for(int i = 0; i < life; i++) {
+            if(hp < maxHp) {
+                this.hp++;
+            }
+        }
     }
 
     /**

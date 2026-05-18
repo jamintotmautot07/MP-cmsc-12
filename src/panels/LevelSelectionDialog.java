@@ -1,59 +1,97 @@
 package panels;
 
-import javax.swing.JDialog;
-import javax.swing.BorderFactory;
-import java.awt.GridLayout;
+import engine.Level;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import engine.Level;
+import java.awt.GridLayout;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 import util.MethodUtilities;
 import util.MethodUtilities.CustomButton;
 
-/**
- * Modal level picker used by the opening menu.
- */
-public class LevelSelectionDialog extends JDialog {
+public class LevelSelectionDialog extends JPanel {
 
-    // The caller reads this after the dialog closes to know what the user picked.
     public Level selected = null;
     private CustomButton[] levelButtons;
 
-    /**
-     * Builds one button per predefined level.
-     */
-    public LevelSelectionDialog(java.awt.Frame parent, int maxLevelReached) {
-        super(parent, "Select Level", true);
-        setSize(300, 250);
-        setLocationRelativeTo(parent);
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    //Display names for each level
+    private final String[] levelDisplayNames = {
+        "Tutorial Sector",
+        "Boot Sector - Level 1",
+        "Memory Core - Level 2",
+        "System Kernel - Level 3 (BOSS)"
+    };
 
-        MethodUtilities.RoundedPanel panel = new MethodUtilities.RoundedPanel(new GridLayout(Level.LEVELS.length, 1, 10, 10), 15);
+    //Listener for navigation
+    public interface LevelSelectListener {
+        void onLevelSelected(Level level);
+        void onBack();
+    }
+
+    private LevelSelectListener listener;
+
+    public void setListener(LevelSelectListener listener) {
+        this.listener = listener;
+    }
+
+    public LevelSelectionDialog(int maxLevelReached) {
+
+        setLayout(new BorderLayout());
+
+        //LEVEL BUTTON GRID
+        MethodUtilities.RoundedPanel panel = new MethodUtilities.RoundedPanel(
+                new GridLayout(Level.LEVELS.length, 1, 10, 10), 15
+        );
+
         panel.setColor(new Color(159, 188, 143).darker());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // One button per predefined level.
         levelButtons = new CustomButton[Level.LEVELS.length];
 
         for (int i = 0; i < Level.LEVELS.length; i++) {
-            levelButtons[i] = new CustomButton(Level.LEVELS[i].name);
+
+            String label;
+
+            //Custom names with fallback safety
+            if (i < levelDisplayNames.length) {
+                label = levelDisplayNames[i];
+            } else {
+                label = Level.LEVELS[i].name;
+            }
+
+            levelButtons[i] = new CustomButton(label);
+
+            //Lock system
             levelButtons[i].setEnabled(i <= maxLevelReached);
+
             final int index = i;
-            levelButtons[i].addActionListener(new ActionListener() {
-                @Override
-                /**
-                 * Stores the chosen level and closes the modal dialog.
-                 */
-                public void actionPerformed(ActionEvent e) {
-                    selected = Level.LEVELS[index];
-                    setVisible(false);
+
+            //Level selection
+            levelButtons[i].addActionListener(e -> {
+                selected = Level.LEVELS[index];
+
+                if (listener != null) {
+                    listener.onLevelSelected(selected);
                 }
             });
+
             panel.add(levelButtons[i]);
         }
 
+        //BACK BUTTON
+        CustomButton backButton = new CustomButton("Back");
+
+        backButton.addActionListener(e -> {
+            if (listener != null) {
+                listener.onBack();
+            }
+        });
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(backButton);
+
+        //Layout placement
         add(panel, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 }
