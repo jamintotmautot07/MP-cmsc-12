@@ -5,7 +5,10 @@ import engine.GamePanel;
 import engine.Level;
 import exception.GameException;
 import java.awt.CardLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -43,15 +46,19 @@ public class BaseFrame extends JFrame {
     private boolean tutorialPlayed = false;
     // Singleton Sound manager
     private AudioPlayer audioPlayer;
+    // Resize handler for undecorated window
+    private int dragX = 0, dragY = 0;
+    private int resizeMargin = 5;
 
     /**
      * Builds all major screens once and wires the application flow between them.
      */
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
-        setResizable(true);
         setMinimumSize(new Dimension(Constants.screenWidth / 2, Constants.screenHeight / 2));
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setUndecorated(true);
+        setResizable(true);
 
         loadProgress();
 
@@ -75,6 +82,7 @@ public class BaseFrame extends JFrame {
         
         pack();
         setLocationRelativeTo(null);
+        setupWindowResize();
     }
 
     /**
@@ -337,6 +345,95 @@ public class BaseFrame extends JFrame {
      */
     private boolean hasSavedProgress() {
         return tutorialPlayed || maxLevelReached >0;
+    }
+
+    /**
+     * Sets up mouse listeners to enable resizing of undecorated windows by dragging edges.
+     */
+    private void setupWindowResize() {
+        MouseAdapter resizeAdapter = new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int x = e.getLocationOnScreen().x - getLocationOnScreen().x;
+                int y = e.getLocationOnScreen().y - getLocationOnScreen().y;
+                int width = getWidth();
+                int height = getHeight();
+
+                // Determine which resize region the cursor is in
+                boolean onLeft = x < resizeMargin;
+                boolean onRight = x > width - resizeMargin;
+                boolean onTop = y < resizeMargin;
+                boolean onBottom = y > height - resizeMargin;
+
+                if ((onLeft && onTop) || (onRight && onBottom)) {
+                    setCursor(new Cursor(Cursor.NW_RESIZE_CURSOR));
+                } else if ((onRight && onTop) || (onLeft && onBottom)) {
+                    setCursor(new Cursor(Cursor.NE_RESIZE_CURSOR));
+                } else if (onLeft || onRight) {
+                    setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
+                } else if (onTop || onBottom) {
+                    setCursor(new Cursor(Cursor.N_RESIZE_CURSOR));
+                } else {
+                    setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                dragX = e.getLocationOnScreen().x - getX();
+                dragY = e.getLocationOnScreen().y - getY();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int x = e.getLocationOnScreen().x - getLocationOnScreen().x;
+                int y = e.getLocationOnScreen().y - getLocationOnScreen().y;
+                int width = getWidth();
+                int height = getHeight();
+
+                boolean onLeft = x < resizeMargin;
+                boolean onRight = x > width - resizeMargin;
+                boolean onTop = y < resizeMargin;
+                boolean onBottom = y > height - resizeMargin;
+
+                int newX = getX();
+                int newY = getY();
+                int newWidth = width;
+                int newHeight = height;
+
+                // Handle edge resizing
+                if (onLeft) {
+                    newX = e.getLocationOnScreen().x;
+                    newWidth = width + getX() - newX;
+                }
+                if (onRight) {
+                    newWidth = e.getLocationOnScreen().x - getX();
+                }
+                if (onTop) {
+                    newY = e.getLocationOnScreen().y;
+                    newHeight = height + getY() - newY;
+                }
+                if (onBottom) {
+                    newHeight = e.getLocationOnScreen().y - getY();
+                }
+
+                // Apply minimum size constraints
+                Dimension minSize = getMinimumSize();
+                if (newWidth < minSize.width) {
+                    newWidth = minSize.width;
+                    if (onLeft) newX = getX();
+                }
+                if (newHeight < minSize.height) {
+                    newHeight = minSize.height;
+                    if (onTop) newY = getY();
+                }
+
+                setBounds(newX, newY, newWidth, newHeight);
+            }
+        };
+
+        addMouseListener(resizeAdapter);
+        addMouseMotionListener(resizeAdapter);
     }
 
     /**
