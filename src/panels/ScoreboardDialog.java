@@ -1,23 +1,22 @@
 package panels;
 
-import javax.swing.JDialog;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridLayout;
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
-
+import javax.swing.JPanel;
 import util.MethodUtilities;
 import util.MethodUtilities.RoundedPanel;
 
-import javax.swing.BorderFactory;
-import java.awt.GridLayout;
-import java.awt.BorderLayout;
-import java.awt.Font;
-import java.awt.Color;
-
 /**
- * Small summary dialog for time score, enemy score, and level progress.
+ * Small summary panel for time score, enemy score, and level progress.
+ * (Converted from JDialog to JPanel for CardLayout-based navigation.)
  */
-public class ScoreboardDialog extends JDialog {
+public class ScoreboardDialog extends JPanel {
 
-    // Score labels are stored as fields so they can be updated whenever the dialog is shown.
+    // Score labels are stored as fields so they can be updated whenever the panel is shown.
     private JLabel timeScoreLabel;
     private JLabel enemyScoreLabel;
     private JLabel enemiesEliminatedLabel;
@@ -27,13 +26,24 @@ public class ScoreboardDialog extends JDialog {
     private Font textFont;
 
     /**
-     * Builds the scoreboard dialog UI.
+     * Listener so BaseFrame can control navigation (back to menu, etc.)
      */
-    public ScoreboardDialog(java.awt.Frame parent) {
-        super(parent, "Scoreboard", true);
-        setSize(340, 245);
-        setLocationRelativeTo(parent);
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    public interface ScoreboardListener {
+        void onBack();
+    }
+
+    private ScoreboardListener listener;
+
+    public void setListener(ScoreboardListener listener) {
+        this.listener = listener;
+    }
+
+    /**
+     * Builds the scoreboard panel UI.
+     */
+    public ScoreboardDialog() {
+
+        setLayout(new BorderLayout());
 
         textFont = MethodUtilities.getFont(16f);
 
@@ -66,13 +76,29 @@ public class ScoreboardDialog extends JDialog {
         panel.add(totalScoreLabel);
 
         add(panel, BorderLayout.CENTER);
+
+        // 🔙 Back button (replaces dialog close behavior)
+        MethodUtilities.CustomButton backButton =
+                new MethodUtilities.CustomButton("Back");
+
+        backButton.addActionListener(e -> {
+            if (listener != null) {
+                listener.onBack();
+            }
+        });
+
+        // Bottom container for navigation buttons
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(backButton);
+
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     /**
-     * Refreshes every label before the dialog is shown.
+     * Refreshes every label before the panel is shown.
      */
     public void updateScores(int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore) {
-        // Refresh all labels in one place before showing the dialog.
+        // Refresh all labels in one place before showing the panel.
         timeScoreLabel.setText("Time Score: " + timeScore);
         enemyScoreLabel.setText("Enemy Score: " + enemyScore);
         enemiesEliminatedLabel.setText("Enemies Eliminated: " + enemiesEliminated);

@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import panels.CreditScroller;
+import panels.LevelSelectionDialog;
 import panels.LoadingPanel;
 import panels.OpeningPanel;
 import panels.ScenePanel;
@@ -43,6 +44,7 @@ public class BaseFrame extends JFrame {
     private boolean tutorialPlayed = false;
     // Singleton Sound manager
     private AudioPlayer audioPlayer;
+    private panels.ScoreboardDialog scoreboardDialog;
 
     /**
      * Builds all major screens once and wires the application flow between them.
@@ -51,7 +53,8 @@ public class BaseFrame extends JFrame {
         setTitle("Hawak ko ang Bit: The Final Bit");
         setResizable(true);
         setMinimumSize(new Dimension(Constants.screenWidth / 2, Constants.screenHeight / 2));
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setUndecorated(true);
 
         loadProgress();
 
@@ -94,6 +97,9 @@ public class BaseFrame extends JFrame {
         container.add(gamePanel, "Game");
         container.add(credits, "Credits");
         container.add(storyPanel, "Story");
+
+        scoreboardDialog = new panels.ScoreboardDialog();
+        container.add(scoreboardDialog, "Scoreboard");
     }
 
     /**
@@ -128,11 +134,16 @@ public class BaseFrame extends JFrame {
             cardLayout.show(container, "Openning");
         });
 
+        scoreboardDialog.setListener(() -> {
+            openPanel.startBackgroundAnimation();
+            cardLayout.show(container, "Openning");
+        });
+
         openPanel.levelButton.addActionListener(e -> {
             // Open a modal selector, then start the chosen level if the user picked one.
-            panels.LevelSelectionDialog dialog = new panels.LevelSelectionDialog(this, maxLevelReached);
-            dialog.setVisible(true);
-            if (dialog.selected != null) {
+            //panels.LevelSelectionDialog dialog = new panels.LevelSelectionDialog(maxLevelReached);
+            //dialog.setVisible(true);
+            /* if (dialog.selected != null) {
                 openPanel.stopBackgroundAnimation();
                 selectedLevel = dialog.selected;
                 openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
@@ -144,7 +155,44 @@ public class BaseFrame extends JFrame {
                 });
 
                 gamePanel.startGameThread();
-            }
+            } */
+
+            LevelSelectionDialog levelPanel = new LevelSelectionDialog(maxLevelReached);
+
+        levelPanel.setListener(new LevelSelectionDialog.LevelSelectListener() {
+
+        @Override
+        public void onLevelSelected(Level level) {
+            openPanel.stopBackgroundAnimation();
+
+            selectedLevel = level;
+            openPanel.setSelectedLevelIndex(Level.getIndex(selectedLevel), selectedLevel.name);
+            saveProgress(Level.getIndex(selectedLevel));
+
+            gamePanel.startLevelFromMenu(selectedLevel);
+            cardLayout.show(container, "Game");
+
+            SwingUtilities.invokeLater(() -> {
+                gamePanel.requestFocusInWindow();
+            });
+
+            gamePanel.startGameThread();
+        }
+
+        @Override
+        public void onBack() {
+            
+            openPanel.startBackgroundAnimation();
+            cardLayout.show(container, "Openning");
+            openPanel.requestFocusInWindow();
+        }
+        });
+
+    // Add panel dynamically (only once ideally, but safe here)
+            container.add(levelPanel, "LevelSelect");
+
+    // Switch to it
+            cardLayout.show(container, "LevelSelect");
         });
 
         openPanel.continueButton.addActionListener(e -> {
@@ -231,8 +279,10 @@ public class BaseFrame extends JFrame {
             );
         });
 
+        
+
         openPanel.scoreButton.addActionListener(e -> {
-            panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
+            //panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
 
             // Main-menu scoreboard is intentionally placeholder-only for now.
             // Future implementation point:
@@ -251,14 +301,16 @@ public class BaseFrame extends JFrame {
             //     savedScores.calculateTotalScore()
             // );
 
-            dialog.updateScores(
+            scoreboardDialog.updateScores(
                 0,
                 0,
                 0,
                 0,
                 0
             );
-            dialog.setVisible(true);
+            //dialog.setVisible(true);
+
+            cardLayout.show(container, "Scoreboard");
         });
 
         addWindowListener(new MethodUtilities.exitAction(this));
