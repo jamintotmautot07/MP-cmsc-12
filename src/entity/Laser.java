@@ -9,6 +9,9 @@ import java.awt.Rectangle;
  */
 public class Laser {
 
+    /*
+     * Kept parallel with Projectile.OwnerType so future player lasers could reuse this class too.
+     */
     public enum OwnerType {
         PLAYER,
         ENEMY
@@ -21,6 +24,9 @@ public class Laser {
     private int timer = 0;
     private boolean alive = true;
 
+    /**
+     * Creates a rectangular beam that stays active for a fixed number of update frames.
+     */
     public Laser(OwnerType ownerType, Rectangle bounds, int damage, int duration) {
         this.ownerType = ownerType;
         this.bounds = bounds;
@@ -28,22 +34,37 @@ public class Laser {
         this.duration = duration;
     }
 
+    /**
+     * Returns whether the beam should still be updated, drawn, and checked for hits.
+     */
     public boolean isAlive() {
         return alive;
     }
 
+    /**
+     * Returns the damage applied while something overlaps this beam.
+     */
     public int getDamage() {
         return damage;
     }
 
+    /**
+     * Returns the side that created this laser.
+     */
     public OwnerType getOwnerType() {
         return ownerType;
     }
 
+    /**
+     * Returns the beam rectangle in world coordinates.
+     */
     public Rectangle getBounds() {
         return bounds;
     }
 
+    /**
+     * Counts down the beam lifetime.
+     */
     public void update() {
         if (!alive) {
             return;
@@ -55,6 +76,9 @@ public class Laser {
         }
     }
 
+    /**
+     * Draws the beam relative to the camera.
+     */
     public void draw(Graphics2D g2, int cameraWorldX, int cameraWorldY) {
         if (!alive) {
             return;

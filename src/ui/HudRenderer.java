@@ -18,6 +18,9 @@ import util.UtilityTool;
  * Draws gameplay HUD elements such as level text, timer, player life, and enemy counters.
  */
 public class HudRenderer {
+    /**
+     * Draws every active HUD section for the current gameplay frame.
+     */
     public void draw(
         Graphics2D g2,
         Level currentLevel,
@@ -38,6 +41,9 @@ public class HudRenderer {
         drawEnemyCounter(g2, enemies, enemyTotals);
     }
 
+    /**
+     * Draws the player HP as half-heart/full-heart icons.
+     */
     private void drawPlayerLife(Graphics2D g2, Player player) {
         int heartSize = 20;
         int spacing = 27;
@@ -65,6 +71,9 @@ public class HudRenderer {
         }
     }
 
+    /**
+     * Draws one heart, including empty, half-full, and full states.
+     */
     private void drawHeart(Graphics2D g2, int x, int y, int size, int heartLife) {
         if (heartLife > 0) {
             g2.setColor(new Color(255, 70, 90, 85));
@@ -87,6 +96,9 @@ public class HudRenderer {
         drawHeartOutline(g2, x, y, size);
     }
 
+    /**
+     * Paints the filled heart shape using two circles and a triangle.
+     */
     private void fillHeart(Graphics2D g2, int x, int y, int size) {
         int half = size / 2;
         g2.fillOval(x, y, half, half);
@@ -97,6 +109,9 @@ public class HudRenderer {
         g2.fillPolygon(xPoints, yPoints, 3);
     }
 
+    /**
+     * Draws the outline for the custom heart shape.
+     */
     private void drawHeartOutline(Graphics2D g2, int x, int y, int size) {
         int half = size / 2;
         g2.drawOval(x, y, half, half);
@@ -107,6 +122,9 @@ public class HudRenderer {
         g2.drawPolygon(xPoints, yPoints, 3);
     }
 
+    /**
+     * Draws remaining enemies by type using the original spawned counts as totals.
+     */
     private void drawEnemyCounter(Graphics2D g2, List<Enemy> enemies, Map<String, Integer> enemyTotals) {
         if (enemyTotals.isEmpty()) {
             return;

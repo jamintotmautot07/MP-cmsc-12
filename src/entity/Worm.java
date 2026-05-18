@@ -17,6 +17,9 @@ public class Worm extends Enemy {
     private static final int AGGRO_RANGE_TILES = 3;
     private static final int BITE_COOLDOWN_FRAMES = 60 * 3;
 
+    /**
+     * Creates a basic worm enemy with its own sprites and default stats.
+     */
     public Worm(GamePanel gp) {
         super(gp);
         setDefaultValues();
@@ -24,6 +27,9 @@ public class Worm extends Enemy {
     }
 
     @Override
+    /**
+     * Sets the worm's low-speed, low-health profile.
+     */
     public void setDefaultValues() {
         super.setDefaultValues();
         speed = 1; // Slow, organic movement
@@ -33,6 +39,9 @@ public class Worm extends Enemy {
     }
 
     @Override
+    /**
+     * Loads worm animations for idle, movement, and damaged states.
+     */
     protected void loadSprites() {
 
         // Load sprite arrays with appropriate frame counts
@@ -51,6 +60,9 @@ public class Worm extends Enemy {
     }
 
     @Override
+    /**
+     * Chooses between biting, chasing nearby players, and wandering when the player is far away.
+     */
     public void setAction() {
         String attackDirection = getCardinalDirectionTowardPlayer();
         if (!isOnCooldown("Worm_bite") && canHitPlayerWithMelee(attackDirection)) {
@@ -91,6 +103,9 @@ public class Worm extends Enemy {
     }
 
     @Override
+    /**
+     * Advances worm animation more slowly so its movement feels heavier.
+     */
     protected void updateAnimation() {
         // Slightly slower animation for organic feel
         spriteCounter++;
@@ -106,6 +121,9 @@ public class Worm extends Enemy {
     }
 
     @Override
+    /**
+     * Makes the worm react to damage by choosing a random new direction.
+     */
     public void damageReaction() {
         // Worms react by moving away more erratically
         actionLockCounter = 0;

@@ -104,6 +104,9 @@ public class StoryPanel extends JPanel {
     private Consumer<StoryScene> sceneSelectionListener;
     private int maxLevelReached;
 
+    /**
+     * Builds the story archive and shows only scenes unlocked by saved progress.
+     */
     public StoryPanel(int maxLevelReached) {
         this.maxLevelReached = Math.max(0, maxLevelReached);
 
@@ -165,14 +168,23 @@ public class StoryPanel extends JPanel {
         rebuildStoryButtons();
     }
 
+    /**
+     * Gives BaseFrame access to the archive back button.
+     */
     public JButton getBackButton() {
         return backButton;
     }
 
+    /**
+     * Registers the callback that should play a scene when its card is clicked.
+     */
     public void setSceneSelectionListener(Consumer<StoryScene> listener) {
         this.sceneSelectionListener = listener;
     }
 
+    /**
+     * Updates unlocked story scenes after progress changes.
+     */
     public void setMaxLevelReached(int maxLevelReached) {
         int safeProgress = Math.max(0, maxLevelReached);
         if (this.maxLevelReached == safeProgress) {
@@ -183,6 +195,9 @@ public class StoryPanel extends JPanel {
         rebuildStoryButtons();
     }
 
+    /**
+     * Recreates the visible scene cards based on the latest unlock value.
+     */
     private void rebuildStoryButtons() {
         storyGrid.removeAll();
 
@@ -231,6 +246,9 @@ public class StoryPanel extends JPanel {
         private final int unlockProgress;
         private final int thumbnailFrame;
 
+        /**
+         * Stores all metadata needed to display and play one cutscene.
+         */
         private StoryScene(
             String sceneId,
             String title,
@@ -249,30 +267,51 @@ public class StoryPanel extends JPanel {
             this.thumbnailFrame = thumbnailFrame;
         }
 
+        /**
+         * Returns the stable scene id used by IntroManager.
+         */
         public String getSceneId() {
             return sceneId;
         }
 
+        /**
+         * Returns the title shown on the story card.
+         */
         public String getTitle() {
             return title;
         }
 
+        /**
+         * Returns the frame filename pattern for this scene.
+         */
         public String getFilePattern() {
             return filePattern;
         }
 
+        /**
+         * Returns how many frames belong to this scene.
+         */
         public int getFrameCount() {
             return frameCount;
         }
 
+        /**
+         * Returns the playback delay for each frame.
+         */
         public int getFrameDelayMs() {
             return frameDelayMs;
         }
 
+        /**
+         * Checks whether saved progress has unlocked this scene.
+         */
         private boolean isUnlocked(int maxLevelReached) {
             return maxLevelReached >= unlockProgress;
         }
 
+        /**
+         * Builds a safe thumbnail frame path for the story card preview.
+         */
         private String getThumbnailPath() {
             int safeFrame = Math.max(0, Math.min(thumbnailFrame, frameCount - 1));
             return String.format(filePattern, safeFrame);
@@ -282,6 +321,9 @@ public class StoryPanel extends JPanel {
     private static class StoryButton extends JButton {
         private Color fillColor = CARD_GREEN;
 
+        /**
+         * Builds one clickable card for a story scene.
+         */
         private StoryButton(StoryScene scene) {
             setPreferredSize(new Dimension(CARD_WIDTH, CARD_HEIGHT));
             setMinimumSize(new Dimension(CARD_WIDTH, CARD_HEIGHT));
@@ -344,6 +386,9 @@ public class StoryPanel extends JPanel {
             });
         }
 
+        /**
+         * Loads and scales the preview frame for a story card.
+         */
         private static ImageIcon createThumbnail(StoryScene scene) {
             BufferedImage source = ResourceCache.getSceneFrame(
                 "story_thumb_" + scene.getSceneId(),

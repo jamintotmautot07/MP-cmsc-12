@@ -1,37 +1,32 @@
 package panels;
 
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-
+import audio.AudioPlayer;
 import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.io.FileInputStream;
-import java.io.InputStream;
-
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import util.Constants;
 import util.MethodUtilities;
-import util.ResourceCache;
 import util.MethodUtilities.CustomButton;
 import util.MethodUtilities.GlowLabel;
 import util.MethodUtilities.RoundedPanel;
+import util.ResourceCache;
 
 /**
  * Main menu screen with animated background and navigation buttons.
  */
 public class OpeningPanel extends JPanel {
-
     // Fallback still image used if the animated background is unavailable.
     private Image backgroundImage;
 
@@ -60,6 +55,9 @@ public class OpeningPanel extends JPanel {
     public CustomButton cutScenesButton;
     private int selectedLevelIndex = 0;
 
+    // Audio Manager for playing music
+    private AudioPlayer audioPlayer = AudioPlayer.getInstance();
+
     /**
      * Builds the full opening screen UI and starts the background animation.
      */
@@ -69,7 +67,7 @@ public class OpeningPanel extends JPanel {
 
         setLayout(new BorderLayout());
         loadBackgroundFrames();
-        startBackgroundAnimation();
+        // startBackgroundAnimation();
 
         // Title fonts are loaded manually so the menu keeps its custom visual style.
         // Font titleUpperFont = new Font("Brush Script MT", Font.ITALIC, 20);
@@ -194,6 +192,7 @@ public class OpeningPanel extends JPanel {
      * Starts the menu background animation timer.
      */
     public void startBackgroundAnimation() {
+        audioPlayer.playMusic("homescreen bg music");
         backgroundTimer = new javax.swing.Timer(100, e -> {
             currentBackgroundFrame = (currentBackgroundFrame + 1) % backgroundFrames.length; // this makes sure it loops forever
             repaint();
@@ -205,6 +204,7 @@ public class OpeningPanel extends JPanel {
      * Stops the menu background animation timer.
      */
     public void stopBackgroundAnimation() {
+        audioPlayer.stopMusic();
         if(backgroundTimer != null && backgroundTimer.isRunning()) {
             this.backgroundTimer.stop();
         }

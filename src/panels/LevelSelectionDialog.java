@@ -43,6 +43,9 @@ public class LevelSelectionDialog extends JDialog {
             final int index = i;
             levelButtons[i].addActionListener(new ActionListener() {
                 @Override
+                /**
+                 * Stores the chosen level and closes the modal dialog.
+                 */
                 public void actionPerformed(ActionEvent e) {
                     selected = Level.LEVELS[index];
                     setVisible(false);

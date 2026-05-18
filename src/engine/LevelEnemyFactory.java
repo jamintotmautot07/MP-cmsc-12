@@ -43,11 +43,17 @@ public class LevelEnemyFactory {
         {11, 45}, {14, 46}, {17, 46}, {20, 44}, {22, 46}
     };
 
+    /**
+     * Stores the gameplay dependencies needed to create enemies and add them to the current world.
+     */
     public LevelEnemyFactory(GamePanel gamePanel, TileManager tileManager) {
         this.gamePanel = gamePanel;
         this.tileManager = tileManager;
     }
 
+    /**
+     * Adds the enemy set that belongs to the requested level.
+     */
     public void populate(Level level) {
         if (level == Level.TUTORIAL) {
             addDummies(10, dummyTutorialPositions);
@@ -67,6 +73,9 @@ public class LevelEnemyFactory {
         }
     }
 
+    /**
+     * Creates worm enemies using the supplied tile positions.
+     */
     private void addWorms(int count, int[][] pos) {
         for (int i = 0; i < count && i < pos.length; i++) {
             Worm enemy = new Worm(gamePanel);
@@ -75,6 +84,9 @@ public class LevelEnemyFactory {
         }
     }
 
+    /**
+     * Creates virus drone enemies using the supplied tile positions.
+     */
     private void addViruses(int count, int[][] pos) {
         for (int i = 0; i < count && i < pos.length; i++) {
             VirusDrone enemy = new VirusDrone(gamePanel);
@@ -83,6 +95,9 @@ public class LevelEnemyFactory {
         }
     }
 
+    /**
+     * Creates Trojan spawners using the supplied tile positions.
+     */
     private void addTrojans(int count, int[][] pos) {
         for (int i = 0; i < count && i < pos.length; i++) {
             Trojan enemy = new Trojan(gamePanel);
@@ -91,6 +106,9 @@ public class LevelEnemyFactory {
         }
     }
 
+    /**
+     * Creates harmless tutorial dummy enemies.
+     */
     private void addDummies(int count, int[][] pos) {
         for (int i = 0; i < count && i < pos.length; i++) {
             Dummy enemy = new Dummy(gamePanel);
@@ -99,6 +117,9 @@ public class LevelEnemyFactory {
         }
     }
 
+    /**
+     * Adds four Trojan guards that follow fixed offsets around the boss.
+     */
     private void addBossGuardTrojans(CoreBoss boss) {
         int tile = util.Constants.tileSize;
         int[][] offsets = {
@@ -115,8 +136,9 @@ public class LevelEnemyFactory {
         }
     }
 
-    private void addRandomly(Enemy enemy) {
-        UtilityTool.setRandomEnemyPosition(enemy, tileManager);
-        gamePanel.addEnemy(enemy);
-    }
+    // method for randomly adding enemy
+    // private void addRandomly(Enemy enemy) {
+    //     UtilityTool.setRandomEnemyPosition(enemy, tileManager);
+    //     gamePanel.addEnemy(enemy);
+    // }
 }

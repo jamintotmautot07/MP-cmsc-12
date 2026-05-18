@@ -1,8 +1,7 @@
 package entity;
 
-import java.awt.Rectangle;
-
 import engine.GamePanel;
+import java.awt.Rectangle;
 import systems.CollisionManager;
 import util.Constants;
 
@@ -29,7 +28,12 @@ public class CoreBoss extends Enemy {
     private int circularAttacksSinceLaser = 0;
     private int nextLaserThreshold = 4;
     private int aggroMoveCounter = 0;
+    private boolean canBeDamaged = false;
+    private int lifeRestoreCounter = 0;
 
+    /**
+     * Creates the final boss and loads its large idle sprite set.
+     */
     public CoreBoss(GamePanel gp) {
         super(gp);
         setDefaultValues();
@@ -37,10 +41,13 @@ public class CoreBoss extends Enemy {
     }
 
     @Override
+    /**
+     * Configures the boss as a large, mostly stationary enemy with high health and damage.
+     */
     public void setDefaultValues() {
         speed = 0;
-        hp = 15;
-        maxHp = 15;
+        hp = 20;
+        maxHp = 20;
         damage = 2;
         renderWidth = Constants.tileSize * 6;
         renderHeight = Constants.tileSize * 6;
@@ -48,18 +55,21 @@ public class CoreBoss extends Enemy {
         alive = true;
         dying = false;
 
-        int padding = Constants.tileSize / 2;
+        int padding = Constants.tileSize * 2;
         solidArea = new Rectangle(
             padding,
             padding,
-            renderWidth - (padding * 4),
-            renderHeight - (padding * 4)
+            padding,
+            padding
         );
         solidAreaDefaultX = solidArea.x;
         solidAreaDefaultY = solidArea.y;
     }
 
     @Override
+    /**
+     * Loads the boss idle animation and reuses it for all movement-facing states.
+     */
     protected void loadSprites() {
 
         idleFrames = loadCachedSpriteArray("boss", "idle", 6);
@@ -78,6 +88,9 @@ public class CoreBoss extends Enemy {
     }
 
     @Override
+    /**
+     * Randomly changes facing direction so the boss does not look completely static.
+     */
     public void setAction() {
         actionLockCounter++;
         if (actionLockCounter < 120) {
@@ -96,12 +109,15 @@ public class CoreBoss extends Enemy {
     }
 
     @Override
+    /**
+     * Runs one boss AI frame, including aggro movement, attacks, animation, and cooldowns.
+     */
     public void update() {
         if (!alive) return;
 
         initializeHomePosition();
 
-        if (hp <= 7) {
+        if (hp <= 10) {
             aggro = true;
         }
 
@@ -109,6 +125,7 @@ public class CoreBoss extends Enemy {
         updateAggroMovement();
         updateBossAttack();
         updateAnimation();
+        updateLife();
 
         if (invincible) {
             invincibleCounter++;
@@ -121,6 +138,36 @@ public class CoreBoss extends Enemy {
         updateCooldowns();
     }
 
+    public void addLife(int life) {
+        this.hp += life;
+    }
+
+    public void updateLife() {
+        lifeRestoreCounter++; 
+
+        if(lifeRestoreCounter < 600) {
+            return;
+        }
+
+        lifeRestoreCounter = 0;
+        if(this.hp == maxHp) {
+            return;
+        } else {
+            addLife(1);
+        }
+    }
+
+    public void canBeDamaged() {
+        this.canBeDamaged = true;
+    }
+
+    public boolean getCanBeDamaged() {
+        return this.canBeDamaged;
+    }
+
+    /**
+     * Stores the original boss position so aggro movement can stay near its arena center.
+     */
     private void initializeHomePosition() {
         if (homeInitialized) {
             return;
@@ -131,6 +178,9 @@ public class CoreBoss extends Enemy {
         homeInitialized = true;
     }
 
+    /**
+     * In aggro phase, nudges the boss toward the player while keeping it near its home position.
+     */
     private void updateAggroMovement() {
         if (!aggro) {
             return;
@@ -156,6 +206,9 @@ public class CoreBoss extends Enemy {
         }
     }
 
+    /**
+     * Chooses between circular projectile bursts and a laser attack based on cooldown/threshold state.
+     */
     private void updateBossAttack() {
         if (isOnCooldown("CoreBoss_attack")) {
             return;
@@ -174,6 +227,9 @@ public class CoreBoss extends Enemy {
         startCooldown("CoreBoss_attack", aggro ? AGGRO_ATTACK_COOLDOWN_FRAMES : NORMAL_ATTACK_COOLDOWN_FRAMES);
     }
 
+    /**
+     * Fires projectiles in all eight directions around the boss.
+     */
     private void fireCircularProjectiles() {
         String[] directions = {
             "up", "down", "left", "right",
@@ -186,6 +242,9 @@ public class CoreBoss extends Enemy {
         }
     }
 
+    /**
+     * Spawns one projectile at the edge or corner of the boss body for a radial burst.
+     */
     private void spawnCircularProjectile(String projectileDirection, int projectileSpeed) {
         int size = CIRCLE_PROJECTILE_SIZE;
         int startX = getCenterX() - size / 2;
@@ -238,6 +297,9 @@ public class CoreBoss extends Enemy {
         ));
     }
 
+    /**
+     * Builds a horizontal or vertical laser based on the player's dominant relative direction.
+     */
     private void fireLaserAtPlayer() {
         int dx = getPlayerCenterX() - getCenterX();
         int dy = getPlayerCenterY() - getCenterY();
@@ -254,6 +316,9 @@ public class CoreBoss extends Enemy {
         }
     }
 
+    /**
+     * Builds a horizontal laser rectangle until it hits a solid tile or reaches screen-range length.
+     */
     private Rectangle buildHorizontalLaser(boolean toRight) {
         int y = clamp(getCenterY() - LASER_THICKNESS / 2, 0, Constants.maxWorldHeight - LASER_THICKNESS);
 
@@ -291,6 +356,9 @@ public class CoreBoss extends Enemy {
         return new Rectangle(currentX, y, bossLeft - currentX, LASER_THICKNESS);
     }
 
+    /**
+     * Builds a vertical laser rectangle until it hits a solid tile or reaches screen-range length.
+     */
     private Rectangle buildVerticalLaser(boolean downward) {
         int x = clamp(getCenterX() - LASER_THICKNESS / 2, 0, Constants.maxWorldWidth - LASER_THICKNESS);
 
@@ -328,11 +396,22 @@ public class CoreBoss extends Enemy {
         return new Rectangle(x, currentY, LASER_THICKNESS, bossTop - currentY);
     }
 
+    /**
+     * Keeps a value inside a min/max range.
+     */
     private int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
 
     @Override
+    protected String getHitSoundKey() {
+        return "boss hit fx";
+    }
+
+    @Override
+    /**
+     * Damages the boss and punishes risky contact/melee hits by damaging the player too.
+     */
     public void takeDamage(int amount) {
         boolean canReactToHit = !invincible;
         super.takeDamage(amount);
@@ -351,6 +430,9 @@ public class CoreBoss extends Enemy {
     }
 
     @Override
+    /**
+     * Forces aggro mode after the boss is hit.
+     */
     public void damageReaction() {
         actionLockCounter = 0;
         aggro = true;

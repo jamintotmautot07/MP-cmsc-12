@@ -19,6 +19,9 @@ public class VirusDrone extends Enemy {
     private static final int PROJECTILE_SPEED = 3;
     private static final int PROJECTILE_SIZE = Constants.tileSize / 3;
 
+    /**
+     * Creates a ranged enemy that can chase, slash, and fire projectiles.
+     */
     public VirusDrone(GamePanel gp) {
         super(gp);
         setDefaultValues();
@@ -26,6 +29,9 @@ public class VirusDrone extends Enemy {
     }
 
     @Override
+    /**
+     * Sets the virus drone's health, speed, and contact damage.
+     */
     public void setDefaultValues() {
         super.setDefaultValues();
         speed = 1; // Faster than basic enemies
@@ -35,6 +41,9 @@ public class VirusDrone extends Enemy {
     }
 
     @Override
+    /**
+     * Loads the virus drone's directional animation frames.
+     */
     protected void loadSprites() {
 
         // Load sprite arrays with appropriate frame counts
@@ -54,6 +63,9 @@ public class VirusDrone extends Enemy {
     }
 
     @Override
+    /**
+     * Chooses between melee, ranged fire, chase pathfinding, and idle hovering.
+     */
     public void setAction() {
         int tileDistance = getTileDistanceToPlayer();
         String attackDirection = getCardinalDirectionTowardPlayer();
@@ -104,6 +116,9 @@ public class VirusDrone extends Enemy {
     }
 
     @Override
+    /**
+     * Advances animation a little faster to fit the drone's mechanical feel.
+     */
     protected void updateAnimation() {
         // Faster animation for mechanical feel
         spriteCounter++;
@@ -119,6 +134,9 @@ public class VirusDrone extends Enemy {
     }
 
     @Override
+    /**
+     * Chooses idle frames while hovering and directional frames while moving.
+     */
     protected BufferedImage[] getCurrentFrameArray() {
         if (invincible && damagedFrames != null && damagedFrames.length > 0) {
             return damagedFrames;
@@ -138,6 +156,9 @@ public class VirusDrone extends Enemy {
     }
 
     @Override
+    /**
+     * Briefly breaks chase state when damaged so hits create visible feedback.
+     */
     public void damageReaction() {
         actionLockCounter = 0;
         // On damage, briefly stop chasing to react

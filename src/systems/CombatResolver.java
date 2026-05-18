@@ -3,9 +3,13 @@ package systems;
 import java.awt.Rectangle;
 
 import engine.GamePanel;
+import entity.CoreBoss;
+import entity.Dummy;
 import entity.Enemy;
 import entity.Laser;
 import entity.Player;
+import entity.Worm;
+import util.Constants;
 import entity.Projectile;
 
 /**
@@ -14,10 +18,16 @@ import entity.Projectile;
 public class CombatResolver {
     private final GamePanel gamePanel;
 
+    /**
+     * Stores the active GamePanel so combat can read and mutate the current world lists.
+     */
     public CombatResolver(GamePanel gamePanel) {
         this.gamePanel = gamePanel;
     }
 
+    /**
+     * Runs every combat interaction once for the current frame.
+     */
     public void resolve() {
         updateProjectiles();
         updateLasers();
@@ -27,6 +37,9 @@ public class CombatResolver {
         resolveEnemyBodyContact();
     }
 
+    /**
+     * Moves projectiles, removes expired ones, and applies projectile hits.
+     */
     private void updateProjectiles() {
         for (Projectile projectile : gamePanel.getProjectiles()) {
             if (projectile == null) {
@@ -52,19 +65,34 @@ public class CombatResolver {
         }
     }
 
+    /**
+     * Checks whether a player-owned projectile hits any living enemy.
+     */
     private boolean hitEnemy(Projectile projectile) {
         for (Enemy enemy : gamePanel.getEnemies()) {
             if (enemy == null || !enemy.isAlive()) {
                 continue;
             }
             if (CollisionManager.rectanglesIntersect(projectile.getBounds(), CollisionManager.getWorldSolidArea(enemy))) {
-                enemy.takeDamage(projectile.getDamage());
+                if(enemy instanceof CoreBoss) {
+                    if(((CoreBoss)enemy).getCanBeDamaged()) {
+                        enemy.takeDamage(projectile.getDamage());
+                    } else {
+                        gamePanel.showObjectForBoss();
+                        continue;
+                    }
+                } else {
+                    enemy.takeDamage(projectile.getDamage());
+                }
                 return true;
             }
         }
         return false;
     }
 
+    /**
+     * Checks whether an enemy-owned projectile hits the player.
+     */
     private boolean hitPlayer(Projectile projectile) {
         if (CollisionManager.rectanglesIntersect(projectile.getBounds(), playerBounds())) {
             gamePanel.getPlayer().takeDamage(projectile.getDamage());
@@ -73,6 +101,9 @@ public class CombatResolver {
         return false;
     }
 
+    /**
+     * Updates beam lifetimes and applies enemy laser damage to the player.
+     */
     private void updateLasers() {
         for (Laser laser : gamePanel.getLasers()) {
             if (laser == null) {
@@ -94,6 +125,9 @@ public class CombatResolver {
         }
     }
 
+    /**
+     * Applies the player's active melee hitbox to enemies.
+     */
     private void resolvePlayerMelee() {
         Player player = gamePanel.getPlayer();
         if (!player.isAttackActive()) {
@@ -105,11 +139,29 @@ public class CombatResolver {
                 continue;
             }
             if (CollisionManager.rectanglesIntersect(player.getAttackHitbox(), CollisionManager.getWorldSolidArea(enemy))) {
-                enemy.takeDamage(1);
+                int damage = enemy.getHp() - 1;
+                if(enemy instanceof CoreBoss) {
+                    if(((CoreBoss)enemy).getCanBeDamaged()) {
+                        enemy.takeDamage(damage - 3);
+                    } else {
+                        gamePanel.showObjectForBoss();
+                        continue;
+                    }
+                } else {
+                    if(enemy instanceof Worm || enemy instanceof Dummy) {
+                        damage = enemy.getHp();
+                    }
+                    enemy.takeDamage(damage); //almost one shots the enemy unless it is a worm or dummy
+                    player.stealLifeFromMelee(damage);
+                }
+                
             }
         }
     }
 
+    /**
+     * Applies every active enemy melee hitbox to the player.
+     */
     private void resolveEnemyMelee() {
         Rectangle playerBounds = playerBounds();
         for (Enemy enemy : gamePanel.getEnemies()) {
@@ -123,6 +175,9 @@ public class CombatResolver {
         }
     }
 
+    /**
+     * Lets the player's dash damage enemies it overlaps.
+     */
     private void resolvePlayerDash() {
         Player player = gamePanel.getPlayer();
         if (!player.isDashing()) {
@@ -130,6 +185,7 @@ public class CombatResolver {
         }
 
         Rectangle dashBounds = CollisionManager.getWorldSolidArea(player);
+        dashBounds.setSize(Constants.tileSize, Constants.tileSize);
         for (Enemy enemy : gamePanel.getEnemies()) {
             if (enemy == null || !enemy.isAlive()) {
                 continue;
@@ -140,6 +196,9 @@ public class CombatResolver {
         }
     }
 
+    /**
+     * Applies body-contact damage from enemies that deal contact damage.
+     */
     private void resolveEnemyBodyContact() {
         Rectangle playerBounds = playerBounds();
         for (Enemy enemy : gamePanel.getEnemies()) {
@@ -155,6 +214,9 @@ public class CombatResolver {
         }
     }
 
+    /**
+     * Rebuilds the player's world-space collision rectangle for the current frame.
+     */
     private Rectangle playerBounds() {
         return CollisionManager.getWorldSolidArea(gamePanel.getPlayer());
     }

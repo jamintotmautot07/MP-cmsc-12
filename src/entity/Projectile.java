@@ -11,6 +11,10 @@ import engine.GamePanel;
  */
 public class Projectile extends Entity {
 
+    /*
+     * OwnerType matters because the same projectile class is used for player shots and enemy shots.
+     * CombatResolver uses this value to decide whether the projectile can damage enemies or the player.
+     */
     public enum OwnerType {
         PLAYER,
         ENEMY
@@ -24,6 +28,9 @@ public class Projectile extends Entity {
     private int distanceTraveled = 0;
     private boolean alive = true;
 
+    /**
+     * Creates a projectile at a world position with fixed movement and lifetime settings.
+     */
     public Projectile(GamePanel gp, OwnerType ownerType, String direction, int startX, int startY, int damage, int speed, int maxDistance, int width, int height) {
         this.gp = gp;
         this.ownerType = ownerType;
@@ -38,22 +45,37 @@ public class Projectile extends Entity {
         this.solidArea = new Rectangle(0, 0, width, height);
     }
 
+    /**
+     * Returns whether the projectile should still update, draw, and collide.
+     */
     public boolean isAlive() {
         return alive;
     }
 
+    /**
+     * Returns the damage applied when this projectile hits a valid target.
+     */
     public int getDamage() {
         return damage;
     }
 
+    /**
+     * Returns who fired this projectile.
+     */
     public OwnerType getOwnerType() {
         return ownerType;
     }
 
+    /**
+     * Returns the current projectile hitbox in world coordinates.
+     */
     public Rectangle getBounds() {
         return new Rectangle(worldX, worldY, renderWidth, renderHeight);
     }
 
+    /**
+     * Moves the projectile, tracks distance, and kills it when it hits a wall or outranges itself.
+     */
     public void update() {
         if (!alive) {
             return;
@@ -88,10 +110,16 @@ public class Projectile extends Entity {
         }
     }
 
+    /**
+     * Manually marks the projectile dead after a combat hit.
+     */
     public void kill() {
         alive = false;
     }
 
+    /**
+     * Draws the projectile relative to the camera.
+     */
     public void draw(Graphics2D g2, int cameraWorldX, int cameraWorldY) {
         if (!alive) {
             return;

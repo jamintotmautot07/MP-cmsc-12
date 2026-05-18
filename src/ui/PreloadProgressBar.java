@@ -10,6 +10,9 @@ import javax.swing.JProgressBar;
  * Styled progress bar used by the startup loading screen.
  */
 public class PreloadProgressBar extends JProgressBar {
+    /**
+     * Creates a styled loading bar with the given minimum and maximum values.
+     */
     public PreloadProgressBar(int min, int max) {
         super(min, max);
         this.setStringPainted(true);

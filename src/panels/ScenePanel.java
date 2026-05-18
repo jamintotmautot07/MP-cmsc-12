@@ -12,6 +12,7 @@ import javax.swing.Timer;
 
 import ui.IntroManager;
 import util.Constants;
+import util.VirtualScreen;
 
 /**
  * Swing wrapper that gives IntroManager a drawable panel and update timer.
@@ -81,17 +82,22 @@ public class ScenePanel extends JPanel implements KeyListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        Graphics virtualGraphics = VirtualScreen.create(g, this);
 
-        // Let IntroManager render the actual scene frame first.
-        introManager.render(g);
+        try {
+            // Let IntroManager render the actual scene frame first.
+            introManager.render(virtualGraphics);
 
-        if (introManager.isRunning()) {
-            // Small hint so the user knows cutscenes are skippable.
-            g.setColor(new Color(255, 255, 255, 200));
-            g.setFont(new Font("Arial", Font.PLAIN, 18));
-            String text = "Press ESC to skip";
-            int textWidth = g.getFontMetrics().stringWidth(text);
-            g.drawString(text, (getWidth() - textWidth) / 2, getHeight() - 40);
+            if (introManager.isRunning()) {
+                // Small hint so the user knows cutscenes are skippable.
+                virtualGraphics.setColor(new Color(255, 255, 255, 200));
+                virtualGraphics.setFont(new Font("Arial", Font.PLAIN, 18));
+                String text = "Press ESC to skip";
+                int textWidth = virtualGraphics.getFontMetrics().stringWidth(text);
+                virtualGraphics.drawString(text, (Constants.screenWidth - textWidth) / 2, Constants.screenHeight - 40);
+            }
+        } finally {
+            virtualGraphics.dispose();
         }
     }
 
@@ -99,6 +105,9 @@ public class ScenePanel extends JPanel implements KeyListener {
     public void keyTyped(KeyEvent e) {}
 
     @Override
+    /**
+     * Handles skip keys while a story/cutscene panel has focus.
+     */
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         // A few common "continue/skip" keys all map to the same behavior.

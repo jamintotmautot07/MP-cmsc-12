@@ -1,17 +1,17 @@
 
 package entity;
 
+import audio.AudioPlayer;
+import engine.GamePanel;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-
-import engine.GamePanel;
 import systems.CollisionManager;
 import systems.KeyHandler;
 import util.Constants;
-import util.UtilityTool;
 import util.ResourceCache;
+import util.UtilityTool;
 
 /*
  OWNER: Jamin
@@ -42,6 +42,9 @@ public class Player extends Entity {
     // Fixed on-screen anchor point. The camera moves the world around the player most of the time.
     public final int screenX;
     public final int screenY;
+
+    // damages for attacks
+    public static final int meleeDamage = 2;
 
     // Separate counters per animation set keep the frame order simple and independent.
     private int idleCounter = 0;
@@ -79,6 +82,9 @@ public class Player extends Entity {
     private int maxHp = 10;
     private int invincibilityFrames = 0;
     private final int invincibilityDuration = 120; // 2 seconds at 60 FPS
+
+    // Audio playing manager
+    private AudioPlayer audioPlayer = AudioPlayer.getInstance();
 
     /**
      * Creates the player and loads all animation frames up front.
@@ -126,6 +132,9 @@ public class Player extends Entity {
         invincibilityFrames = 0;
     }
 
+    /**
+     * Checks whether the player can move to a future position without hitting walls or enemies.
+     */
     private boolean canOccupyPosition(int nextX, int nextY) {
         Rectangle futureSolidArea = CollisionManager.getWorldSolidArea(this, nextX, nextY);
         return !CollisionManager.willCollideWithSolidTile(gp.getTileManager(), futureSolidArea)
@@ -242,6 +251,7 @@ public class Player extends Entity {
                 projectileSize
             );
             gp.spawnProjectile(projectile);
+            audioPlayer.playSound("player bullet fx");
         }
 
         if (!dashing && keyH.isActionPressed(KeyHandler.Action.DASH) && !dashPressed && !isOnCooldown("Player_dash")) {
@@ -251,6 +261,7 @@ public class Player extends Entity {
             dashCounter = 0;
             dashPrevProgress = 0f;
             dashDirection = facingDirection;
+            audioPlayer.playSound("player dash fx");
         }
 
         // Handle dash motion first if dashing.
@@ -288,7 +299,7 @@ public class Player extends Entity {
 
             advanceDirectionalAnimation();
         } else if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP) || keyH.isActionPressed(KeyHandler.Action.MOVE_RIGHT) ||
-            keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
+                keyH.isActionPressed(KeyHandler.Action.MOVE_LEFT) || keyH.isActionPressed(KeyHandler.Action.MOVE_DOWN)
         ) {
 
             if(keyH.isActionPressed(KeyHandler.Action.MOVE_UP)) {
@@ -336,6 +347,9 @@ public class Player extends Entity {
 
     }
 
+    /**
+     * Advances the movement animation that matches the player's current direction.
+     */
     private void advanceDirectionalAnimation() {
         spriteCounter++;
         if (spriteCounter <= movementAnimationSpeed) {
@@ -355,6 +369,9 @@ public class Player extends Entity {
         spriteCounter = 0;
     }
 
+    /**
+     * Advances the idle animation while the player is standing still.
+     */
     private void advanceIdleAnimation() {
         spriteCounter++;
         if (spriteCounter <= idleAnimationSpeed) {
@@ -365,6 +382,17 @@ public class Player extends Entity {
         spriteCounter = 0;
     }
 
+    public void stealLifeFromMelee(int life) {
+        for(int i = 0; i < life; i++) {
+            if(hp < maxHp) {
+                this.hp++;
+            }
+        }
+    }
+
+    /**
+     * Moves to the next sprite frame and wraps back to zero at the end of the array.
+     */
     private int nextFrame(int currentFrame, BufferedImage[] frames) {
         if (frames == null || frames.length == 0) {
             return 0;
@@ -372,6 +400,9 @@ public class Player extends Entity {
         return (currentFrame + 1) % frames.length;
     }
 
+    /**
+     * Starts a melee attack when the attack key is newly pressed and the cooldown allows it.
+     */
     private void tryStartAttack() {
         if (!keyH.isActionPressed(KeyHandler.Action.ATTACK) || attackedPressed || isOnCooldown("Player_attack")) {
             return;
@@ -390,6 +421,9 @@ public class Player extends Entity {
         }
     }
 
+    /**
+     * Opens the short attack window and stores what shape/direction the hitbox should use.
+     */
     private void beginAttack(AttackType requestedAttack, String requestedAttackDirection) {
         attackType = requestedAttack;
         attackDirection = requestedAttackDirection;
@@ -397,8 +431,12 @@ public class Player extends Entity {
         attackActive = true;
         attackedPressed = true;
         startCooldown("Player_attack", 50);
+        audioPlayer.playSound("player melee fx");
     }
 
+    /**
+     * Keeps the attack hitbox active for a fixed number of frames, then clears it.
+     */
     private void updateAttackWindow() {
         if (!attackActive) {
             attackHitbox.setBounds(0, 0, 0, 0);
@@ -417,6 +455,9 @@ public class Player extends Entity {
     }
 
     @Override
+    /**
+     * Uses the locked attack direction instead of live movement direction while an attack is active.
+     */
     protected Rectangle calculateAttackHitbox() {
         return calculateAttackHitbox(attackDirection);
     }
@@ -435,6 +476,9 @@ public class Player extends Entity {
         return attackHitbox;
     }
 
+    /**
+     * Tells CombatResolver whether dash collision damage should be checked this frame.
+     */
     public boolean isDashing() {
         return dashing;
     }
@@ -538,6 +582,9 @@ public class Player extends Entity {
         // g2.fillRect(worldX, worldY, Constants.tileSize, Constants.tileSize);
     }
 
+    /**
+     * Draws a soft glow behind the player so the character stays visible over busy tile art.
+     */
     private void drawGlow(Graphics2D g2, int screenX, int screenY) {
         java.awt.Composite oldComposite = g2.getComposite();
         int centerX = screenX + Constants.tileSize / 2;

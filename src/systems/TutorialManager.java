@@ -4,6 +4,10 @@ package systems;
  * Owns tutorial instruction progress and required action checks.
  */
 public class TutorialManager {
+    /*
+     * The enum order matches tutorialInstructions, so advancing to a step can reuse ordinal()
+     * to choose the correct instruction line.
+     */
     public enum TutorialStep {
         START,
         MOVE_UP,
@@ -37,12 +41,18 @@ public class TutorialManager {
     private int instructionIndex = 0;
     private int startFrameCounter = 0;
 
+    /**
+     * Returns tutorial state to the opening instruction.
+     */
     public void reset() {
         currentStep = TutorialStep.START;
         instructionIndex = 0;
         startFrameCounter = 0;
     }
 
+    /**
+     * Handles tutorial progress that depends on time passing or enemies being cleared.
+     */
     public void update(boolean allDummiesEliminated) {
         if (currentStep == TutorialStep.START) {
             startFrameCounter++;
@@ -57,6 +67,9 @@ public class TutorialManager {
         }
     }
 
+    /**
+     * Advances tutorial steps when the player presses the requested action.
+     */
     public void handleAction(KeyHandler.Action action) {
         if (action == null) {
             return;
@@ -89,22 +102,37 @@ public class TutorialManager {
         }
     }
 
+    /**
+     * Marks the tutorial finished so GamePanel can move on to Level 1.
+     */
     public void complete() {
         currentStep = TutorialStep.COMPLETE;
     }
 
+    /**
+     * Returns true only after all required tutorial actions and dummy enemies are finished.
+     */
     public boolean canUseDoor() {
         return currentStep == TutorialStep.GO_TO_DOOR;
     }
 
+    /**
+     * Returns the text that should be displayed in the tutorial instruction overlay.
+     */
     public String getCurrentInstruction() {
         return tutorialInstructions[Math.min(instructionIndex, tutorialInstructions.length - 1)];
     }
 
+    /**
+     * Exposes the current step for debugging or future UI logic.
+     */
     public TutorialStep getCurrentStep() {
         return currentStep;
     }
 
+    /**
+     * Moves to a specific tutorial step and syncs the displayed instruction index.
+     */
     private void advanceTo(TutorialStep nextStep) {
         currentStep = nextStep;
         instructionIndex = Math.min(nextStep.ordinal(), tutorialInstructions.length - 1);

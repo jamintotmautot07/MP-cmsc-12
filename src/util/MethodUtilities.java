@@ -1,4 +1,5 @@
 package util;
+import audio.AudioPlayer;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
@@ -34,16 +35,25 @@ public class MethodUtilities {
         // Shared frame reference so one exit helper can be attached to multiple exit triggers.
         private static BaseFrame frame;
 
+        /**
+         * Stores the application frame that should be closed if the user confirms exit.
+         */
         public exitAction(BaseFrame frame) {
             exitAction.frame = frame;
         }
 
         @Override
+        /**
+         * Handles exit button clicks.
+         */
         public void actionPerformed(ActionEvent e) {
             exit();
         }
 
         @Override
+        /**
+         * Handles clicking the window close button.
+         */
         public void windowClosing(WindowEvent e) {
             exit();
         }
@@ -96,11 +106,17 @@ public class MethodUtilities {
         private Color glowColor = Color.CYAN;
         private int glowSize = 6;
 
+        /**
+         * Creates a glow label using the default cyan glow.
+         */
         public GlowLabel(String text) {
             super(text);
             setOpaque(false); // Ensure background doesn't block the glow
         }
 
+        /**
+         * Creates a glow label using a caller-supplied glow color.
+         */
         public GlowLabel(String text, Color color) {
             super(text);
             setOpaque(false);
@@ -144,17 +160,26 @@ public class MethodUtilities {
         private int radius;
         private Color color = new Color(159, 188, 143);
 
+        /**
+         * Creates a rounded panel with the default layout.
+         */
         public RoundedPanel(int radius) {
             this.radius = radius;
             setOpaque(false);
         }
 
+        /**
+         * Creates a rounded panel using a caller-supplied layout manager.
+         */
         public RoundedPanel(LayoutManager layout, int radius) {
             super(layout);
             this.radius = radius;
             setOpaque(false); 
         }
 
+        /**
+         * Changes the fill color used by paintComponent().
+         */
         public void setColor(Color color) {
             this.color = color;
         }
@@ -187,6 +212,9 @@ public class MethodUtilities {
         private Color backColor = new Color(129, 167, 109);
         private Color temp = new Color(129, 167, 109);
         
+        /**
+         * Creates a menu-style button with the project's custom colors and mouse feedback.
+         */
         public CustomButton(String text) {
             super(text);
             setForeground(new Color(47, 55, 47));
@@ -211,6 +239,7 @@ public class MethodUtilities {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     temp = new Color(77, 104, 62);
+                    AudioPlayer.getInstance().playSound("button fx");
                     repaint();
                 }
 

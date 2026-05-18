@@ -1,16 +1,15 @@
 package main;
 
+import audio.AudioPlayer;
+import engine.GamePanel;
+import engine.Level;
+import exception.GameException;
 import java.awt.CardLayout;
 import java.awt.Dimension;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import engine.GamePanel;
-import engine.Level;
-import exception.GameException;
 import panels.CreditScroller;
 import panels.LoadingPanel;
 import panels.OpeningPanel;
@@ -42,13 +41,16 @@ public class BaseFrame extends JFrame {
     private Level selectedLevel = Level.TUTORIAL;
     private int maxLevelReached = 0;
     private boolean tutorialPlayed = false;
+    // Singleton Sound manager
+    private AudioPlayer audioPlayer;
 
     /**
      * Builds all major screens once and wires the application flow between them.
      */
     public BaseFrame() {
         setTitle("Hawak ko ang Bit: The Final Bit");
-        setResizable(false);
+        setResizable(true);
+        setMinimumSize(new Dimension(Constants.screenWidth / 2, Constants.screenHeight / 2));
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         loadProgress();
@@ -65,6 +67,7 @@ public class BaseFrame extends JFrame {
         cardLayout.show(container, "Loading");
 
         loadingPanel.startLoading(() -> {
+            audioPlayer = AudioPlayer.getInstance();
             createMainScreensAfterLoading();
             setupButtonListeners();
             startStartupScene();
@@ -74,6 +77,10 @@ public class BaseFrame extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * Builds every screen that depends on preloaded resources.
+     * This runs after LoadingPanel finishes so panels can safely ask ResourceCache for images and fonts.
+     */
     private void createMainScreensAfterLoading() {
         openPanel = new OpeningPanel();
         gamePanel = new GamePanel();
@@ -95,8 +102,9 @@ public class BaseFrame extends JFrame {
     private void startStartupScene() {
         // The opening cinematic only plays once per app session.
         if (!sceneManager.hasPlayed("gameIntro")) {
-            openPanel.stopBackgroundAnimation();
+            // openPanel.stopBackgroundAnimation();
             scenePanel.setOnSceneComplete(() -> {
+                audioPlayer.stopMusic();
                 // Return to the menu once the cutscene ends.
                 openPanel.startBackgroundAnimation();
                 cardLayout.show(container, "Openning");
@@ -225,18 +233,19 @@ public class BaseFrame extends JFrame {
 
         openPanel.scoreButton.addActionListener(e -> {
             panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
-            int timeScore = gamePanel.getTimer() != null ? gamePanel.getTimer().getTimeScore() : 0;
-            int enemyScore = 0; // placeholder
-            int enemiesEliminated = 0; // placeholder
-            int levelsCleared = gamePanel.getLevelsCleared();
-            int totalScore = timeScore + enemyScore + levelsCleared * 100; // placeholder calculation
 
             try {
-                int[] levelTimes = FileManager.loadLevelTimes();
-                int totalLevelTime = FileManager.loadTotalLevelTime();
-                dialog.updateScores(timeScore, enemyScore, enemiesEliminated, levelsCleared, totalScore, levelTimes, totalLevelTime);
+                FileManager.ScoreboardData scores = FileManager.loadScoreboard();
+
+                dialog.updateScores(
+                    scores.getTimeScore(),
+                    scores.getEnemyScore(),
+                    scores.getEnemiesEliminated(),
+                    scores.getLevelsCleared(),
+                    scores.getTotalScore()
+                );
             } catch(GameException ex) {
-                dialog.updateScores(timeScore, enemyScore, enemiesEliminated, levelsCleared, totalScore);
+                dialog.updateScores(0, 0, 0, 0, 0);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
             }
 
@@ -258,6 +267,10 @@ public class BaseFrame extends JFrame {
         cardLayout.show(container, "Openning");
     }
 
+    /**
+     * Reads saved progression before the menu is shown.
+     * If the save file is missing or invalid, the game falls back to a fresh tutorial-only state.
+     */
     private void loadProgress() {
         try {
             FileManager.createSaveFile();
@@ -273,13 +286,16 @@ public class BaseFrame extends JFrame {
         }
     }
 
+    /**
+     * Records level unlocks after GamePanel reports a clear.
+     * The method advances both the playable level selection and the story archive unlock progress.
+     */
     private void updateProgress() {
         Level clearedLevel = gamePanel.getCurrentLevel();
         int clearedIndex = Level.getIndex(clearedLevel);
         int nextIndex = clearedLevel.nextLevel != null ? Level.getIndex(clearedLevel.nextLevel) : clearedIndex;
         int progressIndex = clearedLevel.nextLevel != null ? nextIndex : StoryPanel.ENDING_UNLOCK_PROGRESS;
         int selectedLevelIndex = Math.min(nextIndex, Level.LEVELS.length - 1);
-        int elapsedSeconds = gamePanel.getTimer() != null ? (int)(gamePanel.getTimer().getElapsedTime() / 1000) : 0;
 
         if(clearedLevel == Level.TUTORIAL) {
             tutorialPlayed = true;
@@ -292,10 +308,18 @@ public class BaseFrame extends JFrame {
         if (storyPanel != null) {
             storyPanel.setMaxLevelReached(maxLevelReached);
         }
-        saveLevelTime(clearedIndex, elapsedSeconds);
+
         saveProgress(selectedLevelIndex);
+
+        if(clearedLevel != Level.TUTORIAL) {
+            saveScoreboard();
+        }
     }
 
+    /**
+     * Persists the latest unlock state and selected level.
+     * Save failures are shown as warnings instead of crashing the whole game.
+     */
     private void saveProgress(int selectedLevelIndex) {
         try {
             FileManager.saveProgress(maxLevelReached, tutorialPlayed, selectedLevelIndex);
@@ -304,14 +328,47 @@ public class BaseFrame extends JFrame {
         }
     }
 
-    private void saveLevelTime(int levelIndex, int elapsedSeconds) {
+    /**
+     * Saves the current run's scoreboard values to the save file.
+     */
+    private void saveScoreboard() {
         try {
-            FileManager.saveLevelTime(levelIndex, elapsedSeconds);
+            systems.ScoreManager scores = gamePanel.getScoreManager();
+
+            FileManager.saveScoreboard(
+                scores.getTimeScore(),
+                scores.getEnemyScore(),
+                scores.getEnemiesEliminated(),
+                scores.getLevelsCleared(),
+                scores.calculateTotalScore()
+            );
         } catch(GameException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
         }
     }
 
+    /**
+     * Saves the current run's scoreboard values to the save file.
+     */
+    private void ScoreboardData() {
+        try {
+            systems.ScoreManager scores = gamePanel.getScoreManager();
+
+            FileManager.saveScoreboard(
+                scores.getTimeScore(),
+                scores.getEnemyScore(),
+                scores.getEnemiesEliminated(),
+                scores.getLevelsCleared(),
+                scores.calculateTotalScore()
+            );
+        } catch(GameException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    /**
+     * Checks whether the Continue button should be useful to the player.
+     */
     private boolean hasSavedProgress() {
         return tutorialPlayed || maxLevelReached >0;
     }

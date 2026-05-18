@@ -1,5 +1,6 @@
 package ui;
 
+import audio.AudioPlayer;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -50,6 +51,9 @@ public class IntroManager {
     private int fadeDurationMs;
     private Color fadeColor;
 
+    // Audio Manager for music playing
+    private AudioPlayer audioPlayer = AudioPlayer.getInstance();
+
     /**
      * Creates a manager with no active scene and default fade settings.
      */
@@ -80,6 +84,8 @@ public class IntroManager {
         if (sceneId == null || filePattern == null || frameCount <= 0) {
             return false;
         }
+        audioPlayer.stopMusic();
+        audioPlayer.playMusic(sceneId + " music");
 
         // Reset playback state for a fresh run.
         this.activeSceneId = sceneId;
@@ -198,6 +204,9 @@ public class IntroManager {
         this.fadeProgress = 0.0f;
     }
 
+    /**
+     * Resolves the current frame number into a cached image.
+     */
     private BufferedImage getCurrentSceneFrame() {
         if (activeSceneId == null || filePattern == null || frameCount <= 0) {
             return null;
@@ -209,6 +218,9 @@ public class IntroManager {
         return ResourceCache.getSceneFrame(key, path);
     }
 
+    /**
+     * Marks the scene completed and clears the rolling frame cache.
+     */
     private void finishScene() {
         finished = true;
         if (activeSceneId != null) {

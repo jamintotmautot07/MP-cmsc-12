@@ -90,21 +90,6 @@ public class ScoreboardDialog extends JDialog {
         enemyScoreLabel.setText("Enemy Score: " + enemyScore);
         enemiesEliminatedLabel.setText("Enemies Eliminated: " + enemiesEliminated);
         levelsClearedLabel.setText("Levels Cleared: " + levelsCleared);
-        levelTimesLabel.setText("Level Times: 00:00 | 00:00 | 00:00 | 00:00");
-        totalTimeLabel.setText("Total Level Time: 00:00");
         totalScoreLabel.setText("Total Score: " + totalScore);
-    }
-
-    public void updateScores(int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore, int[] levelTimes, int totalLevelTime) {
-        updateScores(timeScore, enemyScore, enemiesEliminated, levelsCleared, totalScore);
-
-        levelTimesLabel.setText(String.format(
-            "Times T/L1/L2/L3: %s | %s | %s | %s",
-            FileManager.formatTime(levelTimes[0]),
-            FileManager.formatTime(levelTimes[1]),
-            FileManager.formatTime(levelTimes[2]),
-            FileManager.formatTime(levelTimes[3])
-        ));
-        totalTimeLabel.setText("Total Level Time: " + FileManager.formatTime(totalLevelTime));
     }
 }

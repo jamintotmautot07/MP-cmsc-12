@@ -1,21 +1,20 @@
 package ui;
 
+import engine.GamePanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.GridLayout;
 import java.awt.Window;
-
 import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import engine.GamePanel;
 import util.MethodUtilities;
 import util.MethodUtilities.CustomButton;
+import util.ResourceCache;
 
 /**
  * Owns the modal pause menu UI and delegates gameplay actions back to GamePanel.
@@ -26,12 +25,18 @@ public class PauseMenu {
     private final Runnable onHome;
     private JDialog dialog;
 
+    /**
+     * Stores the gameplay callbacks that the pause menu buttons should trigger.
+     */
     public PauseMenu(GamePanel gamePanel, Runnable onResume, Runnable onHome) {
         this.gamePanel = gamePanel;
         this.onResume = onResume;
         this.onHome = onHome;
     }
 
+    /**
+     * Opens the pause dialog, creating it lazily the first time it is needed.
+     */
     public void show() {
         if (dialog == null) {
             createDialog();
@@ -42,12 +47,18 @@ public class PauseMenu {
         dialog.setVisible(true);
     }
 
+    /**
+     * Hides the pause dialog if it is currently visible.
+     */
     public void hide() {
         if (dialog != null && dialog.isVisible()) {
             dialog.setVisible(false);
         }
     }
 
+    /**
+     * Builds the modal Swing dialog and wires its four buttons.
+     */
     private void createDialog() {
         Window owner = SwingUtilities.getWindowAncestor(gamePanel);
         dialog = new JDialog(owner, Dialog.ModalityType.APPLICATION_MODAL);
@@ -75,7 +86,7 @@ public class PauseMenu {
         homeButton.addActionListener(e -> confirmHomeExit());
         settingsButton.addActionListener(e -> JOptionPane.showMessageDialog(
             dialog,
-            "Settings are coming soon.",
+            "Settings are coming soon. Resources: " + ResourceCache.getDoneLoading(),
             "Settings",
             JOptionPane.INFORMATION_MESSAGE
         ));
@@ -100,6 +111,9 @@ public class PauseMenu {
         dialog.pack();
     }
 
+    /**
+     * Confirms before leaving the current level and returning to the opening screen.
+     */
     private void confirmHomeExit() {
         int choice = JOptionPane.showConfirmDialog(
             dialog,

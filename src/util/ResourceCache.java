@@ -7,10 +7,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 /*
  PURPOSE:
@@ -32,6 +36,7 @@ public class ResourceCache {
     // Two separate caches keep image and font lookups straightforward.
     private static final Map<String, BufferedImage> imageCache = new HashMap<>();
     private static final Map<String, Font> fontCache = new HashMap<>();
+    private static final Map<String, Clip> soundCache = new HashMap<>();
     private static final int SCENE_FRAME_CACHE_LIMIT = 8;
     private static final Map<String, BufferedImage> sceneFrameCache = new LinkedHashMap<String, BufferedImage>(
         SCENE_FRAME_CACHE_LIMIT,
@@ -57,7 +62,9 @@ public class ResourceCache {
                                             + 180 // ground tile assets
                                             + 166 // solid tile assets
                                             + 3 // file-based font assets
-                                            + 1; // system-based font assets
+                                            + 1 // system-based font assets
+                                            + 8 // sound (music/sound effects) assets
+                                            ; 
     private static int doneLoading = 0;
     private static ProgressListener listener;
     
@@ -78,6 +85,7 @@ public class ResourceCache {
                 BufferedImage img = ImageIO.read(inputStream);
                 imageCache.put(key, img);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -112,6 +120,7 @@ public class ResourceCache {
                 return image;
             }
         } catch (Exception e) {
+                e.printStackTrace();
         }
 
         System.err.println("Missing scene frame: " + key + " (" + path + ")");
@@ -133,10 +142,14 @@ public class ResourceCache {
                 Font derivedFont = baseFont.deriveFont(style, size);
                 fontCache.put(key, derivedFont);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
 
+    /**
+     * Opens a resource either from the development file system or from the packaged classpath.
+     */
     private static InputStream openResourceStream(String path) throws Exception {
         File file = new File(path);
         if (file.exists()) {
@@ -162,6 +175,7 @@ public class ResourceCache {
                 Font font = new Font(fontName, style, (int)size);
                 fontCache.put(key, font);
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -180,6 +194,31 @@ public class ResourceCache {
         return font;
     }
 
+    public static void loadSound(String key, String path) {
+        if (!soundCache.containsKey(key)) {
+            try {
+                AudioInputStream inputStream =
+                        AudioSystem.getAudioInputStream(new File(path));
+
+                Clip clip = AudioSystem.getClip();
+                clip.open(inputStream);
+                soundCache.put(key, clip);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static Clip getSound(String key) {
+        Clip clip = soundCache.get(key);
+
+        if (clip == null) {
+            System.err.println("Missing cached font: " + key);
+            return soundCache.get("silence");
+        }
+
+        return clip;
+    }
     
     /**
      * Preload all game resources - called once at startup
@@ -203,9 +242,15 @@ public class ResourceCache {
         // Fonts
         loadFontAssets();
 
+        // Sound (music, sound effects)
+        loadSoundAssets();
+
         listener.onProgress(100, "Loading complete!");
     }
 
+    /**
+     * Creates a bright fallback tile so missing images are obvious during testing.
+     */
     private static BufferedImage createErrorImage() {
         BufferedImage image = new BufferedImage(
             Constants.tileSize,
@@ -221,6 +266,9 @@ public class ResourceCache {
         return image;
     }
 
+    /**
+     * Loads static and animated menu background assets.
+     */
     private static void loadBackgroundResource() {
         // Background images
         loadImage("background", "res/background.png");
@@ -235,6 +283,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads all player animation frames.
+     */
     private static void loadPlayerResources() {
         // Idle animations (7 frames)
         for (int i = 0; i < 7; i++) {
@@ -263,6 +314,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads the sprite sets for every enemy type used by the levels.
+     */
     private static void loadEnemyResources() {
         // default enemy sprite
         imageCache.put("enemy_default", errorImage);
@@ -295,6 +349,9 @@ public class ResourceCache {
         loadFlatEnemyAnimation("dummy", "res/DummyAssets", "right", 6);
     }
 
+    /**
+     * Loads one enemy animation sequence from the nested EnemyAssets folder structure.
+     */
     private static void loadEnemyAnimation(
         String enemyKey,
         String folder,
@@ -314,6 +371,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads one enemy animation sequence from a flat asset folder.
+     */
     private static void loadFlatEnemyAnimation(String enemyKey, String folder, String state, int frameCount) {
         for (int i = 0; i < frameCount; i++) {
             String key = "enemy_" + enemyKey + "_" + state + "_" + i;
@@ -323,6 +383,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads ground and solid tile textures until the expected numbering sequence ends.
+     */
     private static void loadTileAssets() {
         for (int i = 1; i <= 180; i++) {
             String path = String.format("res/TILES/ground%03d.png", i);
@@ -347,6 +410,9 @@ public class ResourceCache {
         }
     }
 
+    /**
+     * Loads custom project fonts and one system fallback font.
+     */
     private static void loadFontAssets() {
         loadFont("title_upper", "res/Font/TopTitle_Font.ttf", Font.BOLD, 35f);
         doneLoading = report( "Loaded title font");
@@ -359,6 +425,53 @@ public class ResourceCache {
         doneLoading = report("Loaded Papyrus font");
     }
 
+    private static void loadSoundAssets() {
+        // fallback audio
+        loadSound("silence", "res/Music/silence.wav");
+        doneLoading = report("Loaded Fallback sound");
+
+        // Main menu music
+        loadSound("homescreen bg music", "res/Music/homescreen bg music.wav");
+        doneLoading = report("Loaded Main Menu Background Music");
+
+        // cutscene musics
+        loadSound("gameIntro music", "res/Music/gameIntro.wav");
+        doneLoading = report("Loaded Animation Intro Music");
+        loadSound("level1Intro music", "res/Music/level1Intro music.wav");
+        doneLoading = report("Loaded Level 1 Intro Music");
+        loadSound("level2Intro music", "res/Music/level2Intro music.wav");
+        doneLoading = report("Loaded Level 2 Intro Music");
+        loadSound("bossIntro music", "res/Music/bossIntro music.wav");
+        doneLoading = report("Loaded Boss Intro Music");
+        loadSound("endingOutro music", "res/Music/endingOutro music.wav");
+        doneLoading = report("Loaded Outro Music");
+
+        // gameplay musics
+        loadSound("Level 1 and 2 music", "res/Music/Level 1 and 2 music.wav");
+        doneLoading = report("Loaded Level 1 and 2 Gameplay Music");
+        loadSound("Level 3 (Boss) music", "res/Music/Level 3 (Boss) music.wav");
+        doneLoading = report("Loaded Boss Level Gameplay Music");
+
+        // Gameplay sound effects
+        loadSound("player bullet fx", "res/Music/player bullet fx.wav");
+        doneLoading = report("Loaded Player Bullet Sound Effects");
+        loadSound("player melee fx", "res/Music/player melee fx.wav");
+        doneLoading = report("Loaded Player Melee Sound Effects");
+        loadSound("player dash fx", "res/Music/player dash fx.wav");
+        doneLoading = report("Loaded Player Dash Sound Effects");
+        loadSound("enemy hit fx", "res/Music/enemy hit fx.wav");
+        doneLoading = report("Loaded Enemy Hit Sound Effects");
+        loadSound("boss hit fx", "res/Music/boss hit fx.wav");
+        doneLoading = report("Loaded Boss Hit Sound Effects");
+
+        // General sound effects
+        loadSound("button fx", "res/Music/button fx.wav");
+        doneLoading = report("Loaded Button Effects");
+    }
+
+    /**
+     * Updates the loading progress listener after a resource is handled.
+     */
     private static int report(String message) {
         doneLoading++;
         int percent = (int) ((doneLoading / (double) totalResources) * 100);
@@ -374,6 +487,11 @@ public class ResourceCache {
         imageCache.clear();
         fontCache.clear();
         sceneFrameCache.clear();
+        soundCache.clear();
+    }
+
+    public static Map<String, Clip> getSoundClips() {
+        return ResourceCache.soundCache;
     }
     
     /**
@@ -381,4 +499,6 @@ public class ResourceCache {
      */
     public static void printStats() {
     }
+
+    public static int getDoneLoading() { return doneLoading; }
 }
