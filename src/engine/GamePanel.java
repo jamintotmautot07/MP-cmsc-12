@@ -428,11 +428,12 @@ public class GamePanel extends JPanel implements Runnable {
                 clampEnemyToWorld(enemy);
            }
         }
-
-        if(allEnemiesKilled()) {
-            ((CoreBoss)enemies.get(0)).canBeDamaged();
+        if(getCurrentLevel() == Level.LEVEL_3) {
+            if(allEnemiesKilled()) {
+                ((CoreBoss)enemies.get(0)).canBeDamaged();
+            }
         }
-
+        
         combatResolver.resolve();
         processDefeatedEnemies();
         camera.update(player);
