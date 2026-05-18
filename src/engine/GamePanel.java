@@ -601,11 +601,11 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public boolean allEnemiesKilled() {
-        if(enemies.get(0) instanceof CoreBoss && enemies.size() == 1) {
-            return true;
-        } else {
+        if(enemies.isEmpty()) {
             return false;
-        }
+        } 
+
+        return enemies.size() == 1 && enemies.get(0) instanceof CoreBoss;
     }
 
     /**

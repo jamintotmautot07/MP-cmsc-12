@@ -234,30 +234,21 @@ public class BaseFrame extends JFrame {
         openPanel.scoreButton.addActionListener(e -> {
             panels.ScoreboardDialog dialog = new panels.ScoreboardDialog(this);
 
-            // Main-menu scoreboard is intentionally placeholder-only for now.
-            // Future implementation point:
-            // 1. Create a score save file or reuse a score section in the existing save file.
-            // 2. When the victory screen finishes calculating the final score, write:
-            //    timeScore, enemyScore, enemiesEliminated, levelsCleared, and totalScore.
-            // 3. Load those saved values here before opening the dialog.
-            //
-            // Example future shape, not implemented yet:
-            // systems.ScoreManager savedScores = ScoreFileManager.loadScores();
-            // dialog.updateScores(
-            //     savedScores.getTimeScore(),
-            //     savedScores.getEnemyScore(),
-            //     savedScores.getEnemiesEliminated(),
-            //     savedScores.getLevelsCleared(),
-            //     savedScores.calculateTotalScore()
-            // );
+            try {
+                FileManager.ScoreboardData scores = FileManager.loadScoreboard();
 
-            dialog.updateScores(
-                0,
-                0,
-                0,
-                0,
-                0
-            );
+                dialog.updateScores(
+                    scores.getTimeScore(),
+                    scores.getEnemyScore(),
+                    scores.getEnemiesEliminated(),
+                    scores.getLevelsCleared(),
+                    scores.getTotalScore()
+                );
+            } catch(GameException ex) {
+                dialog.updateScores(0, 0, 0, 0, 0);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+            }
+
             dialog.setVisible(true);
         });
 
@@ -317,7 +308,12 @@ public class BaseFrame extends JFrame {
         if (storyPanel != null) {
             storyPanel.setMaxLevelReached(maxLevelReached);
         }
+
         saveProgress(selectedLevelIndex);
+
+        if(clearedLevel != Level.TUTORIAL) {
+            saveScoreboard();
+        }
     }
 
     /**
@@ -327,6 +323,44 @@ public class BaseFrame extends JFrame {
     private void saveProgress(int selectedLevelIndex) {
         try {
             FileManager.saveProgress(maxLevelReached, tutorialPlayed, selectedLevelIndex);
+        } catch(GameException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    /**
+     * Saves the current run's scoreboard values to the save file.
+     */
+    private void saveScoreboard() {
+        try {
+            systems.ScoreManager scores = gamePanel.getScoreManager();
+
+            FileManager.saveScoreboard(
+                scores.getTimeScore(),
+                scores.getEnemyScore(),
+                scores.getEnemiesEliminated(),
+                scores.getLevelsCleared(),
+                scores.calculateTotalScore()
+            );
+        } catch(GameException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    /**
+     * Saves the current run's scoreboard values to the save file.
+     */
+    private void ScoreboardData() {
+        try {
+            systems.ScoreManager scores = gamePanel.getScoreManager();
+
+            FileManager.saveScoreboard(
+                scores.getTimeScore(),
+                scores.getEnemyScore(),
+                scores.getEnemiesEliminated(),
+                scores.getLevelsCleared(),
+                scores.calculateTotalScore()
+            );
         } catch(GameException e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Save File Error", JOptionPane.WARNING_MESSAGE);
         }

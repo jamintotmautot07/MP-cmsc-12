@@ -12,6 +12,8 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.Color;
 
+import systems.FileManager;
+
 /**
  * Small summary dialog for time score, enemy score, and level progress.
  */
@@ -22,6 +24,8 @@ public class ScoreboardDialog extends JDialog {
     private JLabel enemyScoreLabel;
     private JLabel enemiesEliminatedLabel;
     private JLabel levelsClearedLabel;
+    private JLabel levelTimesLabel;
+    private JLabel totalTimeLabel;
     private JLabel totalScoreLabel;
 
     private Font textFont;
@@ -31,14 +35,14 @@ public class ScoreboardDialog extends JDialog {
      */
     public ScoreboardDialog(java.awt.Frame parent) {
         super(parent, "Scoreboard", true);
-        setSize(340, 245);
+        setSize(420, 340);
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         textFont = MethodUtilities.getFont(16f);
 
         // Simple stacked layout for a compact score summary.
-        RoundedPanel panel = new RoundedPanel(new GridLayout(5, 1, 10, 10), 10);
+        RoundedPanel panel = new RoundedPanel(new GridLayout(7, 1, 10, 10), 10);
         panel.setColor(new Color(159, 188, 143).darker());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -55,6 +59,13 @@ public class ScoreboardDialog extends JDialog {
         levelsClearedLabel = new JLabel("Levels Cleared: 0");
         levelsClearedLabel.setFont(textFont);
 
+        levelTimesLabel = new JLabel("Level Times: 00:00 | 00:00 | 00:00 | 00:00");
+        levelTimesLabel.setFont(textFont);
+
+        totalTimeLabel = new JLabel("Total Level Time: 00:00");
+        totalTimeLabel.setFont(textFont);
+        totalTimeLabel.setForeground(new Color(80, 40, 120));
+
         totalScoreLabel = new JLabel("Total Score: 0");
         totalScoreLabel.setFont(MethodUtilities.getFont(20f));
         totalScoreLabel.setForeground(Color.RED);
@@ -63,6 +74,8 @@ public class ScoreboardDialog extends JDialog {
         panel.add(enemyScoreLabel);
         panel.add(enemiesEliminatedLabel);
         panel.add(levelsClearedLabel);
+        panel.add(levelTimesLabel);
+        panel.add(totalTimeLabel);
         panel.add(totalScoreLabel);
 
         add(panel, BorderLayout.CENTER);

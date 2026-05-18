@@ -67,7 +67,7 @@ public final class FileManager {
             migrateLegacySaveFile(saveFile);
 
             if(!Files.exists(saveFile)) {
-                writeSaveFile(0, false, TUTORIAL_INDEX, TUTORIAL_INDEX);
+                writeSaveFile(0, false, TUTORIAL_INDEX, TUTORIAL_INDEX, 0, 0, 0, 0, 0);
             }
         } catch(IOException e) {
             throw new GameException("Unable to create save file.");
@@ -75,11 +75,24 @@ public final class FileManager {
     }
 
     /**
-     * Saves the complete progress record.
+     * Saves progress while keeping the existing saved scoreboard values.
      */
     public static void saveData(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
         createSaveFile();
-        writeSaveFile(highScore, tutorialPlayed, maxLevelReached, selectedLevel);
+
+        ScoreboardData scoreboard = loadScoreboard();
+
+        writeSaveFile(
+            highScore, 
+            tutorialPlayed, 
+            maxLevelReached, 
+            selectedLevel,
+            scoreboard.getTimeScore(),
+            scoreboard.getEnemyScore(),
+            scoreboard.getEnemiesEliminated(),
+            scoreboard.getLevelsCleared(),
+            scoreboard.getTotalScore()
+        );
     }
 
     // for type of saving method that is the last level reached
@@ -104,6 +117,79 @@ public final class FileManager {
      */
     public static void saveProgress(int maxLevelReached, boolean tutorialPlayed, int selectedLevel) throws GameException {
         saveData(loadHighScore(), tutorialPlayed, maxLevelReached, selectedLevel);
+    }
+
+    /**
+     * Saves the scoreboard values while keeping the current saved progress.
+    */
+    public static void saveScoreboard(int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore) throws GameException {
+        createSaveFile();
+
+        int highScore = Math.max(loadHighScore(), totalScore);
+
+        writeSaveFile(
+            highScore, 
+            loadTutorialPlayed(), 
+            loadMaxLevelReached(),
+            loadSelectedLevel(),
+            timeScore,
+            enemyScore,
+            enemiesEliminated,
+            levelsCleared,
+            totalScore
+        );
+    }
+
+    /**
+     * Loads all saved scoreboard values from the save file.
+    */
+    public static ScoreboardData loadScoreboard() throws GameException {
+        return new ScoreboardData(
+            loadInt("timeScore", 0),
+            loadInt("enemyScore", 0),
+            loadInt("enemiesEliminated", 0),
+            loadInt("levelsCleared", 0),
+            loadInt("totalScore", 0)
+        );
+    }
+
+    /**
+     * Small data holder for saved scoreboard values.
+     */
+    public static final class ScoreboardData {
+        private final int timeScore;
+        private final int enemyScore;
+        private final int enemiesEliminated;
+        private final int levelsCleared;
+        private final int totalScore;
+
+        public ScoreboardData(int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore) {
+            this.timeScore = timeScore;
+            this.enemyScore = enemyScore;
+            this.enemiesEliminated = enemiesEliminated;
+            this.levelsCleared = levelsCleared;
+            this.totalScore = totalScore;
+        }
+
+        public int getTimeScore() {
+            return timeScore;
+        }
+
+        public int getEnemyScore() {
+            return enemyScore;
+        }
+
+        public int getEnemiesEliminated() {
+            return enemiesEliminated;
+        }
+
+        public int getLevelsCleared() {
+            return levelsCleared;
+        }
+
+        public int getTotalScore() {
+            return totalScore;
+        }
     }
 
     /**
@@ -187,8 +273,19 @@ public final class FileManager {
 
     /**
      * Writes the complete save file atomically from the values passed by the caller.
+     * This saves both game progress and scoreboard data in one place.
      */
-    private static void writeSaveFile(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
+    private static void writeSaveFile(
+        int highScore, 
+        boolean tutorialPlayed, 
+        int maxLevelReached, 
+        int selectedLevel,
+        int timeScore,
+        int enemyScore,
+        int enemiesEliminated,
+        int levelsCleared,
+        int totalScore
+    ) throws GameException {
         try {
             Path saveFile = getSaveFilePath();
             Files.createDirectories(saveFile.getParent());
@@ -198,6 +295,11 @@ public final class FileManager {
             values.setProperty("tutorialPlayed", Boolean.toString(tutorialPlayed));
             values.setProperty("maxLevelReached", Integer.toString(clampProgress(maxLevelReached)));
             values.setProperty("selectedLevel", Integer.toString(clampLevel(selectedLevel)));
+            values.setProperty("timeScore", Integer.toString(Math.max(0, timeScore)));
+            values.setProperty("enemyScore", Integer.toString(Math.max(0, enemyScore)));
+            values.setProperty("enemiesEliminated", Integer.toString(Math.max(0, enemiesEliminated)));
+            values.setProperty("levelsCleared", Integer.toString(Math.max(0, levelsCleared)));
+            values.setProperty("totalScore", Integer.toString(Math.max(0, totalScore)));
 
             try(BufferedWriter writer = Files.newBufferedWriter(saveFile, StandardCharsets.UTF_8)) {
                 values.store(writer, "Hawak Ko Ang Bit save data");
