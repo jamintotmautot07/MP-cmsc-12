@@ -24,7 +24,7 @@ import util.ResourceCache;
  - Volume control
 */
 
-// al
+// all
 
 /**
  * A singleton class that acts as am audio service for background music and sound-effect playback.
