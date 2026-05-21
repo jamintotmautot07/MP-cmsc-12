@@ -1,3 +1,4 @@
+src/GameLauncher.java
 src/audio/AudioPlayer.java
 src/engine/Camera.java
 src/engine/GameMode.java
@@ -17,7 +18,6 @@ src/entity/VirusDrone.java
 src/entity/Worm.java
 src/exception/GameException.java
 src/main/BaseFrame.java
-src/main/GameLauncher.java
 src/panels/CreditScroller.java
 src/panels/LevelSelectionDialog.java
 src/panels/LoadingPanel.java
@@ -31,14 +31,15 @@ src/systems/CombatResolver.java
 src/systems/FileManager.java
 src/systems/GameState.java
 src/systems/KeyHandler.java
+src/systems/ScoreFileManager.java
 src/systems/ScoreManager.java
 src/systems/TestFileManager.java
 src/systems/Timer.java
 src/systems/TutorialManager.java
-src/Tile/GroundTile.java
-src/Tile/SolidTile.java
-src/Tile/Tile.java
-src/Tile/TileManager.java
+src/tile/GroundTile.java
+src/tile/SolidTile.java
+src/tile/Tile.java
+src/tile/TileManager.java
 src/ui/HudRenderer.java
 src/ui/IntroManager.java
 src/ui/ObjectiveTextOverlay.java

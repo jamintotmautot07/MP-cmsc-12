@@ -1,0 +1,71 @@
+========================================
+HAWAK KO ANG BIT: THE FINAL BIT
+SYSTEM LORE ARCHIVE
+========================================
+
+YEAR: UNKNOWN
+
+The system was once stable.
+
+Cities, communication networks, digital archives,
+security infrastructures, and artificial systems
+were all connected to a single global computational core.
+
+This core was known as:
+
+THE CENTRAL SYSTEM.
+
+At the center of the system existed a tiny but essential fragment
+known only as:
+
+THE BIT.
+
+The Bit was never meant to control the system.
+It was designed to maintain balance.
+
+A single unit.
+A single signal.
+A single surviving instruction.
+
+But then...
+
+the collapse began.
+
+Unknown malicious entities infiltrated the network.
+Viruses corrupted memory sectors.
+Worms consumed communication lines.
+Trojans infiltrated protected cores.
+
+Entire sectors of the digital infrastructure failed.
+
+The Boot Sector was the first to collapse.
+
+Then the Memory Core followed.
+
+Eventually, the System Kernel itself became unstable.
+
+As the corruption spread, the Central System initiated
+its final emergency protocol.
+
+PROJECT: FINAL BIT.
+
+The Bit was awakened.
+
+Not as a weapon.
+
+But as the system's final surviving process.
+
+Your mission is to travel through the collapsing digital sectors,
+eliminate the corruption,
+restore the damaged systems,
+and reach the core before total shutdown occurs.
+
+If the Kernel collapses...
+
+the entire system disappears forever.
+
+You are the final process still running.
+
+========================================
+END OF ARCHIVE
+========================================

@@ -1,0 +1,50 @@
+HAWAK KO ANG BIT: THE FINAL BIT
+Software License Agreement
+
+Copyright (c) 2026
+Hawak Ko Ang Bit Team
+
+Developers:
+- Benjamin A. Deypalan
+- Allan II E. Lerios
+- Althea Kate Silvano
+- Constantino "Inoy" T. Cesista Jr.
+
+All Rights Reserved.
+
+This software was developed as an academic and educational project using Java Swing.
+
+Permission is granted to:
+- Use the software for educational and non-commercial purposes
+- Install and run the software on personal devices
+- Study the source code for learning purposes
+
+The following are NOT permitted without explicit permission from the developers:
+- Commercial redistribution
+- Selling or monetizing the software
+- Reuploading modified versions under another name
+- Claiming ownership of the assets, code, or design
+
+ASSET OWNERSHIP
+
+The following assets were originally created for this project:
+
+Visual Assets, UI, Animations, and Illustrations:
+- Benjamin A. Deypalan
+
+Audio and Music:
+- Allan II E. Lerios
+
+DISCLAIMER
+
+This software is provided "as is", without warranty of any kind.
+The developers shall not be held liable for:
+- System damage
+- Data loss
+- Hardware issues
+- Software conflicts
+- Unexpected runtime behavior
+
+This project was developed primarily for academic demonstration and learning purposes.
+
+Thank you for playing Hawak Ko Ang Bit: The Final Bit.

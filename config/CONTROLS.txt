@@ -1,0 +1,64 @@
+========================================
+HAWAK KO ANG BIT: THE FINAL BIT
+CONTROLS GUIDE
+========================================
+
+MOVEMENT
+----------------------------------------
+W  - Move Up
+A  - Move Left
+S  - Move Down
+D  - Move Right
+
+COMBAT
+----------------------------------------
+ENTER      - Normal Attack
+BACKSPACE  - Fire Attack
+
+MOVEMENT SKILL
+----------------------------------------
+LEFT ARROW KEY - Dash
+
+MENU CONTROLS
+----------------------------------------
+MOUSE CLICK - Select Buttons
+ESCAPE      - Pause / Exit Current Screen
+
+GAMEPLAY OBJECTIVES
+----------------------------------------
+- Eliminate all enemies to clear a level
+- Survive before the timer reaches zero
+- Defeat the corruption inside the system
+- Restore the digital core
+
+LEVEL FLOW
+----------------------------------------
+Tutorial Level
+→ Learn movement and combat
+
+Level 1 - Boot Sector
+→ Eliminate all enemies
+
+Level 2 - Memory Core
+→ Survive stronger corruption
+
+Level 3 - System Kernel
+→ Defeat the Core Boss
+
+GAME OVER CONDITIONS
+----------------------------------------
+- HP reaches zero
+- Timer reaches zero
+
+TIPS
+----------------------------------------
+- Use Dash to reposition quickly
+- Fire Attack is effective at range
+- Eliminate Trojan enemies quickly
+- Watch enemy movement patterns carefully
+
+"You are the final process still running."
+
+========================================
+END OF FILE
+========================================
