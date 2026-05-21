@@ -1,6 +1,3 @@
-
-package main;
-
 /*
  OWNER: Jamin (Benjamin)
 
@@ -20,6 +17,8 @@ package main;
 */
 
 import javax.swing.SwingUtilities;
+
+import main.BaseFrame;
 
 //main class that calls the other operations
 

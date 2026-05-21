@@ -24,9 +24,11 @@ import javax.swing.SwingUtilities;
 import panels.VictoryPanel;
 import systems.CombatResolver;
 import systems.KeyHandler;
+import systems.ScoreFileManager;
 import systems.ScoreManager;
 import systems.Timer;
 import systems.TutorialManager;
+import exception.GameException;
 import tile.TileManager;
 import ui.HudRenderer;
 import ui.IntroManager;
@@ -915,6 +917,13 @@ public class GamePanel extends JPanel implements Runnable {
             add(victoryPanel, BorderLayout.CENTER);
         }
         victoryPanel.showScores(scoreManager);
+
+        try {
+            ScoreFileManager.saveScores(scoreManager);
+        } catch (GameException ignored) {
+            // Preserve game flow even if score persistence fails.
+        }
+
         revalidate();
         repaint();
     }

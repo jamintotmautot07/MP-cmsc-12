@@ -1,7 +1,6 @@
 package entity;
 
 import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
 
 import engine.GamePanel;
 import util.Constants;

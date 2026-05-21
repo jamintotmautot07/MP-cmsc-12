@@ -7,7 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -187,7 +187,10 @@ public class Enemy extends Entity {
         for (int i = 1; i <= maxFrames; i++) {
             try {
                 String path = basePath + state + i + ".png";
-                BufferedImage img = ImageIO.read(new File(path));
+                BufferedImage img = null;
+                try (InputStream is = ResourceCache.getStream(path)) {
+                    if (is != null) img = ImageIO.read(is);
+                }
                 if (img != null) {
                     frames[loaded] = img;
                     loaded++;

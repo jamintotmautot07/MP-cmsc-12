@@ -5,7 +5,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
@@ -150,19 +149,44 @@ public class ResourceCache {
     /**
      * Opens a resource either from the development file system or from the packaged classpath.
      */
+    public static InputStream getStream(String path) {
+        try {
+            URL url = getResourceURL(path);
+            return (url != null) ? url.openStream() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static InputStream openResourceStream(String path) throws Exception {
-        File file = new File(path);
-        if (file.exists()) {
-            return new FileInputStream(file);
-        }
-
-        String resourcePath = "/" + path.replace("\\", "/");
-        InputStream resourceStream = ResourceCache.class.getResourceAsStream(resourcePath);
-        if (resourceStream != null) {
-            return resourceStream;
-        }
-
+        InputStream is = getStream(path);
+        if (is != null) return is;
         throw new IllegalArgumentException("Resource not found: " + path);
+    }
+
+    /**
+     * Helper to find a resource URL. Handles filesystem, standard classpath,
+     * and flattened JAR structures (removing 'res/' prefix).
+     */
+    private static URL getResourceURL(String path) {
+        try {
+            // 1. Try file system (Development mode)
+            File file = new File(path);
+            if (file.exists()) return file.toURI().toURL();
+
+            // 2. Try Classpath (JAR mode)
+            String resPath = path.replace("\\", "/");
+            if (!resPath.startsWith("/")) resPath = "/" + resPath;
+
+            URL url = ResourceCache.class.getResource(resPath);
+            if (url != null) return url;
+
+            // 3. Fallback for flattened JARs: remove "/res/" prefix if present
+            if (resPath.startsWith("/res/")) {
+                url = ResourceCache.class.getResource(resPath.substring(4));
+            }
+            return url;
+        } catch (Exception e) { return null; }
     }
     
     /**
@@ -197,12 +221,13 @@ public class ResourceCache {
     public static void loadSound(String key, String path) {
         if (!soundCache.containsKey(key)) {
             try {
-                AudioInputStream inputStream =
-                        AudioSystem.getAudioInputStream(new File(path));
-
-                Clip clip = AudioSystem.getClip();
-                clip.open(inputStream);
-                soundCache.put(key, clip);
+                URL url = getResourceURL(path);
+                if (url != null) {
+                    AudioInputStream inputStream = AudioSystem.getAudioInputStream(url);
+                    Clip clip = AudioSystem.getClip();
+                    clip.open(inputStream);
+                    soundCache.put(key, clip);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -273,8 +298,8 @@ public class ResourceCache {
         // Background images
         loadImage("background", "res/background.png");
         doneLoading = report("Loaded background");
-        loadImage("text_background", "res/text_background.png");
-        doneLoading = report("Loaded text background");
+        loadImage("icon", "res/icon.png");
+        doneLoading = report("Loaded icon");
         
         // Background animation frames (22 frames)
         for (int i = 0; i < 22; i++) {
@@ -389,8 +414,7 @@ public class ResourceCache {
     private static void loadTileAssets() {
         for (int i = 1; i <= 180; i++) {
             String path = String.format("res/TILES/ground%03d.png", i);
-            java.io.File f = new java.io.File(path);
-            if (f.exists()) {
+            if (getResourceURL(path) != null) {
                 loadImage("tile_ground_" + i, path);
                 doneLoading = report("Loaded ground tile "+ i);
             } else {
@@ -400,8 +424,7 @@ public class ResourceCache {
         // Tile assets - Solid tiles
         for (int i = 1; i <= 166; i++) {
             String path = String.format("res/TILES/solid%03d.png", i);
-            java.io.File f = new java.io.File(path);
-            if (f.exists()) {
+            if (getResourceURL(path) != null) {
                 loadImage("tile_solid_" + i, path);
                 doneLoading = report("Loaded solid tile "+ i);
             } else {

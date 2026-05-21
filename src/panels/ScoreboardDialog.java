@@ -7,6 +7,8 @@ import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
+import systems.ScoreManager;
 import util.MethodUtilities;
 import util.MethodUtilities.RoundedPanel;
 
@@ -77,7 +79,7 @@ public class ScoreboardDialog extends JPanel {
 
         add(panel, BorderLayout.CENTER);
 
-        // 🔙 Back button (replaces dialog close behavior)
+        // Back button (replaces dialog close behavior)
         MethodUtilities.CustomButton backButton =
                 new MethodUtilities.CustomButton("Back");
 
@@ -97,12 +99,12 @@ public class ScoreboardDialog extends JPanel {
     /**
      * Refreshes every label before the panel is shown.
      */
-    public void updateScores(int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore) {
+    public void updateScores(ScoreManager scoreManager) {
         // Refresh all labels in one place before showing the panel.
-        timeScoreLabel.setText("Time Score: " + timeScore);
-        enemyScoreLabel.setText("Enemy Score: " + enemyScore);
-        enemiesEliminatedLabel.setText("Enemies Eliminated: " + enemiesEliminated);
-        levelsClearedLabel.setText("Levels Cleared: " + levelsCleared);
-        totalScoreLabel.setText("Total Score: " + totalScore);
+        timeScoreLabel.setText("Time Score: " + scoreManager.getTimeScore());
+        enemyScoreLabel.setText("Enemy Score: " + scoreManager.getEnemyScore());
+        enemiesEliminatedLabel.setText("Enemies Eliminated: " + scoreManager.getEnemiesEliminated());
+        levelsClearedLabel.setText("Levels Cleared: " + scoreManager.getLevelsCleared());
+        totalScoreLabel.setText("Total Score: " + scoreManager.calculateTotalScore());
     }
 }

@@ -2,12 +2,10 @@ package engine;
 
 import entity.CoreBoss;
 import entity.Dummy;
-import entity.Enemy;
 import entity.Trojan;
 import entity.VirusDrone;
 import entity.Worm;
 import tile.TileManager;
-import util.UtilityTool;
 
 /**
  * Creates and registers the enemy roster required by each level definition.

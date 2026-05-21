@@ -89,11 +89,9 @@ public class MethodUtilities {
 
             if(choice == JOptionPane.YES_OPTION) {
                 // Stop any running timers/threads before disposing the frame.
-                frame.scenePanel.stopScene();
-                frame.gamePanel.stopGameThread();
-                frame.getCredits().stopTimer();
-                frame.openPanel.stopBackgroundAnimation();
+                frame.cleanupBeforeExit();
                 frame.dispose();
+                System.exit(0);
             } 
         }
     }

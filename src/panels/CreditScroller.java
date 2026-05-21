@@ -27,7 +27,7 @@ public class CreditScroller extends JPanel implements ActionListener {
         "MEMBERS:", 
         "", 
         "UI and Game Mechanics:", 
-        "Benjamid Abad Deypalan", 
+        "Benjamin Abad Deypalan", 
         "", 
         "Audio and Resource Caching:", 
         "Constantino Tajantajan Cesista Jr.", 

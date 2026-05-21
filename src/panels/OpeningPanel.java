@@ -45,6 +45,7 @@ public class OpeningPanel extends JPanel {
     private MethodUtilities.GlowLabel headerLabel1;
     private MethodUtilities.GlowLabel headerLabel2;
     private JLabel instructionsLabel;
+    private JLabel lastSavedLabel;
     
     public CustomButton playButton;
     public CustomButton exitButton;
@@ -130,10 +131,17 @@ public class OpeningPanel extends JPanel {
         centerPanel.setPreferredSize(new Dimension(280, 220));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        header = new JPanel();
+        header = new JPanel(new BorderLayout());
         header.setBackground(null);
         header.setOpaque(false);
         header.setBorder(BorderFactory.createEmptyBorder(25, 0, 20, 0));
+
+        lastSavedLabel = new JLabel("Last saved: Never");
+        lastSavedLabel.setForeground(Color.BLACK);
+        lastSavedLabel.setFont(ResourceCache.getFont("button_text"));
+        lastSavedLabel.setHorizontalAlignment(JLabel.LEFT);
+        lastSavedLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 0));
+        header.add(lastSavedLabel, BorderLayout.NORTH);
 
         JPanel southPanel = new JPanel(new BorderLayout());
         southPanel.setOpaque(false);
@@ -159,7 +167,11 @@ public class OpeningPanel extends JPanel {
 
         titlePanel.add(headerLabel2);
 
-        header.add(titlePanel);
+        JPanel titleContainer = new JPanel();
+        titleContainer.setOpaque(false);
+        titleContainer.add(titlePanel);
+
+        header.add(titleContainer, BorderLayout.CENTER);
 
         centerPanel.add(continueButton);
         centerPanel.add(playButton);
@@ -172,6 +184,14 @@ public class OpeningPanel extends JPanel {
         add(main, BorderLayout.CENTER);
         add(header, BorderLayout.NORTH);
         add(southPanel, BorderLayout.SOUTH);
+    }
+
+    public void setLastSavedTime(String lastSavedTime) {
+        if (lastSavedTime == null || lastSavedTime.isBlank()) {
+            lastSavedLabel.setText("Last saved: Never");
+        } else {
+            lastSavedLabel.setText("Last saved: " + lastSavedTime);
+        }
     }
 
     // Loads the looping menu animation into memory.

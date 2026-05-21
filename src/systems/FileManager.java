@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -78,8 +80,25 @@ public final class FileManager {
      * Saves the complete progress record.
      */
     public static void saveData(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
+        saveData(highScore, tutorialPlayed, maxLevelReached, selectedLevel,
+            loadLastTimeScore(),
+            loadLastEnemyScore(),
+            loadLastEnemiesEliminated(),
+            loadLastLevelsCleared(),
+            loadLastTotalScore()
+        );
+    }
+
+    public static void saveData(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel,
+            int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore) throws GameException {
         createSaveFile();
-        writeSaveFile(highScore, tutorialPlayed, maxLevelReached, selectedLevel);
+        writeSaveFile(highScore, tutorialPlayed, maxLevelReached, selectedLevel,
+            timeScore,
+            enemyScore,
+            enemiesEliminated,
+            levelsCleared,
+            totalScore
+        );
     }
 
     // for type of saving method that is the last level reached
@@ -114,6 +133,26 @@ public final class FileManager {
     }
 
     /**
+     * Loads the last save timestamp in milliseconds.
+     */
+    public static long loadSavedAtMillis() throws GameException {
+        return loadLong("savedAt", 0L);
+    }
+
+    /**
+     * Loads the last save timestamp as a readable string.
+     */
+    public static String loadSavedAtText() throws GameException {
+        long savedAt = loadSavedAtMillis();
+        if (savedAt <= 0L) {
+            return "Never";
+        }
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        return formatter.format(new Date(savedAt));
+    }
+
+    /**
      * Legacy name kept for compatibility; intro progress now maps to tutorial progress.
      */
     public static boolean loadIntroPlayed() throws GameException {
@@ -141,6 +180,26 @@ public final class FileManager {
         return clampLevel(loadInt("selectedLevel", TUTORIAL_INDEX));
     }
 
+    public static int loadLastTimeScore() throws GameException {
+        return loadInt("lastTimeScore", 0);
+    }
+
+    public static int loadLastEnemyScore() throws GameException {
+        return loadInt("lastEnemyScore", 0);
+    }
+
+    public static int loadLastEnemiesEliminated() throws GameException {
+        return loadInt("lastEnemiesEliminated", 0);
+    }
+
+    public static int loadLastLevelsCleared() throws GameException {
+        return loadInt("lastLevelsCleared", 0);
+    }
+
+    public static int loadLastTotalScore() throws GameException {
+        return loadInt("lastTotalScore", 0);
+    }
+
     /**
      * Loads the highest unlocked progress point.
      */
@@ -160,6 +219,20 @@ public final class FileManager {
                 return defaultValue;
             }
             return Integer.parseInt(value);
+        } catch(NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private static long loadLong(String key, long defaultValue) throws GameException {
+        createSaveFile();
+
+        try {
+            String value = loadValues().get(key);
+            if (value == null) {
+                return defaultValue;
+            }
+            return Long.parseLong(value);
         } catch(NumberFormatException e) {
             return defaultValue;
         }
@@ -189,6 +262,11 @@ public final class FileManager {
      * Writes the complete save file atomically from the values passed by the caller.
      */
     private static void writeSaveFile(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel) throws GameException {
+        writeSaveFile(highScore, tutorialPlayed, maxLevelReached, selectedLevel, 0, 0, 0, 0, 0);
+    }
+
+    private static void writeSaveFile(int highScore, boolean tutorialPlayed, int maxLevelReached, int selectedLevel,
+            int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared, int totalScore) throws GameException {
         try {
             Path saveFile = getSaveFilePath();
             Files.createDirectories(saveFile.getParent());
@@ -198,6 +276,12 @@ public final class FileManager {
             values.setProperty("tutorialPlayed", Boolean.toString(tutorialPlayed));
             values.setProperty("maxLevelReached", Integer.toString(clampProgress(maxLevelReached)));
             values.setProperty("selectedLevel", Integer.toString(clampLevel(selectedLevel)));
+            values.setProperty("savedAt", Long.toString(System.currentTimeMillis()));
+            values.setProperty("lastTimeScore", Integer.toString(timeScore));
+            values.setProperty("lastEnemyScore", Integer.toString(enemyScore));
+            values.setProperty("lastEnemiesEliminated", Integer.toString(enemiesEliminated));
+            values.setProperty("lastLevelsCleared", Integer.toString(levelsCleared));
+            values.setProperty("lastTotalScore", Integer.toString(totalScore));
 
             try(BufferedWriter writer = Files.newBufferedWriter(saveFile, StandardCharsets.UTF_8)) {
                 values.store(writer, "Hawak Ko Ang Bit save data");

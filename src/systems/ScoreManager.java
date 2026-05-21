@@ -86,6 +86,13 @@ public class ScoreManager {
         return new ScoreSnapshot(timeScore, enemyScore, enemiesEliminated, levelsCleared);
     }
 
+    public void setRunScores(int timeScore, int enemyScore, int enemiesEliminated, int levelsCleared) {
+        this.timeScore = timeScore;
+        this.enemyScore = enemyScore;
+        this.enemiesEliminated = enemiesEliminated;
+        this.levelsCleared = levelsCleared;
+    }
+
     /**
      * Restores a previous score snapshot, or resets if no snapshot is available.
      */

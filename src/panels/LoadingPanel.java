@@ -30,6 +30,8 @@ public class LoadingPanel extends JPanel {
     private JLabel statusLabel;
     private JLabel titleLabel;
     private JLabel subtitleLabel;
+    private SwingWorker<Void, ProgressUpdate> worker;
+    private javax.swing.Timer doneTimer;
 
     /**
      * Builds the loading screen labels and progress bar.
@@ -88,7 +90,7 @@ public class LoadingPanel extends JPanel {
      * Starts resource preloading on a SwingWorker so the UI can keep updating progress.
      */
     public void startLoading(Runnable onDone) {
-        SwingWorker<Void, ProgressUpdate> worker = new SwingWorker<>() {
+        worker = new SwingWorker<>() {
             @Override
             /**
              * Performs the actual cache loading away from the Swing event thread.
@@ -116,10 +118,14 @@ public class LoadingPanel extends JPanel {
              * Shows completion briefly, then allows BaseFrame to build the main screens.
              */
             protected void done() {
-                 progressBar.setValue(100);
+                if (isCancelled()) {
+                    return;
+                }
+
+                progressBar.setValue(100);
                 statusLabel.setText("Loading complete!");
 
-                javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
+                doneTimer = new javax.swing.Timer(1000, e -> {
                     ((javax.swing.Timer) e.getSource()).stop();
 
                     if (onDone != null) {
@@ -127,12 +133,21 @@ public class LoadingPanel extends JPanel {
                     }
                 });
 
-                timer.setRepeats(false);
-                timer.start();
+                doneTimer.setRepeats(false);
+                doneTimer.start();
             }
         };
 
         worker.execute();
+    }
+
+    public void stopLoading() {
+        if (worker != null && !worker.isDone()) {
+            worker.cancel(true);
+        }
+        if (doneTimer != null && doneTimer.isRunning()) {
+            doneTimer.stop();
+        }
     }
 
     private static class ProgressUpdate {
